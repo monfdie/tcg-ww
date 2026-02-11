@@ -1,18 +1,272 @@
 <%- include('../partials/header') %>
 
 <style>
-    .page-title { text-align: center; margin-bottom: 40px; margin-top: 20px; }
-    .page-title h1 { 
-        font-family: 'Cinzel', serif; 
-        font-size: 3em; 
-        color: #fff; 
-        text-shadow: 0 0 10px #d4af37; 
-        margin: 0; 
+    /* --- Стили для страницы Турниров --- */
+
+    /* Заголовок страницы */
+    .tournaments-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        border-bottom: 1px solid #2a3454;
+        padding-bottom: 15px;
     }
+    .live-dot {
+        width: 12px; height: 12px;
+        background-color: #ff4444;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #ff4444;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    
+    .section-title {
+        font-family: 'Cinzel', serif;
+        font-size: 2em;
+        color: #fff;
+        margin: 0;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    /* --- Фильтры (Чипсы) --- */
+    .filters-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    .filter-chip {
+        background: rgba(43, 52, 82, 0.6);
+        border: 1px solid #3c4566;
+        padding: 6px 16px;
+        border-radius: 20px;
+        color: #8da4c4;
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.9em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        user-select: none;
+    }
+    .filter-chip:hover {
+        background: rgba(79, 172, 254, 0.2);
+        color: #fff;
+        border-color: #4facfe;
+    }
+    .filter-chip.active {
+        background: #4facfe;
+        color: #fff;
+        border-color: #4facfe;
+        box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
+    }
+
+    /* --- Карточка Турнира --- */
+    .tournament-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .tour-card {
+        display: flex;
+        height: 140px;
+        background: rgba(22, 28, 48, 0.8);
+        border: 1px solid #2a3454;
+        border-radius: 6px;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        position: relative;
+        text-decoration: none; /* Убираем подчеркивание, если это ссылка */
+    }
+
+    .tour-card:hover {
+        transform: translateX(5px);
+        border-color: #4facfe;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        background: rgba(26, 32, 55, 0.95);
+    }
+
+    /* Картинка слева */
+    .tour-img-wrapper {
+        width: 280px;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .tour-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+    .tour-card:hover .tour-img-wrapper img {
+        transform: scale(1.05);
+    }
+    
+    /* Оверлей на картинке (например, статус LIVE) */
+    .tour-status-overlay {
+        position: absolute;
+        top: 10px; left: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        padding: 2px 8px;
+        font-size: 0.75em;
+        border-radius: 4px;
+        border: 1px solid #ff4444;
+        color: #ff4444;
+        font-weight: bold;
+        text-transform: uppercase;
+        display: none; /* Скрыт по умолчанию */
+    }
+    .is-live .tour-status-overlay { display: block; }
+    .is-live { border-left: 3px solid #ff4444; }
+
+    /* Контент справа */
+    .tour-content {
+        flex-grow: 1;
+        padding: 20px 25px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .tour-title {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 1.4em;
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 8px;
+    }
+    
+    .tour-meta {
+        font-size: 0.9em;
+        color: #8da4c4;
+        margin-bottom: 12px;
+        display: flex;
+        gap: 15px;
+    }
+    
+    /* Теги (Badges) */
+    .tour-tags {
+        display: flex;
+        gap: 8px;
+    }
+    .tag-badge {
+        background: rgba(255, 255, 255, 0.05);
+        color: #aaa;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    
+    /* Цвета для конкретных тегов */
+    .tag-region { color: #d4af37; background: rgba(212, 175, 55, 0.1); } /* Золотой */
+    .tag-system { color: #4facfe; background: rgba(79, 172, 254, 0.1); } /* Голубой */
+
 </style>
 
-<div class="page-title">
-    <h1>TOURNAMENTS</h1>
+<div class="page-container">
+    
+    <div class="tournaments-header">
+        <div class="live-dot"></div>
+        <h2 class="section-title">Live & Upcoming</h2>
+    </div>
+
+    <div class="filters-container">
+        <div class="filter-chip active" onclick="filterTournaments('all', this)">All</div>
+        <div class="filter-chip" onclick="filterTournaments('EU', this)">EU Region</div>
+        <div class="filter-chip" onclick="filterTournaments('NA', this)">NA Region</div>
+        <div class="filter-chip" onclick="filterTournaments('AS', this)">Asia Region</div>
+        <div class="filter-chip" onclick="filterTournaments('Draft', this)">Draft Mode</div>
+        <div class="filter-chip" onclick="filterTournaments('Classic', this)">Classic</div>
+    </div>
+
+    <div class="tournament-list" id="tournaments-grid">
+        
+        <a href="#" class="tour-card is-live" data-tags="EU Draft">
+            <div class="tour-img-wrapper">
+                <img src="https://i.ytimg.com/vi/uKq9p9tZ0k8/maxresdefault.jpg" alt="Tournament">
+                <div class="tour-status-overlay">LIVE NOW</div>
+            </div>
+            <div class="tour-content">
+                <div class="tour-title">Abyss Cup Winter 2026 Playoff</div>
+                <div class="tour-meta">
+                    <span>📅 Feb 12, 18:00 CET</span>
+                    <span>🏆 Prize: $500</span>
+                </div>
+                <div class="tour-tags">
+                    <span class="tag-badge tag-region">#EU</span>
+                    <span class="tag-badge tag-system">#Draft</span>
+                    <span class="tag-badge">#AbyssCup</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="#" class="tour-card" data-tags="AS Classic">
+            <div class="tour-img-wrapper">
+                <img src="https://upload-os-bbs.hoyolab.com/upload/2022/12/06/11485989/4e3419992a7a4214571999981324750c_6888636437936109315.png" alt="Tournament">
+            </div>
+            <div class="tour-content">
+                <div class="tour-title">Cat's Tail Gathering S5</div>
+                <div class="tour-meta">
+                    <span>📅 Feb 20, 2026</span>
+                    <span>🏆 Prize: Gems</span>
+                </div>
+                <div class="tour-tags">
+                    <span class="tag-badge tag-region">#Asia</span>
+                    <span class="tag-badge tag-system">#Classic</span>
+                    <span class="tag-badge">#Official</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="#" class="tour-card" data-tags="NA Draft">
+            <div class="tour-img-wrapper">
+                <img src="https://img.youtube.com/vi/m2D2Kz4-eIM/maxresdefault.jpg" alt="Tournament">
+            </div>
+            <div class="tour-content">
+                <div class="tour-title">Weekly Scrims NA #42</div>
+                <div class="tour-meta">
+                    <span>📅 Every Saturday</span>
+                    <span>🏆 Prize: Fame</span>
+                </div>
+                <div class="tour-tags">
+                    <span class="tag-badge tag-region">#NA</span>
+                    <span class="tag-badge tag-system">#Draft</span>
+                    <span class="tag-badge">#Weekly</span>
+                </div>
+            </div>
+        </a>
+
+    </div>
 </div>
+
+<script>
+    function filterTournaments(tag, element) {
+        // 1. Обновляем визуально активную кнопку
+        document.querySelectorAll('.filter-chip').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        // 2. Логика фильтрации
+        const cards = document.querySelectorAll('.tour-card');
+        
+        cards.forEach(card => {
+            const cardTags = card.getAttribute('data-tags');
+            
+            if (tag === 'all') {
+                card.style.display = 'flex';
+            } else {
+                // Проверяем, содержит ли data-tags выбранный фильтр (например, "EU" или "Draft")
+                if (cardTags.includes(tag)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            }
+        });
+    }
+</script>
 
 <%- include('../partials/footer') %>
