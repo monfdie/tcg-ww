@@ -1,177 +1,31 @@
-<%- include('../partials/header') %>
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const Match = require('../models/Match');
 
-<div id="game-screen" style="display: flex; flex-direction: column; height: 100%; width: 100%; margin-top: -40px;">
-    <div class="header" style="height: 6vh; display: flex; gap: 30px; align-items: center; justify-content: center; background: rgba(10, 12, 20, 0.95); border-bottom: 2px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 30; flex-shrink: 0;">
-        <div id="room-container" style="position: absolute; left: 20px; display: flex; align-items: center; gap: 10px;">
-            <div id="room-display" onclick="copyRoomCode()" style="font-family: 'Segoe UI', monospace; font-size: 14px; color: #d4af37; background: rgba(255, 215, 0, 0.1); padding: 4px 8px; border: 1px solid #554400; border-radius: 4px; cursor: pointer;">CODE: <%= roomId %></div>
-            <span id="copy-toast" style="visibility: hidden; background-color: #28a745; color: #fff; padding: 4px 8px; font-size: 12px; border-radius: 4px;">Code Copied!</span>
-        </div>
-        <div class="reserve-timer blue-res"><span id="blue-res">5:00</span></div>
-        <div id="status">Waiting...</div>
-        <div class="reserve-timer red-res"><span id="red-res">5:00</span></div>
-    </div>
+router.use((req, res, next) => {
+    res.locals.user = req.user || null;
+    res.locals.path = req.path;
+    next();
+});
 
-    <div class="draft-area">
-        <div class="team-side blue-side">
-            <div class="player-header">
-                <div id="blue-timer" class="turn-timer">60</div>
-                <h2 id="blue-name-display">PLAYER 1</h2>
-                <div id="blue-ready-switch" class="ready-switch" onclick="toggleReady('blue')">
-                    <div class="switch-circle"></div>
-                </div>
-            </div>
-            <div class="ban-row" id="blue-bans"></div>
-            <div class="pick-row" id="blue-picks-1"></div>
-            <div class="pick-row-small" id="blue-picks-2"></div>
-        </div>
+router.get('/', (req, res) => res.render('pages/home', { title: 'Home' }));
+router.get('/create', (req, res) => res.render('pages/create', { title: 'Create' }));
+router.get('/tournaments', (req, res) => res.render('pages/tournaments', { title: 'Tournaments' }));
 
-        <div class="center-axis">
-            <div class="mid-label ban-label">BANS</div>
-            <div class="mid-label pick-label">PICKS</div>
-        </div>
+router.get('/history', async (req, res) => {
+    try {
+        const matches = await Match.find().sort({ date: -1 }).limit(6);
+        res.render('pages/history', { title: 'History', matches });
+    } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
+});
 
-        <div class="team-side red-side">
-            <div class="player-header">
-                <div id="red-ready-switch" class="ready-switch" onclick="toggleReady('red')">
-                    <div class="switch-circle"></div>
-                </div>
-                <h2 id="red-name-display">PLAYER 2</h2>
-                <div id="red-timer" class="turn-timer">60</div>
-            </div>
-            <div class="ban-row" id="red-bans"></div>
-            <div class="pick-row" id="red-picks-1"></div>
-            <div class="pick-row-small" id="red-picks-2"></div>
-        </div>
-    </div>
+router.get('/game/:id', (req, res) => {
+    res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id });
+});
 
-    <div class="controls-area">
-        <button id="skip-btn" class="round-btn" onclick="skipTurn()" style="display:none;">SKIP</button>
-        <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled>SELECT</button>
-    </div>
+router.get('/auth/discord', passport.authenticate('discord'));
+router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => res.redirect('/'));
+router.get('/logout', (req, res, next) => { req.logout((err) => { if (err) return next(err); res.redirect('/'); }); });
 
-    <div class="char-pool" id="char-pool-container"></div>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="/draft-rules.js"></script> 
-
-<script>
-    const currentRoom = '<%= roomId %>';
-    const savedMatchData = <%- savedData ? JSON.stringify(savedData) : 'null' %>;
-    
-    let charsData = {}, myRole = 'spectator', myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
-    sessionStorage.setItem('draft_user_id', myUserId);
-
-    const socket = io({ transports: ['websocket'], autoConnect: !savedMatchData });
-
-    window.onload = async () => {
-        const res = await fetch('/characters.json');
-        charsData = await res.json();
-        renderRows();
-
-        if (savedMatchData) {
-            renderHistoryGame(savedMatchData);
-        } else {
-            socket.connect();
-            socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId });
-        }
-    };
-
-    function renderHistoryGame(data) {
-        document.getElementById('status').innerText = "ARCHIVED MATCH";
-        document.getElementById('blue-name-display').innerText = data.blueName;
-        document.getElementById('red-name-display').innerText = data.redName;
-        document.getElementById('blue-ready-switch').style.display = 'none';
-        document.getElementById('red-ready-switch').style.display = 'none';
-        document.querySelector('.controls-area').style.display = 'none';
-        document.getElementById('char-pool-container').style.opacity = '0.2';
-        
-        const fakeState = {
-            bluePicks: data.bluePicks, redPicks: data.redPicks, bans: data.bans,
-            draftType: data.draftType, gameStarted: true, stepIndex: 100, ready: { blue: true, red: true }
-        };
-        renderSlots(fakeState);
-    }
-
-    function renderSlots(state) {
-        const currentSchema = DRAFT_RULES[state.draftType || 'gitcg'];
-        
-        const fill = (containerId, items, side, type) => {
-            const div = document.getElementById(containerId);
-            if (!div) return;
-            div.innerHTML = '';
-            
-            // Определяем сколько слотов должно быть
-            let slotsCount = 0;
-            if (type === 'ban') slotsCount = currentSchema.filter(s => s.team === side && s.type === 'ban').length;
-            else slotsCount = currentSchema.filter(s => s.team === side && s.type === 'pick').length;
-
-            for (let i = 0; i < slotsCount; i++) {
-                const slot = document.createElement('div');
-                slot.className = 'slot-circle' + (type === 'ban' ? ' slot-ban' : '');
-                
-                const charId = items[i] ? (typeof items[i] === 'object' ? items[i].id : items[i]) : null;
-                if (charId) {
-                    let all = []; Object.values(charsData).forEach(a => all.push(...a));
-                    const char = all.find(c => c.id === charId);
-                    if (char) slot.innerHTML = `<img src="${char.img}">`;
-                }
-                div.appendChild(slot);
-            }
-        };
-
-        fill('blue-bans', state.bans.filter(b => b.team === 'blue'), 'blue', 'ban');
-        fill('red-bans', state.bans.filter(b => b.team === 'red'), 'red', 'ban');
-        
-        if (state.draftType === 'classic' || state.draftType === 'generals_2') {
-            fill('blue-picks-1', state.bluePicks, 'blue', 'pick');
-            fill('red-picks-1', state.redPicks, 'red', 'pick');
-        } else {
-            fill('blue-picks-1', state.bluePicks.slice(0, 5), 'blue', 'pick');
-            fill('blue-picks-2', state.bluePicks.slice(5, 9), 'blue', 'pick');
-            fill('red-picks-1', state.redPicks.slice(0, 5), 'red', 'pick');
-            fill('red-picks-2', state.redPicks.slice(5, 9), 'red', 'pick');
-        }
-    }
-
-    function renderRows() {
-        const container = document.getElementById('char-pool-container');
-        container.innerHTML = '';
-        Object.entries(charsData).forEach(([elem, chars]) => {
-            const row = document.createElement('div'); row.className = `element-row row-${elem}`;
-            chars.forEach(c => {
-                const el = document.createElement('div'); el.className = 'char-option'; el.id = `char-${c.id}`;
-                el.innerHTML = `<img src="${c.img}">`;
-                el.onclick = () => {
-                    if (savedMatchData) return;
-                    document.querySelectorAll('.char-option').forEach(x => x.classList.remove('selected-pending'));
-                    el.classList.add('selected-pending');
-                    window.selectedId = c.id;
-                    document.getElementById('confirm-btn').disabled = false;
-                };
-                row.appendChild(el);
-            });
-            container.appendChild(row);
-        });
-    }
-
-    function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
-    function confirmSelection() { 
-        if(window.selectedId) {
-            socket.emit('action', { roomId: currentRoom, charId: window.selectedId });
-            document.getElementById('confirm-btn').disabled = true;
-        }
-    }
-
-    function updateUI(state) {
-        document.getElementById('status').innerText = state.gameStarted ? 
-            `${state.currentTeam} is ${state.currentAction}` : "WAITING...";
-        renderSlots(state);
-    }
-
-    socket.on('init_game', (data) => { myRole = data.role; updateUI(data.state); });
-    socket.on('update_state', updateUI);
-    socket.on('error_msg', (msg) => { if(!savedMatchData) alert(msg); });
-</script>
-
-<%- include('../partials/footer') %>
+module.exports = router;
