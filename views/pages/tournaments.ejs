@@ -3,12 +3,10 @@
 <style>
     /* --- Стили для страницы Турниров --- */
 
-    /* Общий отступ для секций */
     .tournament-section {
         margin-bottom: 60px;
     }
 
-    /* Заголовок секции */
     .section-header {
         display: flex;
         align-items: center;
@@ -50,11 +48,11 @@
     .filter-chip {
         background: rgba(43, 52, 82, 0.6);
         border: 1px solid #3c4566;
-        padding: 6px 16px;
+        padding: 8px 20px; /* Чуть больше паддинг для кликабельности */
         border-radius: 20px;
         color: #8da4c4;
         font-family: 'Segoe UI', sans-serif;
-        font-size: 0.9em;
+        font-size: 0.95em;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
@@ -65,6 +63,7 @@
         color: #fff;
         border-color: #4facfe;
     }
+    /* Активный стиль (как на скрине - голубой) */
     .filter-chip.active {
         background: #4facfe;
         color: #fff;
@@ -77,7 +76,7 @@
         display: flex;
         flex-direction: column;
         gap: 15px;
-        min-height: 50px; /* Чтобы пустой блок имел высоту */
+        min-height: 50px; 
     }
     
     .empty-message {
@@ -188,12 +187,11 @@
         </div>
 
         <div class="filters-container" id="filters-live">
-            <div class="filter-chip active" onclick="filterTournaments('all', this, 'grid-live')">All</div>
-            <div class="filter-chip" onclick="filterTournaments('EU', this, 'grid-live')">EU Region</div>
-            <div class="filter-chip" onclick="filterTournaments('NA', this, 'grid-live')">NA Region</div>
-            <div class="filter-chip" onclick="filterTournaments('AS', this, 'grid-live')">Asia Region</div>
-            <div class="filter-chip" onclick="filterTournaments('Draft', this, 'grid-live')">Draft Mode</div>
-            <div class="filter-chip" onclick="filterTournaments('Classic', this, 'grid-live')">Classic</div>
+            <div class="filter-chip" onclick="toggleFilter('AS', this, 'grid-live')">AS</div>
+            <div class="filter-chip" onclick="toggleFilter('NA', this, 'grid-live')">NA</div>
+            <div class="filter-chip" onclick="toggleFilter('EU', this, 'grid-live')">EU</div>
+            <div class="filter-chip" onclick="toggleFilter('Allpick', this, 'grid-live')">Allpick</div>
+            <div class="filter-chip" onclick="toggleFilter('Draft', this, 'grid-live')">Draft</div>
         </div>
 
         <div class="tournament-list" id="grid-live">
@@ -217,7 +215,7 @@
                 </div>
             </a>
 
-            <a href="#" class="tour-card" data-tags="AS Classic">
+            <a href="#" class="tour-card" data-tags="AS Allpick">
                 <div class="tour-img-wrapper">
                     <img src="https://upload-os-bbs.hoyolab.com/upload/2022/12/06/11485989/4e3419992a7a4214571999981324750c_6888636437936109315.png" alt="Tournament">
                 </div>
@@ -229,7 +227,7 @@
                     </div>
                     <div class="tour-tags">
                         <span class="tag-badge tag-region">#Asia</span>
-                        <span class="tag-badge tag-system">#Classic</span>
+                        <span class="tag-badge tag-system">#Allpick</span>
                         <span class="tag-badge">#Official</span>
                     </div>
                 </div>
@@ -264,12 +262,11 @@
         </div>
 
         <div class="filters-container" id="filters-archive">
-            <div class="filter-chip active" onclick="filterTournaments('all', this, 'grid-archive')">All</div>
-            <div class="filter-chip" onclick="filterTournaments('AS', this, 'grid-archive')">AS</div>
-            <div class="filter-chip" onclick="filterTournaments('NA', this, 'grid-archive')">NA</div>
-            <div class="filter-chip" onclick="filterTournaments('EU', this, 'grid-archive')">EU</div>
-            <div class="filter-chip" onclick="filterTournaments('Allpick', this, 'grid-archive')">Allpick</div>
-            <div class="filter-chip" onclick="filterTournaments('Draft', this, 'grid-archive')">Draft</div>
+            <div class="filter-chip" onclick="toggleFilter('AS', this, 'grid-archive')">AS</div>
+            <div class="filter-chip" onclick="toggleFilter('NA', this, 'grid-archive')">NA</div>
+            <div class="filter-chip" onclick="toggleFilter('EU', this, 'grid-archive')">EU</div>
+            <div class="filter-chip" onclick="toggleFilter('Allpick', this, 'grid-archive')">Allpick</div>
+            <div class="filter-chip" onclick="toggleFilter('Draft', this, 'grid-archive')">Draft</div>
         </div>
 
         <div class="tournament-list" id="grid-archive">
@@ -280,39 +277,41 @@
 </div>
 
 <script>
-    function filterTournaments(tag, btnElement, gridId) {
-        // 1. Управление активной кнопкой (только внутри своего контейнера)
-        // Находим родителя кнопки (контейнер фильтров)
-        const filterContainer = btnElement.parentElement;
+    function toggleFilter(tag, btnElement, gridId) {
+        // 1. Переключаем класс active (можно выбрать несколько)
+        btnElement.classList.toggle('active');
         
-        // Убираем класс active у всех кнопок ВНУТРИ этого контейнера
-        filterContainer.querySelectorAll('.filter-chip').forEach(el => el.classList.remove('active'));
-        
-        // Добавляем класс active нажатой кнопке
-        btnElement.classList.add('active');
+        applyFilters(btnElement.parentElement, gridId);
+    }
 
-        // 2. Фильтрация карточек (только внутри целевой сетки)
+    function applyFilters(filterContainer, gridId) {
+        // 2. Собираем все активные теги
+        const activeChips = filterContainer.querySelectorAll('.filter-chip.active');
+        const activeTags = Array.from(activeChips).map(chip => chip.innerText.trim());
+
         const grid = document.getElementById(gridId);
         if (!grid) return;
         
-        // Находим карточки и сообщение "пусто"
         const cards = grid.querySelectorAll('.tour-card');
-        const emptyMsg = grid.querySelector('.empty-message');
+        
+        // 3. Если ничего не выбрано - показываем всё
+        if (activeTags.length === 0) {
+            cards.forEach(card => card.style.display = 'flex');
+            return;
+        }
 
-        // Если это архив и там только emptyMsg, ничего не фильтруем, просто выходим
-        if (cards.length === 0) return;
-
+        // 4. Фильтруем (карточка должна содержать ВСЕ выбранные теги)
+        // Если вы выбрали EU и Draft, покажет только то, что и EU и Draft.
         cards.forEach(card => {
             const cardTags = card.getAttribute('data-tags');
             
-            if (tag === 'all') {
+            // Проверяем, содержит ли cardTags каждый активный тег
+            const matchesAll = activeTags.every(tag => cardTags.includes(tag));
+            
+            if (matchesAll) {
                 card.style.display = 'flex';
             } else {
-                if (cardTags.includes(tag)) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
+                card.style.display = 'none';
             }
         });
     }
