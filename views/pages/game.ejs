@@ -12,11 +12,6 @@
     </div>
 
     <div class="draft-area">
-        <div id="immunity-top-display" class="immunity-top-container" style="display: none;">
-            <div class="im-label">IMMUNE</div>
-            <div class="im-row" id="immunity-icons-row"></div>
-        </div>
-
         <div class="team-side blue-side">
             <div class="player-header">
                 <div id="blue-timer" class="turn-timer">60</div>
@@ -62,65 +57,95 @@
 
 <script>
     const currentRoom = '<%= roomId %>';
-    // ИСПРАВЛЕНИЕ: Данные из базы вставляются корректно в переменную
-    const savedMatchData = <%- locals.savedData ? JSON.stringify(savedData) : 'null' %>;
+    // Исправлено: безопасная вставка данных
+    const savedMatchData = <%- savedData ? JSON.stringify(savedData) : 'null' %>;
     
     let charsData = {}, myRole = 'spectator', myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
 
-    // Подключаем сокет только если это активная игра
     const socket = io({ transports: ['websocket'], autoConnect: !savedMatchData });
 
     window.onload = async () => {
-        // Загружаем данные персонажей
-        const response = await fetch('/characters.json');
-        charsData = await response.json();
-        
+        const res = await fetch('/characters.json');
+        charsData = await res.json();
         renderRows();
 
         if (savedMatchData) {
-            console.log("Загружена игра из истории");
             renderHistoryGame(savedMatchData);
         } else {
-            // Обычная логика подключения для новой игры
             socket.connect();
             socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId });
         }
     };
 
     function renderHistoryGame(data) {
-        document.getElementById('status').innerText = "DRAFT COMPLETED (HISTORY)";
+        document.getElementById('status').innerText = "ARCHIVED MATCH";
         document.getElementById('blue-name-display').innerText = data.blueName;
         document.getElementById('red-name-display').innerText = data.redName;
         document.getElementById('blue-ready-switch').style.display = 'none';
         document.getElementById('red-ready-switch').style.display = 'none';
         document.querySelector('.controls-area').style.display = 'none';
         document.getElementById('char-pool-container').style.opacity = '0.3';
-
-        // Создаем состояние для функции отрисовки
-        const fakeState = {
-            bluePicks: data.bluePicks,
-            redPicks: data.redPicks,
-            bans: data.bans,
-            draftType: data.draftType,
-            gameStarted: true,
-            immunityPhaseActive: false,
-            stepIndex: 100,
-            ready: { blue: true, red: true }
-        };
-        renderSlots(fakeState);
+        
+        renderSlots({
+            bluePicks: data.bluePicks, redPicks: data.redPicks, bans: data.bans,
+            draftType: data.draftType, gameStarted: true, stepIndex: 100, ready: { blue: true, red: true }
+        });
     }
 
-    // --- Оставшиеся функции (updateUI, renderSlots, и т.д.) остаются такими же как были ---
-    socket.on('init_game', (data) => {
-        myRole = data.role;
-        updateUI(data.state);
-    });
+    // --- Все остальные функции отрисовки (renderSlots, renderRows и т.д.) ---
+    function renderSlots(state) {
+        const fill = (id, items, side) => {
+            const div = document.getElementById(id); if(!div) return;
+            div.innerHTML = '';
+            items.forEach(item => {
+                const s = document.createElement('div'); s.className = 'slot-circle';
+                const id = typeof item === 'object' ? item.id : item;
+                let all = []; Object.values(charsData).forEach(a => all.push(...a));
+                const c = all.find(x => x.id === id);
+                if(c) s.innerHTML = `<img src="${c.img}">`;
+                div.appendChild(s);
+            });
+        };
+        fill('blue-bans', state.bans.filter(b => b.team === 'blue'));
+        fill('red-bans', state.bans.filter(b => b.team === 'red'));
+        fill('blue-picks-1', state.bluePicks);
+        fill('red-picks-1', state.redPicks);
+    }
+
+    function renderRows() {
+        const container = document.getElementById('char-pool-container');
+        container.innerHTML = '';
+        Object.entries(charsData).forEach(([elem, chars]) => {
+            const row = document.createElement('div'); row.className = `element-row row-${elem}`;
+            chars.forEach(c => {
+                const el = document.createElement('div'); el.className = 'char-option';
+                el.innerHTML = `<img src="${c.img}">`;
+                el.onclick = () => {
+                    document.querySelectorAll('.char-option').forEach(x => x.classList.remove('selected-pending'));
+                    el.classList.add('selected-pending');
+                    window.selectedId = c.id;
+                    document.getElementById('confirm-btn').disabled = false;
+                };
+                row.appendChild(el);
+            });
+            container.appendChild(row);
+        });
+    }
+
+    function confirmSelection() {
+        if(window.selectedId) {
+            socket.emit('action', { roomId: currentRoom, charId: window.selectedId });
+            document.getElementById('confirm-btn').disabled = true;
+        }
+    }
+
+    function updateUI(state) {
+        document.getElementById('status').innerText = state.gameStarted ? "DRAFTING..." : "WAITING...";
+        renderSlots(state);
+    }
 
     socket.on('update_state', updateUI);
-    socket.on('timer_tick', (data) => { /* логика таймера */ });
-    
-    // Вставь сюда все остальные функции: toggleReady, renderRows, createChar, confirmSelection, updateUI и т.д.
 </script>
 
 <%- include('../partials/footer') %>
