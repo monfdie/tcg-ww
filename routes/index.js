@@ -26,8 +26,22 @@ router.get('/history', async (req, res) => {
     }
 });
 
-router.get('/game/:id', (req, res) => res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id }));
-
+router.get('/game/:id', async (req, res) => {
+    try {
+        // Ищем матч в базе данных по roomId
+        const savedMatch = await Match.findOne({ roomId: req.params.id });
+        
+        res.render('pages/game', { 
+            title: `Room ${req.params.id}`, 
+            roomId: req.params.id,
+            // Если нашли в базе, передаем данные на страницу
+            savedData: savedMatch || null 
+        });
+    } catch (err) {
+        console.error("Ошибка поиска комнаты:", err);
+        res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id, savedData: null });
+    }
+});
 // --- РОУТЫ DISCORD ---
 router.get('/auth/discord', passport.authenticate('discord'));
 
