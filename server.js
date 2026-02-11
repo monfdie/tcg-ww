@@ -16,12 +16,10 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// === ПОДКЛЮЧЕНИЕ К MONGODB ===
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('✅ Connected to MongoDB!'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// === НАСТРОЙКА СЕССИЙ ===
 app.use(session({
     secret: 'gitcg-super-secret-key',
     resave: false,
@@ -37,9 +35,7 @@ passport.deserializeUser(async (id, done) => {
     try {
         const user = await User.findById(id);
         done(null, user);
-    } catch (err) {
-        done(err, null);
-    }
+    } catch (err) { done(err, null); }
 });
 
 passport.use(new DiscordStrategy({
@@ -64,9 +60,7 @@ passport.use(new DiscordStrategy({
             await user.save();
         }
         return done(null, user);
-    } catch (err) {
-        return done(err, null);
-    }
+    } catch (err) { return done(err, null); }
 }));
 
 app.set('view engine', 'ejs');
@@ -90,7 +84,7 @@ io.on('connection', (socket) => {
             spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
-            timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null, // Изменено: 45 сек и 3 мин
+            timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
             bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false }
         };
         socket.join(roomId);
@@ -143,7 +137,7 @@ io.on('connection', (socket) => {
 });
 
 async function nextStep(roomId) {
-    const s = sessions[roomId]; s.stepIndex++; s.timer = 45; // Изменено: сброс на 45 сек
+    const s = sessions[roomId]; s.stepIndex++; s.timer = 45;
     if (s.stepIndex >= s.draftOrder.length) {
         io.to(roomId).emit('game_over', getPublicState(s)); 
         clearInterval(s.timerInterval); 
@@ -154,7 +148,7 @@ async function nextStep(roomId) {
                 bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks
             });
             const count = await Match.countDocuments();
-            if (count > 6) { // Лимит 6 игр
+            if (count > 6) {
                 const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 6);
                 await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
             }
