@@ -1,39 +1,31 @@
-<%- include('../partials/header') %>
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const Match = require('../models/Match');
 
-<div style="padding: 20px;">
-    <h1 style="color: #fff; font-family: 'Cinzel', serif; border-bottom: 2px solid #3c4566; padding-bottom: 10px;">Match History</h1>
+router.use((req, res, next) => {
+    res.locals.user = req.user || null;
+    res.locals.path = req.path;
+    next();
+});
 
-    <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
-        <% if (locals.matches && locals.matches.length > 0) { %>
-            <% locals.matches.forEach(match => { %>
-                <div style="background: rgba(16, 20, 32, 0.95); border: 1px solid #2a3454; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a3454; padding-bottom: 10px; margin-bottom: 15px;">
-                        <h3 style="margin: 0; color: #4facfe; font-family: 'Segoe UI', sans-serif;">
-                            <a href="/game/<%= match.roomId %>" style="color: #4facfe; text-decoration: none; border-bottom: 1px dashed #4facfe;">
-                                Room: <%= match.roomId %>
-                            </a>
-                            <span style="font-size: 0.7em; color: #8da4c4; margin-left: 10px;">
-                                <%= new Date(match.date).toLocaleString('ru-RU') %>
-                            </span>
-                        </h3>
-                        <span style="background: #2a3454; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; color: #fff; text-transform: uppercase;">
-                            <%= match.draftType %>
-                        </span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: center; align-items: center; gap: 30px; font-size: 1.2em;">
-                        <div style="color: #4facfe; font-weight: bold; width: 40%; text-align: right;"><%= match.blueName %></div>
-                        <div style="color: #8da4c4; font-family: 'Cinzel', serif;">VS</div>
-                        <div style="color: #ff6b6b; font-weight: bold; width: 40%; text-align: left;"><%= match.redName %></div>
-                    </div>
-                </div>
-            <% }) %>
-        <% } else { %>
-            <div style="background: rgba(16, 20, 32, 0.95); border: 1px solid #2a3454; padding: 30px; border-radius: 8px; text-align: center; color: #8da4c4;">
-                No matches played yet. Go create a draft!
-            </div>
-        <% } %>
-    </div>
-</div>
+router.get('/', (req, res) => res.render('pages/home', { title: 'Home' }));
+router.get('/create', (req, res) => res.render('pages/create', { title: 'Create' }));
+router.get('/tournaments', (req, res) => res.render('pages/tournaments', { title: 'Tournaments' }));
 
-<%- include('../partials/footer') %>
+router.get('/history', async (req, res) => {
+    try {
+        const matches = await Match.find().sort({ date: -1 }).limit(6);
+        res.render('pages/history', { title: 'History', matches });
+    } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
+});
+
+router.get('/game/:id', (req, res) => {
+    res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id });
+});
+
+router.get('/auth/discord', passport.authenticate('discord'));
+router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => res.redirect('/'));
+router.get('/logout', (req, res, next) => { req.logout((err) => { if (err) return next(err); res.redirect('/'); }); });
+
+module.exports = router;
