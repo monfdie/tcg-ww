@@ -1,3 +1,4 @@
+require('dotenv').config(); // Загружаем ключи из .env
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -5,10 +6,18 @@ const path = require('path');
 const session = require('express-session');
 const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
+const mongoose = require('mongoose'); // Подключаем MongoDB
+
+const User = require('./models/User'); // Наша модель пользователя
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+// === ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ ===
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('✅ Connected to MongoDB!'))
+    .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // === НАСТРОЙКА СЕССИЙ ===
 const sessionMiddleware = session({
@@ -22,19 +31,53 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.serializeUser((user, done) => done(null, user));
-passport.deserializeUser((obj, done) => done(null, obj));
+// Сохраняем ТОЛЬКО id юзера в сессию
+passport.serializeUser((user, done) => done(null, user.id));
+
+// Достаем юзера из базы по его ID при каждом запросе
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (err) {
+        done(err, null);
+    }
+});
 
 passport.use(new DiscordStrategy({
-    clientID: '1471167069235183812',
-    clientSecret: '87BRTxxfxwbC1JAiuAnwPzkM8GL-siDx',
+    clientID: process.env.DISCORD_CLIENT_ID,
+    clientSecret: process.env.DISCORD_CLIENT_SECRET,
     callbackURL: process.env.NODE_ENV === 'production' 
         ? 'https://tcg-ww.onrender.com/auth/discord/callback' 
         : 'http://localhost:3000/auth/discord/callback',
     scope: ['identify']
-}, function(accessToken, refreshToken, profile, done) {
-    return done(null, profile);
+}, async function(accessToken, refreshToken, profile, done) {
+    try {
+        // Ищем пользователя в базе
+        let user = await User.findOne({ discordId: profile.id });
+        
+        // Если его нет - создаем нового
+        if (!user) {
+            user = await User.create({
+                discordId: profile.id,
+                username: profile.global_name || profile.username,
+                avatar: profile.avatar
+            });
+            console.log('🌟 New user registered:', user.username);
+        } else {
+            // Если аватар или ник изменились - обновляем
+            user.username = profile.global_name || profile.username;
+            user.avatar = profile.avatar;
+            await user.save();
+        }
+        
+        return done(null, user);
+    } catch (err) {
+        return done(err, null);
+    }
 }));
+
+// Дальше идет твой код: // Настройка EJS и статики...
 
 // Настройка EJS и статики
 app.set('view engine', 'ejs');
