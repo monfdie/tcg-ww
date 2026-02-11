@@ -7,6 +7,7 @@ const session = require('express-session');
 const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo');
 
 // Модели БД
 const User = require('./models/User');
@@ -25,7 +26,9 @@ mongoose.connect(process.env.MONGO_URI)
 const sessionMiddleware = session({
     secret: 'gitcg-super-secret-key',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    // Вот эта новая строчка говорит сохранять сессии в MongoDB
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }) 
 });
 app.use(sessionMiddleware);
 
