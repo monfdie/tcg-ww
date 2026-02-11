@@ -14,7 +14,7 @@ const io = new Server(server);
 const sessionMiddleware = session({
     secret: 'gitcg-super-secret-key',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false
 });
 app.use(sessionMiddleware);
 
@@ -45,251 +45,182 @@ app.use(express.static(path.join(__dirname, 'public')));
 const CHARACTERS_BY_ELEMENT = require('./characters.json');
 const { DRAFT_RULES, IMMUNITY_ORDER } = require('./public/draft-rules.js');
 
-// === МАРШРУТЫ (ROUTES) ===
+// === МАРШРУТЫ ===
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 
-// === ЛОГИКА ИГРОВЫХ СЕССИЙ ===
+// === ЛОГИКА ИГРОВЫХ СЕССИЙ (SOCKET.IO) ===
 const sessions = {};
 
 io.on('connection', (socket) => {
-    
-    // Создание игры
     socket.on('create_game', ({ nickname, draftType, userId }) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = draftType || 'gitcg';
         const selectedSchema = DRAFT_RULES[type];
 
         sessions[roomId] = {
-            id: roomId, 
-            bluePlayer: socket.id, 
-            blueUserId: userId, 
-            redPlayer: null,
-            redUserId: null,
-            spectators: [], 
-            blueName: nickname || 'Player 1', 
-            redName: 'Waiting...',
-            draftType: type,
-            draftOrder: selectedSchema, 
-            gameStarted: false,
-            immunityPhaseActive: false,
-            lastActive: Date.now(), 
-            finishedAt: null,       
-            stepIndex: 0, 
-            currentTeam: null, 
-            currentAction: null,
-            immunityStepIndex: 0,
-            immunityPool: [], 
-            immunityBans: [], 
-            timer: 45, 
-            blueReserve: 180, 
-            redReserve: 180, 
-            timerInterval: null,
-            bans: [], 
-            bluePicks: [], redPicks: [],
-            ready: { blue: false, red: false }
+            id: roomId, bluePlayer: socket.id, blueUserId: userId, redPlayer: null, redUserId: null,
+            spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
+            draftType: type, draftOrder: selectedSchema, gameStarted: false, immunityPhaseActive: false,
+            lastActive: Date.now(), finishedAt: null, stepIndex: 0, currentTeam: null, currentAction: null,
+            immunityStepIndex: 0, immunityPool: [], immunityBans: [], timer: 60, blueReserve: 300, redReserve: 300,
+            timerInterval: null, bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false }
         };
-        
         socket.join(roomId);
-        socket.emit('init_game', { 
-            roomId, role: 'blue', 
-            state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT 
-        });
+        socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    // Присоединение
     socket.on('join_game', ({roomId, nickname, asSpectator, userId}) => {
         const session = sessions[roomId];
-        if (!session) {
-            socket.emit('error_msg', 'Room not found');
-            return;
-        }
+        if (!session) return socket.emit('error_msg', 'Room not found');
         session.lastActive = Date.now();
-
         if (asSpectator || (session.bluePlayer && session.redPlayer)) {
-            session.spectators.push(socket.id);
-            socket.join(roomId);
-            socket.emit('init_game', { 
-                roomId, role: 'spectator', 
-                state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT 
-            });
-            return;
+            session.spectators.push(socket.id); socket.join(roomId);
+            return socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
         }
-
         if (!session.redPlayer) {
-            session.redPlayer = socket.id;
-            session.redUserId = userId; 
-            session.redName = nickname || 'Player 2';
-            socket.join(roomId);
-            socket.emit('init_game', { 
-                roomId, role: 'red', 
-                state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT 
-            });
+            session.redPlayer = socket.id; session.redUserId = userId; session.redName = nickname || 'Player 2';
+            socket.join(roomId); socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
             io.to(roomId).emit('update_state', getPublicState(session));
         } 
     });
 
-    // Переподключение
     socket.on('rejoin_game', ({ roomId, userId }) => {
         const session = sessions[roomId];
-        if (!session) {
-            socket.emit('error_msg', 'Session expired');
-            return;
-        }
-
+        if (!session) return socket.emit('error_msg', 'Session expired');
         let role = 'spectator';
-        if (session.blueUserId === userId) {
-            session.bluePlayer = socket.id; 
-            role = 'blue';
-            session.lastActive = Date.now(); 
-        } else if (session.redUserId === userId) {
-            session.redPlayer = socket.id; 
-            role = 'red';
-            session.lastActive = Date.now(); 
-        } else {
-            session.spectators.push(socket.id);
-        }
-
-        socket.join(roomId);
-        socket.emit('init_game', { 
-            roomId, role, 
-            state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT 
-        });
+        if (session.blueUserId === userId) { session.bluePlayer = socket.id; role = 'blue'; } 
+        else if (session.redUserId === userId) { session.redPlayer = socket.id; role = 'red'; }
+        else { session.spectators.push(socket.id); }
+        session.lastActive = Date.now(); socket.join(roomId);
+        socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
         io.to(roomId).emit('update_state', getPublicState(session));
     });
 
-    // Готовность и начало игры
     socket.on('player_ready', (roomId) => {
         const session = sessions[roomId];
         if (!session) return;
-        session.lastActive = Date.now();
-
         if (socket.id === session.bluePlayer) session.ready.blue = true;
         if (socket.id === session.redPlayer) session.ready.red = true;
-
         io.to(roomId).emit('update_state', getPublicState(session));
-
         if (session.ready.blue && session.ready.red && !session.gameStarted) {
             session.gameStarted = true;
             if (session.draftType === 'gitcg_cup_2') {
-                session.immunityPhaseActive = true;
-                session.currentTeam = IMMUNITY_ORDER[0].team;
-                session.currentAction = IMMUNITY_ORDER[0].type;
+                session.immunityPhaseActive = true; session.currentTeam = IMMUNITY_ORDER[0].team; session.currentAction = IMMUNITY_ORDER[0].type;
             } else {
-                session.currentTeam = session.draftOrder[0].team;
-                session.currentAction = session.draftOrder[0].type;
+                session.currentTeam = session.draftOrder[0].team; session.currentAction = session.draftOrder[0].type;
             }
-            startTimer(roomId);
-            io.to(roomId).emit('game_started');
-            io.to(roomId).emit('update_state', getPublicState(session));
+            startTimer(roomId); io.to(roomId).emit('game_started'); io.to(roomId).emit('update_state', getPublicState(session));
         }
     });
 
-    // Пропуск хода (Skip)
     socket.on('skip_action', (roomId) => {
         const session = sessions[roomId];
         if (!session || !session.immunityPhaseActive) return;
-        const isMyTurn = (session.currentTeam === 'blue' && socket.id === session.bluePlayer) ||
-                         (session.currentTeam === 'red' && socket.id === session.redPlayer);
-        if (!isMyTurn) return;
-
-        if (session.currentAction === 'immunity_ban') {
-            session.immunityBans.push('skipped');
-        } else if (session.currentAction === 'immunity_pick') {
-            session.immunityPool.push('skipped');
-        }
+        if (session.currentAction === 'immunity_ban') session.immunityBans.push('skipped');
+        else if (session.currentAction === 'immunity_pick') session.immunityPool.push('skipped');
         nextImmunityStep(roomId);
     });
 
-    // Основное действие (Pick/Ban)
     socket.on('action', ({ roomId, charId }) => {
         const session = sessions[roomId];
-        if (!session || !session.redPlayer || !session.gameStarted) return;
-        const isMyTurn = (session.currentTeam === 'blue' && socket.id === session.bluePlayer) ||
-                         (session.currentTeam === 'red' && socket.id === session.redPlayer);
-        if (!isMyTurn) return;
-
+        if (!session || !session.gameStarted) return;
         if (session.immunityPhaseActive) {
-            if (session.immunityBans.includes(charId) || session.immunityPool.includes(charId)) return;
             if (session.currentAction === 'immunity_ban') session.immunityBans.push(charId);
             else session.immunityPool.push(charId);
             nextImmunityStep(roomId);
-            return;
-        }
-
-        const config = session.draftOrder[session.stepIndex];
-        if (session.currentAction === 'ban') {
-            session.bans.push({ id: charId, team: session.currentTeam });
         } else {
-            if (session.currentTeam === 'blue') session.bluePicks.push(charId);
-            else session.redPicks.push(charId);
+            if (session.currentAction === 'ban') session.bans.push({ id: charId, team: session.currentTeam });
+            else session.currentTeam === 'blue' ? session.bluePicks.push(charId) : session.redPicks.push(charId);
+            nextStep(roomId);
         }
-        nextStep(roomId);
     });
 });
 
-// === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
-
 function nextImmunityStep(roomId) {
-    const session = sessions[roomId];
-    session.immunityStepIndex++;
-    session.timer = 45;
-    if (session.immunityStepIndex >= IMMUNITY_ORDER.length) {
-        session.immunityPhaseActive = false;
-        session.stepIndex = 0;
-        session.currentTeam = session.draftOrder[0].team;
-        session.currentAction = session.draftOrder[0].type;
+    const s = sessions[roomId]; s.immunityStepIndex++; s.timer = 60;
+    if (s.immunityStepIndex >= IMMUNITY_ORDER.length) {
+        s.immunityPhaseActive = false; s.stepIndex = 0;
+        s.currentTeam = s.draftOrder[0].team; s.currentAction = s.draftOrder[0].type;
     } else {
-        const config = IMMUNITY_ORDER[session.immunityStepIndex];
-        session.currentTeam = config.team;
-        session.currentAction = config.type;
+        const c = IMMUNITY_ORDER[s.immunityStepIndex]; s.currentTeam = c.team; s.currentAction = c.type;
     }
-    io.to(roomId).emit('update_state', getPublicState(session));
+    io.to(roomId).emit('update_state', getPublicState(s));
 }
 
 function nextStep(roomId) {
-    const session = sessions[roomId];
-    session.stepIndex++;
-    session.timer = 45;
-    if (session.stepIndex >= session.draftOrder.length) {
-        session.finishedAt = Date.now();
-        io.to(roomId).emit('game_over', getPublicState(session));
-        clearInterval(session.timerInterval);
-        return;
+    const s = sessions[roomId]; s.stepIndex++; s.timer = 60;
+    if (s.stepIndex >= s.draftOrder.length) {
+        s.finishedAt = Date.now(); io.to(roomId).emit('game_over', getPublicState(s)); clearInterval(s.timerInterval); return;
     }
-    const config = session.draftOrder[session.stepIndex];
-    session.currentTeam = config.team;
-    session.currentAction = config.type;
-    io.to(roomId).emit('update_state', getPublicState(session));
+    const c = s.draftOrder[s.stepIndex]; s.currentTeam = c.team; s.currentAction = c.type;
+    io.to(roomId).emit('update_state', getPublicState(s));
 }
 
 function startTimer(roomId) {
-    const session = sessions[roomId];
-    if (session.timerInterval) clearInterval(session.timerInterval);
-    session.timerInterval = setInterval(() => {
-        if (session.timer > 0) {
-            session.timer--;
-        } else {
-            if (session.currentTeam === 'blue') {
-                session.blueReserve--;
-                if (session.blueReserve <= 0) { session.blueReserve = 0; autoPick(roomId); }
-            } else {
-                session.redReserve--;
-                if (session.redReserve <= 0) { session.redReserve = 0; autoPick(roomId); }
-            }
+    const s = sessions[roomId];
+    if (s.timerInterval) clearInterval(s.timerInterval);
+    s.timerInterval = setInterval(() => {
+        if (s.timer > 0) s.timer--;
+        else {
+            if (s.currentTeam === 'blue') { s.blueReserve--; if(s.blueReserve <= 0) { s.blueReserve=0; autoPick(roomId); } }
+            else { s.redReserve--; if(s.redReserve <= 0) { s.redReserve=0; autoPick(roomId); } }
         }
-        io.to(roomId).emit('timer_tick', { main: session.timer, blueReserve: session.blueReserve, redReserve: session.redReserve });
+        io.to(roomId).emit('timer_tick', { main: s.timer, blueReserve: s.blueReserve, redReserve: s.redReserve });
     }, 1000);
 }
 
 function autoPick(roomId) {
     const session = sessions[roomId];
-    let all = []; Object.values(CHARACTERS_BY_ELEMENT).forEach(a => all.push(...a));
-    const randomChar = all.find(c => !session.bluePicks.includes(c.id) && !session.redPicks.includes(c.id));
-    if (randomChar) {
-        if (session.currentAction === 'ban') session.bans.push({ id: randomChar.id, team: session.currentTeam });
-        else if (session.currentTeam === 'blue') session.bluePicks.push(randomChar.id);
-        else session.redPicks.push(randomChar.id);
+    let allFlat = [];
+    Object.values(CHARACTERS_BY_ELEMENT).forEach(arr => allFlat.push(...arr));
+
+    session.lastActive = Date.now();
+
+    if (session.immunityPhaseActive) {
+        const available = allFlat.filter(c => !session.immunityBans.includes(c.id) && !session.immunityPool.includes(c.id));
+        if (available.length > 0) {
+            const r = available[Math.floor(Math.random() * available.length)];
+            if (session.currentAction === 'immunity_ban') session.immunityBans.push(r.id);
+            else session.immunityPool.push(r.id);
+            nextImmunityStep(roomId);
+        } else {
+            if (session.currentAction === 'immunity_ban') session.immunityBans.push('skipped');
+            else session.immunityPool.push('skipped');
+            nextImmunityStep(roomId);
+        }
+        return;
+    }
+
+    const currentConfig = session.draftOrder[session.stepIndex];
+    const isImmunityTurn = !!currentConfig.immunity;
+
+    const available = allFlat.filter(c => {
+        const isBanned = session.bans.some(b => b.id === c.id);
+        if (isBanned) return false;
+        const myPicks = session.currentTeam === 'blue' ? session.bluePicks : session.redPicks;
+        const oppPicks = session.currentTeam === 'blue' ? session.redPicks : session.bluePicks;
+        if (myPicks.includes(c.id)) return false;
+        const isInImmunityPool = session.immunityPool.includes(c.id);
+        if (isInImmunityPool) {
+            if (session.currentAction === 'ban') return false;
+            if (session.currentAction === 'pick' && !isImmunityTurn) return false;
+        }
+        if (oppPicks.includes(c.id)) {
+            if (isImmunityTurn && isInImmunityPool) return true;
+            return false;
+        }
+        return true;
+    });
+
+    if (available.length > 0) {
+        const randomChar = available[Math.floor(Math.random() * available.length)];
+        if (session.currentAction === 'ban') {
+            session.bans.push({ id: randomChar.id, team: session.currentTeam });
+        } else {
+            if (session.currentTeam === 'blue') session.bluePicks.push(randomChar.id);
+            else session.redPicks.push(randomChar.id);
+        }
         nextStep(roomId);
     }
 }
@@ -299,25 +230,21 @@ function getPublicState(session) {
         stepIndex: session.stepIndex + 1,
         currentTeam: session.currentTeam, 
         currentAction: session.currentAction,
-        bans: session.bans, 
-        bluePicks: session.bluePicks, 
-        redPicks: session.redPicks,
-        immunityPhaseActive: session.immunityPhaseActive,
-        immunityPool: session.immunityPool,
-        immunityBans: session.immunityBans,
-        blueName: session.blueName, 
-        redName: session.redName,
-        draftType: session.draftType,
-        ready: session.ready,
-        gameStarted: session.gameStarted
+        bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
+        immunityPhaseActive: session.immunityPhaseActive, immunityPool: session.immunityPool, immunityBans: session.immunityBans,
+        blueName: session.blueName, redName: session.redName, draftType: session.draftType,
+        ready: session.ready, gameStarted: session.gameStarted
     };
 }
 
-// Очистка старых сессий
+// Очистка мертвых сессий
 setInterval(() => {
     const now = Date.now();
-    Object.keys(sessions).forEach(id => {
-        if (now - sessions[id].lastActive > 3600000) delete sessions[id];
+    Object.keys(sessions).forEach(roomId => {
+        if (now - sessions[roomId].lastActive > 3600000) {
+            if (sessions[roomId].timerInterval) clearInterval(sessions[roomId].timerInterval);
+            delete sessions[roomId];
+        }
     });
 }, 60000);
 
