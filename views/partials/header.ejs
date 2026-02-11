@@ -12,39 +12,31 @@
 <div class="app-container">
     
     <aside class="sidebar">
-        <div class="menu-icon">
-            <span></span>
-            <span></span>
-            <span></span>
+        <div class="sidebar-brand">GITCG<br><span>DRAFT</span></div>
+        
+        <div class="sidebar-links">
+            <a href="/" class="<%= locals.path === '/' ? 'active' : '' %>">Main</a>
+            <a href="/create" class="<%= locals.path === '/create' ? 'active' : '' %>">Create Draft</a>
+            <a href="/tournaments" class="<%= locals.path === '/tournaments' ? 'active' : '' %>">Tournaments</a>
+            <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">History</a>
         </div>
-
-        <div class="sidebar-content">
-            <div class="sidebar-brand">GITCG<br><span>DRAFT</span></div>
-            
-            <div class="sidebar-links">
-                <a href="/" class="<%= locals.path === '/' ? 'active' : '' %>">Main</a>
-                <a href="/create" class="<%= locals.path === '/create' ? 'active' : '' %>">Create Draft</a>
-                <a href="/tournaments" class="<%= locals.path === '/tournaments' ? 'active' : '' %>">Tournaments</a>
-                <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">History</a>
-            </div>
-            
-            <div class="sidebar-user">
-                <% if (locals.user) { %>
-                    <div class="user-profile">
-                        <% if (locals.user.avatar) { %>
-                            <img src="https://cdn.discordapp.com/avatars/<%= locals.user.discordId %>/<%= locals.user.avatar %>.png" alt="Avatar">
-                        <% } else { %>
-                            <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
-                        <% } %>
-                        <div class="user-info">
-                            <span class="user-name"><%= locals.user.username %></span>
-                            <a href="/logout" class="logout-link">Logout</a>
-                        </div>
+        
+        <div class="sidebar-user">
+            <% if (locals.user) { %>
+                <div class="user-profile">
+                    <% if (locals.user.avatar) { %>
+                        <img src="https://cdn.discordapp.com/avatars/<%= locals.user.discordId %>/<%= locals.user.avatar %>.png" alt="Avatar">
+                    <% } else { %>
+                        <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
+                    <% } %>
+                    <div class="user-info">
+                        <span class="user-name"><%= locals.user.username %></span>
+                        <a href="/logout" class="logout-link">Logout</a>
                     </div>
-                <% } else { %>
-                    <a href="/auth/discord" class="login-btn">Discord Login</a>
-                <% } %>
-            </div>
+                </div>
+            <% } else { %>
+                <a href="/auth/discord" class="login-btn">Discord Login</a>
+            <% } %>
         </div>
     </aside>
 
