@@ -90,7 +90,7 @@ io.on('connection', (socket) => {
             spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
-            timer: 60, blueReserve: 300, redReserve: 300, timerInterval: null,
+            timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null, // Изменено: 45 сек и 3 мин
             bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false }
         };
         socket.join(roomId);
@@ -143,7 +143,7 @@ io.on('connection', (socket) => {
 });
 
 async function nextStep(roomId) {
-    const s = sessions[roomId]; s.stepIndex++; s.timer = 60;
+    const s = sessions[roomId]; s.stepIndex++; s.timer = 45; // Изменено: сброс на 45 сек
     if (s.stepIndex >= s.draftOrder.length) {
         io.to(roomId).emit('game_over', getPublicState(s)); 
         clearInterval(s.timerInterval); 
@@ -154,7 +154,7 @@ async function nextStep(roomId) {
                 bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks
             });
             const count = await Match.countDocuments();
-            if (count > 6) {
+            if (count > 6) { // Лимит 6 игр
                 const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 6);
                 await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
             }
@@ -170,6 +170,10 @@ function startTimer(roomId) {
     if (s.timerInterval) clearInterval(s.timerInterval);
     s.timerInterval = setInterval(() => {
         if (s.timer > 0) s.timer--;
+        else {
+            if (s.currentTeam === 'blue') s.blueReserve--;
+            else s.redReserve--;
+        }
         io.to(roomId).emit('timer_tick', { main: s.timer, blueReserve: s.blueReserve, redReserve: s.redReserve });
     }, 1000);
 }
