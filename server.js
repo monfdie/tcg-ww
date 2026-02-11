@@ -21,7 +21,7 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('✅ Connected to MongoDB!'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// === НАСТРОЙКА СЕССИЙ (с сохранением в БД) ===
+// === НАСТРОЙКА СЕССИЙ ===
 app.use(session({
     secret: 'gitcg-super-secret-key',
     resave: false,
@@ -100,16 +100,14 @@ io.on('connection', (socket) => {
     socket.on('join_game', ({roomId, nickname, asSpectator, userId}) => {
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Room not found');
-        session.lastActive = Date.now();
-        if (asSpectator || (session.bluePlayer && session.redPlayer)) {
-            session.spectators.push(socket.id); socket.join(roomId);
-            return socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
-        }
-        if (!session.redPlayer) {
+        if (!session.redPlayer && !asSpectator) {
             session.redPlayer = socket.id; session.redUserId = userId; session.redName = nickname || 'Player 2';
             socket.join(roomId); socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
             io.to(roomId).emit('update_state', getPublicState(session));
-        } 
+        } else {
+            session.spectators.push(socket.id); socket.join(roomId);
+            socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+        }
     });
 
     socket.on('rejoin_game', ({ roomId, userId }) => {
@@ -118,10 +116,8 @@ io.on('connection', (socket) => {
         let role = 'spectator';
         if (session.blueUserId === userId) { session.bluePlayer = socket.id; role = 'blue'; } 
         else if (session.redUserId === userId) { session.redPlayer = socket.id; role = 'red'; }
-        else { session.spectators.push(socket.id); }
-        session.lastActive = Date.now(); socket.join(roomId);
+        socket.join(roomId);
         socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
-        io.to(roomId).emit('update_state', getPublicState(session));
     });
 
     socket.on('player_ready', (roomId) => {
@@ -132,11 +128,7 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('update_state', getPublicState(session));
         if (session.ready.blue && session.ready.red && !session.gameStarted) {
             session.gameStarted = true;
-            if (session.draftType === 'gitcg_cup_2') {
-                session.immunityPhaseActive = true; session.currentTeam = IMMUNITY_ORDER[0].team; session.currentAction = IMMUNITY_ORDER[0].type;
-            } else {
-                session.currentTeam = session.draftOrder[0].team; session.currentAction = session.draftOrder[0].type;
-            }
+            session.currentTeam = session.draftOrder[0].team; session.currentAction = session.draftOrder[0].type;
             startTimer(roomId); io.to(roomId).emit('game_started'); io.to(roomId).emit('update_state', getPublicState(session));
         }
     });
@@ -144,15 +136,9 @@ io.on('connection', (socket) => {
     socket.on('action', ({ roomId, charId }) => {
         const session = sessions[roomId];
         if (!session || !session.gameStarted) return;
-        if (session.immunityPhaseActive) {
-            if (session.currentAction === 'immunity_ban') session.immunityBans.push(charId);
-            else session.immunityPool.push(charId);
-            nextImmunityStep(roomId);
-        } else {
-            if (session.currentAction === 'ban') session.bans.push({ id: charId, team: session.currentTeam });
-            else session.currentTeam === 'blue' ? session.bluePicks.push(charId) : session.redPicks.push(charId);
-            nextStep(roomId);
-        }
+        if (session.currentAction === 'ban') session.bans.push({ id: charId, team: session.currentTeam });
+        else session.currentTeam === 'blue' ? session.bluePicks.push(charId) : session.redPicks.push(charId);
+        nextStep(roomId);
     });
 });
 
@@ -162,20 +148,16 @@ async function nextStep(roomId) {
         s.finishedAt = Date.now(); 
         io.to(roomId).emit('game_over', getPublicState(s)); 
         clearInterval(s.timerInterval); 
-        
         try {
             await Match.create({
                 roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
                 blueDiscordId: s.blueUserId, redDiscordId: s.redUserId,
                 bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks
             });
-            console.log(`✅ Match ${s.id} saved!`);
-
             const count = await Match.countDocuments();
             if (count > 5) {
                 const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 5);
                 await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
-                console.log('🧹 DB cleaned to 5 matches');
             }
         } catch (e) { console.error(e); }
         return;
@@ -189,10 +171,6 @@ function startTimer(roomId) {
     if (s.timerInterval) clearInterval(s.timerInterval);
     s.timerInterval = setInterval(() => {
         if (s.timer > 0) s.timer--;
-        else {
-            if (s.currentTeam === 'blue') s.blueReserve--;
-            else s.redReserve--;
-        }
         io.to(roomId).emit('timer_tick', { main: s.timer, blueReserve: s.blueReserve, redReserve: s.redReserve });
     }, 1000);
 }
@@ -202,7 +180,6 @@ function getPublicState(session) {
         stepIndex: session.stepIndex + 1,
         currentTeam: session.currentTeam, currentAction: session.currentAction,
         bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
-        immunityPhaseActive: session.immunityPhaseActive, immunityPool: session.immunityPool, immunityBans: session.immunityBans,
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
         ready: session.ready, gameStarted: session.gameStarted
     };
