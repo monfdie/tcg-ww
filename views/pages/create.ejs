@@ -1,1 +1,66 @@
+<%- include('../partials/header') %>
 
+<div style="display: flex; justify-content: center; margin-top: 50px;">
+    <div class="lobby-card">
+        <h1>Create Room</h1>
+        <div class="input-group">
+            <label>NICKNAME</label>
+            <input id="nickname-input" placeholder="Enter Name" maxlength="15">
+        </div>
+        <div class="input-group">
+            <label>DRAFT MODE</label>
+            <select id="draft-type-select">
+                <option value="gitcg">GITCG CUP </option>
+                <option value="gitcg_cup_2">GITCG CUP 2 (Immunity)</option>
+                <option value="classic">Classic (2 Bans / 3 Picks)</option>
+                <option value="generals_2">Generals 2 (New)</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="createGame()">Create Game</button>
+        
+        <div class="separator"><span>OR JOIN</span></div>
+        
+        <div class="input-group">
+            <label>ROOM CODE</label>
+            <input id="room-input" placeholder="Enter Code">
+        </div>
+        <div class="input-group" style="flex-direction: row; align-items: center; gap: 10px; margin-bottom: 5px;">
+            <input type="checkbox" id="spectator-check" style="width: auto; margin: 0;">
+            <label for="spectator-check" style="margin: 0; cursor: pointer;">Join as Spectator</label>
+        </div>
+        <button class="btn-secondary" onclick="joinGame()">Join Game</button>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io({ transports: ['websocket'] });
+    let myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
+    sessionStorage.setItem('draft_user_id', myUserId);
+
+    function createGame() { 
+        const nick = document.getElementById('nickname-input').value;
+        const type = document.getElementById('draft-type-select').value;
+        if(!nick) return alert("Enter nickname!");
+        // Просим сервер создать игру
+        socket.emit('create_game', { nickname: nick, draftType: type, userId: myUserId }); 
+    }
+
+    function joinGame() {
+        const room = document.getElementById('room-input').value.toUpperCase();
+        if(!room) return alert("Enter code!");
+        // ВАЖНО: При многостраничности мы просто переходим по ссылке!
+        // Сервер сам разберется на странице игры.
+        window.location.href = `/game/${room}`;
+    }
+
+    // Когда сервер создал игру, он присылает init_game с roomId
+    socket.on('init_game', (data) => {
+        sessionStorage.setItem('draft_room_id', data.roomId);
+        sessionStorage.setItem('draft_nickname', document.getElementById('nickname-input').value);
+        // Переходим на страницу созданной игры
+        window.location.href = `/game/${data.roomId}`;
+    });
+</script>
+
+<%- include('../partials/footer') %>
