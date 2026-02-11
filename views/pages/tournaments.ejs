@@ -3,15 +3,21 @@
 <style>
     /* --- Стили для страницы Турниров --- */
 
-    /* Заголовок страницы */
-    .tournaments-header {
+    /* Общий отступ для секций */
+    .tournament-section {
+        margin-bottom: 60px;
+    }
+
+    /* Заголовок секции */
+    .section-header {
         display: flex;
         align-items: center;
         gap: 15px;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
         border-bottom: 1px solid #2a3454;
         padding-bottom: 15px;
     }
+    
     .live-dot {
         width: 12px; height: 12px;
         background-color: #ff4444;
@@ -21,6 +27,11 @@
     }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     
+    .archive-icon {
+        color: #8da4c4;
+        font-size: 1.2em;
+    }
+
     .section-title {
         font-family: 'Cinzel', serif;
         font-size: 2em;
@@ -61,11 +72,21 @@
         box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
     }
 
-    /* --- Карточка Турнира --- */
+    /* --- Сетка и Карточки --- */
     .tournament-list {
         display: flex;
         flex-direction: column;
         gap: 15px;
+        min-height: 50px; /* Чтобы пустой блок имел высоту */
+    }
+    
+    .empty-message {
+        text-align: center;
+        color: #556;
+        padding: 40px;
+        border: 1px dashed #2a3454;
+        border-radius: 6px;
+        font-family: 'Segoe UI', sans-serif;
     }
 
     .tour-card {
@@ -77,7 +98,7 @@
         overflow: hidden;
         transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
         position: relative;
-        text-decoration: none; /* Убираем подчеркивание, если это ссылка */
+        text-decoration: none;
     }
 
     .tour-card:hover {
@@ -87,7 +108,6 @@
         background: rgba(26, 32, 55, 0.95);
     }
 
-    /* Картинка слева */
     .tour-img-wrapper {
         width: 280px;
         flex-shrink: 0;
@@ -104,12 +124,10 @@
         transform: scale(1.05);
     }
     
-    /* Оверлей на картинке (например, статус LIVE) */
     .tour-status-overlay {
         position: absolute;
         top: 10px; left: 10px;
         background: rgba(0, 0, 0, 0.7);
-        color: #fff;
         padding: 2px 8px;
         font-size: 0.75em;
         border-radius: 4px;
@@ -117,12 +135,11 @@
         color: #ff4444;
         font-weight: bold;
         text-transform: uppercase;
-        display: none; /* Скрыт по умолчанию */
+        display: none;
     }
     .is-live .tour-status-overlay { display: block; }
     .is-live { border-left: 3px solid #ff4444; }
 
-    /* Контент справа */
     .tour-content {
         flex-grow: 1;
         padding: 20px 25px;
@@ -147,11 +164,7 @@
         gap: 15px;
     }
     
-    /* Теги (Badges) */
-    .tour-tags {
-        display: flex;
-        gap: 8px;
-    }
+    .tour-tags { display: flex; gap: 8px; }
     .tag-badge {
         background: rgba(255, 255, 255, 0.05);
         color: #aaa;
@@ -161,104 +174,140 @@
         font-family: 'Segoe UI', sans-serif;
     }
     
-    /* Цвета для конкретных тегов */
-    .tag-region { color: #d4af37; background: rgba(212, 175, 55, 0.1); } /* Золотой */
-    .tag-system { color: #4facfe; background: rgba(79, 172, 254, 0.1); } /* Голубой */
+    .tag-region { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+    .tag-system { color: #4facfe; background: rgba(79, 172, 254, 0.1); }
 
 </style>
 
 <div class="page-container">
     
-    <div class="tournaments-header">
-        <div class="live-dot"></div>
-        <h2 class="section-title">Live & Upcoming</h2>
+    <div class="tournament-section">
+        <div class="section-header">
+            <div class="live-dot"></div>
+            <h2 class="section-title">Live & Upcoming</h2>
+        </div>
+
+        <div class="filters-container" id="filters-live">
+            <div class="filter-chip active" onclick="filterTournaments('all', this, 'grid-live')">All</div>
+            <div class="filter-chip" onclick="filterTournaments('EU', this, 'grid-live')">EU Region</div>
+            <div class="filter-chip" onclick="filterTournaments('NA', this, 'grid-live')">NA Region</div>
+            <div class="filter-chip" onclick="filterTournaments('AS', this, 'grid-live')">Asia Region</div>
+            <div class="filter-chip" onclick="filterTournaments('Draft', this, 'grid-live')">Draft Mode</div>
+            <div class="filter-chip" onclick="filterTournaments('Classic', this, 'grid-live')">Classic</div>
+        </div>
+
+        <div class="tournament-list" id="grid-live">
+            
+            <a href="#" class="tour-card is-live" data-tags="EU Draft">
+                <div class="tour-img-wrapper">
+                    <img src="https://i.ytimg.com/vi/uKq9p9tZ0k8/maxresdefault.jpg" alt="Tournament">
+                    <div class="tour-status-overlay">LIVE NOW</div>
+                </div>
+                <div class="tour-content">
+                    <div class="tour-title">Abyss Cup Winter 2026 Playoff</div>
+                    <div class="tour-meta">
+                        <span>📅 Feb 12, 18:00 CET</span>
+                        <span>🏆 Prize: $500</span>
+                    </div>
+                    <div class="tour-tags">
+                        <span class="tag-badge tag-region">#EU</span>
+                        <span class="tag-badge tag-system">#Draft</span>
+                        <span class="tag-badge">#AbyssCup</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="#" class="tour-card" data-tags="AS Classic">
+                <div class="tour-img-wrapper">
+                    <img src="https://upload-os-bbs.hoyolab.com/upload/2022/12/06/11485989/4e3419992a7a4214571999981324750c_6888636437936109315.png" alt="Tournament">
+                </div>
+                <div class="tour-content">
+                    <div class="tour-title">Cat's Tail Gathering S5</div>
+                    <div class="tour-meta">
+                        <span>📅 Feb 20, 2026</span>
+                        <span>🏆 Prize: Gems</span>
+                    </div>
+                    <div class="tour-tags">
+                        <span class="tag-badge tag-region">#Asia</span>
+                        <span class="tag-badge tag-system">#Classic</span>
+                        <span class="tag-badge">#Official</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="#" class="tour-card" data-tags="NA Draft">
+                <div class="tour-img-wrapper">
+                    <img src="https://img.youtube.com/vi/m2D2Kz4-eIM/maxresdefault.jpg" alt="Tournament">
+                </div>
+                <div class="tour-content">
+                    <div class="tour-title">Weekly Scrims NA #42</div>
+                    <div class="tour-meta">
+                        <span>📅 Every Saturday</span>
+                        <span>🏆 Prize: Fame</span>
+                    </div>
+                    <div class="tour-tags">
+                        <span class="tag-badge tag-region">#NA</span>
+                        <span class="tag-badge tag-system">#Draft</span>
+                        <span class="tag-badge">#Weekly</span>
+                    </div>
+                </div>
+            </a>
+
+        </div>
     </div>
 
-    <div class="filters-container">
-        <div class="filter-chip active" onclick="filterTournaments('all', this)">All</div>
-        <div class="filter-chip" onclick="filterTournaments('EU', this)">EU Region</div>
-        <div class="filter-chip" onclick="filterTournaments('NA', this)">NA Region</div>
-        <div class="filter-chip" onclick="filterTournaments('AS', this)">Asia Region</div>
-        <div class="filter-chip" onclick="filterTournaments('Draft', this)">Draft Mode</div>
-        <div class="filter-chip" onclick="filterTournaments('Classic', this)">Classic</div>
+
+    <div class="tournament-section">
+        <div class="section-header">
+            <span class="archive-icon">📂</span>
+            <h2 class="section-title" style="color: #8da4c4;">Archive</h2>
+        </div>
+
+        <div class="filters-container" id="filters-archive">
+            <div class="filter-chip active" onclick="filterTournaments('all', this, 'grid-archive')">All</div>
+            <div class="filter-chip" onclick="filterTournaments('AS', this, 'grid-archive')">AS</div>
+            <div class="filter-chip" onclick="filterTournaments('NA', this, 'grid-archive')">NA</div>
+            <div class="filter-chip" onclick="filterTournaments('EU', this, 'grid-archive')">EU</div>
+            <div class="filter-chip" onclick="filterTournaments('Allpick', this, 'grid-archive')">Allpick</div>
+            <div class="filter-chip" onclick="filterTournaments('Draft', this, 'grid-archive')">Draft</div>
+        </div>
+
+        <div class="tournament-list" id="grid-archive">
+            <div class="empty-message">No archived tournaments yet.</div>
+        </div>
     </div>
 
-    <div class="tournament-list" id="tournaments-grid">
-        
-        <a href="#" class="tour-card is-live" data-tags="EU Draft">
-            <div class="tour-img-wrapper">
-                <img src="https://i.ytimg.com/vi/uKq9p9tZ0k8/maxresdefault.jpg" alt="Tournament">
-                <div class="tour-status-overlay">LIVE NOW</div>
-            </div>
-            <div class="tour-content">
-                <div class="tour-title">Abyss Cup Winter 2026 Playoff</div>
-                <div class="tour-meta">
-                    <span>📅 Feb 12, 18:00 CET</span>
-                    <span>🏆 Prize: $500</span>
-                </div>
-                <div class="tour-tags">
-                    <span class="tag-badge tag-region">#EU</span>
-                    <span class="tag-badge tag-system">#Draft</span>
-                    <span class="tag-badge">#AbyssCup</span>
-                </div>
-            </div>
-        </a>
-
-        <a href="#" class="tour-card" data-tags="AS Classic">
-            <div class="tour-img-wrapper">
-                <img src="https://upload-os-bbs.hoyolab.com/upload/2022/12/06/11485989/4e3419992a7a4214571999981324750c_6888636437936109315.png" alt="Tournament">
-            </div>
-            <div class="tour-content">
-                <div class="tour-title">Cat's Tail Gathering S5</div>
-                <div class="tour-meta">
-                    <span>📅 Feb 20, 2026</span>
-                    <span>🏆 Prize: Gems</span>
-                </div>
-                <div class="tour-tags">
-                    <span class="tag-badge tag-region">#Asia</span>
-                    <span class="tag-badge tag-system">#Classic</span>
-                    <span class="tag-badge">#Official</span>
-                </div>
-            </div>
-        </a>
-
-        <a href="#" class="tour-card" data-tags="NA Draft">
-            <div class="tour-img-wrapper">
-                <img src="https://img.youtube.com/vi/m2D2Kz4-eIM/maxresdefault.jpg" alt="Tournament">
-            </div>
-            <div class="tour-content">
-                <div class="tour-title">Weekly Scrims NA #42</div>
-                <div class="tour-meta">
-                    <span>📅 Every Saturday</span>
-                    <span>🏆 Prize: Fame</span>
-                </div>
-                <div class="tour-tags">
-                    <span class="tag-badge tag-region">#NA</span>
-                    <span class="tag-badge tag-system">#Draft</span>
-                    <span class="tag-badge">#Weekly</span>
-                </div>
-            </div>
-        </a>
-
-    </div>
 </div>
 
 <script>
-    function filterTournaments(tag, element) {
-        // 1. Обновляем визуально активную кнопку
-        document.querySelectorAll('.filter-chip').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-
-        // 2. Логика фильтрации
-        const cards = document.querySelectorAll('.tour-card');
+    function filterTournaments(tag, btnElement, gridId) {
+        // 1. Управление активной кнопкой (только внутри своего контейнера)
+        // Находим родителя кнопки (контейнер фильтров)
+        const filterContainer = btnElement.parentElement;
         
+        // Убираем класс active у всех кнопок ВНУТРИ этого контейнера
+        filterContainer.querySelectorAll('.filter-chip').forEach(el => el.classList.remove('active'));
+        
+        // Добавляем класс active нажатой кнопке
+        btnElement.classList.add('active');
+
+        // 2. Фильтрация карточек (только внутри целевой сетки)
+        const grid = document.getElementById(gridId);
+        if (!grid) return;
+        
+        // Находим карточки и сообщение "пусто"
+        const cards = grid.querySelectorAll('.tour-card');
+        const emptyMsg = grid.querySelector('.empty-message');
+
+        // Если это архив и там только emptyMsg, ничего не фильтруем, просто выходим
+        if (cards.length === 0) return;
+
         cards.forEach(card => {
             const cardTags = card.getAttribute('data-tags');
             
             if (tag === 'all') {
                 card.style.display = 'flex';
             } else {
-                // Проверяем, содержит ли data-tags выбранный фильтр (например, "EU" или "Draft")
                 if (cardTags.includes(tag)) {
                     card.style.display = 'flex';
                 } else {
