@@ -1,184 +1,377 @@
-/* G E N S H I N   S T Y L E   C S S - MERGED */
+<%- include('../partials/header') %>
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap');
+<style>
+    .page-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+</style>
 
-body { 
-    background: #0b0d17;
-    background-image: radial-gradient(circle at 50% 30%, #2b3452 0%, #080a12 85%);
-    color: #ece5d8;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    margin: 0; 
-    height: 100vh;
-    overflow: hidden;
-    user-select: none;
-}
+<div id="game-screen">
+    <div class="game-header">
+         <div id="room-container">
+             <div id="room-display" onclick="copyRoomCode()" title="Click to copy room code">CODE: <%= roomId %></div>
+             <span id="copy-toast">Code Copied!</span>
+         </div>
+         <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
+         <div id="status">Waiting...</div>
+         <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
+     </div>
 
-/* --- СТИЛИ ЛЕЙАУТА (НОВЫЙ САЙТ) --- */
-#lobby-screen { 
-    display: flex; align-items: center; justify-content: center;
-    height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
-}
-.lobby-card {
-    background: rgba(22, 28, 48, 0.95); border: 1px solid #3c4566; border-top: 2px solid #4facfe;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6); padding: 40px; width: 350px;
-    display: flex; flex-direction: column; gap: 15px; position: relative;
-}
-.lobby-card::before {
-    content: ''; position: absolute; bottom: -1px; right: -1px; width: 20px; height: 20px;
-    border-bottom: 2px solid #4facfe; border-right: 2px solid #4facfe;
-}
-.lobby-card h1 { margin: 0 0 20px 0; font-size: 2.2em; color: #fff; text-shadow: 0 0 10px #4facfe; text-align: center; }
-.input-group { display: flex; flex-direction: column; text-align: left; }
-.input-group label { font-size: 0.8em; color: #8da4c4; margin-bottom: 5px; font-weight: bold; letter-spacing: 1px; }
-input, select { 
-    padding: 12px; font-size: 1em; border-radius: 2px; border: 1px solid #3c4566; background: #0f131f; 
-    color: #4facfe; outline: none; transition: 0.3s; width: 100%; box-sizing: border-box; font-family: 'Segoe UI', sans-serif;
-}
-input:focus, select:focus { border-color: #4facfe; box-shadow: 0 0 10px rgba(79, 172, 254, 0.3); background: #141a2b; }
-button { 
-    padding: 12px; font-size: 1.1em; cursor: pointer; border: 1px solid transparent; border-radius: 2px;
-    color: #fff; font-weight: bold; margin: 5px 0; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
-}
-.btn-primary { background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%); border: 1px solid #4facfe; }
-.btn-primary:hover { box-shadow: 0 0 20px #4facfe; }
-.btn-secondary { background: transparent; border: 1px solid #ff6b6b; color: #ff6b6b; }
-.btn-secondary:hover { background: rgba(255, 107, 107, 0.1); box-shadow: 0 0 20px #ff6b6b; }
-.separator { text-align: center; margin: 5px 0; position: relative; }
-.separator span { background: #161c30; padding: 0 10px; color: #555; font-size: 0.8em; position: relative; z-index: 1; }
-.separator::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #3c4566; z-index: 0; }
+     <div class="draft-area">
+         <div id="immunity-top-display" class="immunity-top-container" style="display: none;">
+             <div class="im-label">IMMUNE</div>
+             <div class="im-row" id="immunity-icons-row"></div>
+         </div>
 
-/* --- СТИЛИ ДРАФТА (СТАРЫЙ САЙТ) --- */
-#game-screen { display: flex; flex-direction: column; height: 100%; width: 100%; }
+         <div class="team-side blue-side">
+             <div class="player-header">
+                 <div id="blue-timer" class="turn-timer">45</div>
+                 <h2 id="blue-name-display">PLAYER 1</h2>
+                 <div id="blue-ready-switch" class="ready-switch" onclick="toggleReady('blue')">
+                     <div class="switch-circle"></div>
+                 </div>
+             </div>
+             <div class="ban-row" id="blue-bans"></div>
+             <div class="pick-row" id="blue-picks-1"></div>
+             <div class="pick-row-small" id="blue-picks-2"></div>
+         </div>
 
-/* Хедер внутри игры */
-.game-header { 
-    height: 6vh; display: flex; gap: 30px; align-items: center; justify-content: center; 
-    background: rgba(10, 12, 20, 0.95); border-bottom: 2px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
-    z-index: 30; flex-shrink: 0; width: 100%;
-}
-.reserve-timer { font-size: 18px; font-weight: bold; font-family: 'Cinzel', serif; }
-.blue-res { color: #4facfe; } .red-res { color: #ff6b6b; }
-#status { font-size: 16px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; }
-#room-container { position: absolute; left: 20px; display: flex; align-items: center; gap: 10px; }
-#room-display { font-family: 'Segoe UI', monospace; font-size: 14px; color: #d4af37; background: rgba(255, 215, 0, 0.1); padding: 4px 8px; border: 1px solid #554400; border-radius: 4px; cursor: pointer; }
-#copy-toast { visibility: hidden; background-color: #28a745; color: #fff; padding: 4px 8px; font-size: 12px; border-radius: 4px; }
-#copy-toast.show { visibility: visible; }
+         <div class="center-axis">
+             <div class="mid-label ban-label">BANS</div>
+             <div class="mid-label pick-label">PICKS</div>
+         </div>
 
-.draft-area { 
-    height: 38vh; display: flex; justify-content: center; gap: 80px; padding: 10px 50px; 
-    align-items: center; flex-shrink: 0; position: relative; 
-    background: radial-gradient(ellipse at center, rgba(60, 80, 120, 0.15) 0%, transparent 70%);
-}
-.team-side { width: 45%; display: flex; flex-direction: column; align-items: center; }
-.center-axis { width: 10%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 15px; gap: 80px; opacity: 0.6; }
-.mid-label { font-family: 'Cinzel', serif; font-size: 1.2em; color: #7a8aa3; letter-spacing: 3px; border-bottom: 1px solid #444; padding-bottom: 5px; }
-.player-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; height: 40px; }
-.turn-timer { font-family: 'Cinzel', serif; font-size: 28px; font-weight: bold; min-width: 60px; text-align: center; }
-#blue-timer { color: #4facfe; text-shadow: 0 0 10px rgba(79, 172, 254, 0.4); }
-#red-timer { color: #ff6b6b; text-shadow: 0 0 10px rgba(255, 107, 107, 0.4); }
-.player-header h2 { font-family: 'Cinzel', serif; font-size: 1.1em; margin: 0; color: #ddd; letter-spacing: 1px; }
+         <div class="team-side red-side">
+             <div class="player-header">
+                 <div id="red-ready-switch" class="ready-switch" onclick="toggleReady('red')">
+                     <div class="switch-circle"></div>
+                 </div>
+                 <h2 id="red-name-display">PLAYER 2</h2>
+                 <div id="red-timer" class="turn-timer">45</div>
+             </div>
+             <div class="ban-row" id="red-bans"></div>
+             <div class="pick-row" id="red-picks-1"></div>
+             <div class="pick-row-small" id="red-picks-2"></div>
+         </div>
+     </div>
 
-.ready-switch { width: 30px; height: 15px; background: #222; border-radius: 15px; position: relative; cursor: pointer; border: 1px solid #444; display: flex; align-items: center; }
-.switch-circle { width: 11px; height: 11px; background: #777; border-radius: 50%; position: absolute; left: 2px; transition: all 0.3s; }
-.ready-on { border-color: #28a745; }
-.ready-on .switch-circle { left: 15px; background: #28a745; box-shadow: 0 0 5px #28a745; }
+     <div class="controls-area">
+         <button id="skip-btn" class="round-btn" onclick="skipTurn()">SKIP</button>
+         <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled>SELECT</button>
+     </div>
 
-.ban-row, .pick-row, .pick-row-small { display: flex; gap: 15px; margin-bottom: 10px; }
-.pick-row-small { gap: 15px; }
-.blue-side .ban-row, .blue-side .pick-row, .blue-side .pick-row-small { flex-direction: row-reverse; justify-content: flex-start; }
-.red-side .ban-row, .red-side .pick-row, .red-side .pick-row-small { flex-direction: row; justify-content: flex-start; }
+     <div class="char-pool" id="char-pool-container"></div>
+ </div>
 
-/* Кружки пиков */
-.slot-circle { 
-    width: 60px; height: 60px; border-radius: 50%; background: rgba(0, 0, 0, 0.3); 
-    border: 2px solid #ccc; overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center; transition: all 0.3s; 
-}
-.blue-side .slot-circle { border-color: #d3d3d3; }
-.red-side .slot-circle { border-color: #d3d3d3; }
-.slot-ban { border-color: #8b0000 !important; background: rgba(40, 5, 5, 0.4) !important; }
-.active-slot { 
-    border-color: #ffd700 !important; background: rgba(255, 215, 0, 0.1) !important; 
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); transform: scale(1.1); z-index: 5;
-}
-.slot-circle img { width: 100%; height: 100%; object-fit: cover; }
-.step-number { font-family: 'Cinzel', serif; font-size: 20px; color: rgba(255, 255, 255, 0.2); }
-.slot-immunity-pick { border-color: #50b36b !important; background: transparent !important; box-shadow: none; }
+ <script src="/socket.io/socket.io.js"></script>
+ <script src="/draft-rules.js"></script>
 
-/* Кнопки управления */
-.controls-area { 
-    display: flex; justify-content: center; align-items: center; 
-    height: 40px; position: relative; z-index: 20; 
-    margin-top: -20px; margin-bottom: 10px; 
-}
-.round-btn {
-    font-family: 'Cinzel', serif; font-weight: bold; font-size: 1.1em;
-    padding: 8px 30px; border-radius: 50px; border: 1px solid #555;
-    background: #222; color: #999; cursor: default; transition: all 0.2s; letter-spacing: 2px;
-}
-.confirm-btn:not(:disabled) { 
-    background: #d4af37; border-color: #fff; color: #000; 
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5); cursor: pointer; transform: scale(1.05); 
-}
-#skip-btn { position: absolute; background: #444; color: #fff; border: 1px solid #777; cursor: pointer; display: none; }
-#skip-btn:hover { background: #666; border-color: #aaa; transform: scale(1.05); }
-.skip-left { right: 50%; margin-right: 120px; }
-.skip-right { left: 50%; margin-left: 120px; }
+ <script>
+     const socket = io({ transports: ['websocket'] });
+     
+     // Получаем ID комнаты из URL
+     const currentRoom = '<%= roomId %>';
+     // Получаем UserID из сессии (установлен в create.ejs)
+     const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
+     sessionStorage.setItem('draft_user_id', myUserId);
 
-/* Immunity */
-.immunity-top-container {
-    position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: center; z-index: 50; gap: 5px;
-}
-.im-label { font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: bold; color: #888; letter-spacing: 2px; }
-.im-row { display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 20px; border: 1px solid #333; }
-.im-icon { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #000; }
-.im-ban { border: 2px solid #ff4444; position: relative; }
-.im-ban::after { content: ''; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255, 0, 0, 0.3); }
-.im-pick { border: 2px solid #4facfe; } 
-.im-empty { background: rgba(255,255,255,0.05); } 
-.im-icon img { width: 100%; height: 100%; object-fit: cover; }
+     let myRole = '', currentDraftType = 'gitcg';
+     let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
 
-/* Пул персонажей */
-.char-pool { 
-    flex-grow: 1; background: rgba(10, 12, 20, 0.95); border-top: 1px solid #333; 
-    display: flex; flex-direction: column; justify-content: flex-start; padding: 20px 0; padding-bottom: 40px; 
-    box-shadow: 0 -10px 30px rgba(0,0,0,0.8); position: relative; overflow-y: auto; scrollbar-width: none; width: 100%;
-}
-.char-pool::-webkit-scrollbar { display: none; }
+     socket.on('connect', () => {
+         // При загрузке страницы сразу пытаемся переподключиться к комнате
+         if (currentRoom && myUserId) {
+             socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId });
+         }
+     });
 
-/* Лесенка */
-.ladder-container {
-    position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 100px; 
-    display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 20px; padding-bottom: 40px; 
-    overflow-y: auto; z-index: 10; scrollbar-width: none; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
-}
-.ladder-container::-webkit-scrollbar { display: none; }
-.ladder-step { 
-    font-family: 'Segoe UI', sans-serif; font-size: 11px; font-weight: bold; 
-    padding: 2px 6px; border-radius: 2px; text-transform: uppercase; 
-    opacity: 0.3; width: 100%; box-sizing: border-box; transition: 0.3s; 
-    border: 1px solid transparent;
-}
-.step-left { text-align: left; border-left: 2px solid; border-right: none; }
-.step-right { text-align: right; border-right: 2px solid; border-left: none; }
-.step-pick { color: #4facfe; border-color: rgba(79, 172, 254, 0.3); }
-.step-ban { color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3); }
-.step-immunity { color: #50b36b !important; border-color: rgba(80, 179, 107, 0.3) !important; }
-.step-active { opacity: 1; background: #222; transform: scale(1.1); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-.step-done { text-decoration: line-through; opacity: 0.15; }
+     socket.on('error_msg', (msg) => {
+         if (msg === 'Session expired' || msg === 'Room not found') {
+             alert("Game session expired or not found.");
+             window.location.href = "/"; 
+         } else {
+             alert(msg);
+         }
+     });
 
-/* Ряды элементов */
-.element-row { min-height: 55px; width: 100%; display: flex; align-items: center; position: relative; border-bottom: none; margin-bottom: 2px; }
-.row-half { width: calc(50% - 60px); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.left-half { justify-content: flex-end; padding-right: 20px; } 
-.right-half { justify-content: flex-start; padding-left: 20px; } 
-.row-gap { width: 120px; } 
+     socket.on('init_game', (data) => {
+         myRole = data.role; 
+         // currentRoom уже установлен из EJS
+         charsData = data.chars;
+         currentDraftType = data.state.draftType || 'gitcg';
+         
+         document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
+         renderRows(); 
+         updateUI(data.state);
+     });
 
-.char-option { width: 48px; height: 48px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255,255,255,0.05); transition: all 0.1s; background: #111; flex-shrink: 0; }
-.char-option img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; opacity: 0.8; }
-.char-option:hover { transform: scale(1.1); border-color: #fff; z-index: 10; }
-.char-option:hover img { opacity: 1; }
-.selected-pending { border-color: #d4af37 !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.5) !important; transform: scale(1.1); z-index: 20; }
-.selected-pending img { opacity: 1; }
-.immunity-highlight { border-color: #50b36b !important; box-shadow: 0 0 10px rgba(80, 179, 107, 0.6) !important; opacity: 1 !important; filter: none !important; }
-.disabled { opacity: 0.15; filter: grayscale(100%); pointer-events: none; border-color: transparent; }
+     socket.on('update_state', updateUI);
+     socket.on('game_started', () => { isGameStarted = true; });
+     socket.on('game_over', (state) => { 
+         updateUI(state); 
+         setTimeout(() => alert("Draft Completed!"), 500); 
+     });
+     
+     socket.on('timer_tick', (data) => {
+         const t = typeof data === 'object' ? data.main : data;
+         const b = document.getElementById('blue-timer'), r = document.getElementById('red-timer');
+         if(activeTeam==='blue') { b.innerText=t; r.innerText="45"; b.style.color=t<10?'#ff5555':'#4facfe'; }
+         else { r.innerText=t; b.innerText="45"; r.style.color=t<10?'#ff5555':'#ff6b6b'; }
+         if(typeof data === 'object') {
+             document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
+             document.getElementById('red-res').innerText = formatTime(data.redReserve);
+         }
+     });
+
+     function formatTime(s) { 
+         if (s < 0) s = 0; 
+         const m=Math.floor(s/60), sec=s%60; 
+         return `${m}:${sec<10?'0':''}${sec}`; 
+     }
+
+     function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
+     function copyRoomCode() { 
+         if (!currentRoom) return;
+         navigator.clipboard.writeText(currentRoom).then(() => {
+             const toast = document.getElementById('copy-toast');
+             toast.classList.add('show');
+             setTimeout(() => { toast.classList.remove('show'); }, 2000);
+         });
+     }
+     
+     function skipTurn() {
+         if(currentRoom) {
+             socket.emit('skip_action', currentRoom);
+         }
+     }
+     
+     function renderRows() {
+         const container = document.getElementById('char-pool-container');
+         container.innerHTML = '';
+         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
+         const schema = DRAFT_RULES[currentDraftType];
+         
+         if(schema) {
+             schema.forEach((step, i) => {
+                 const d = document.createElement('div');
+                 const sideClass = step.team === 'blue' ? 'step-left' : 'step-right';
+                 let colorClass = 'step-pick'; 
+                 if (step.type.includes('ban')) { colorClass = 'step-ban'; } 
+                 else if (step.immunity) { colorClass = 'step-immunity'; }
+                 d.className = `ladder-step ${sideClass} ${colorClass}`;
+                 d.id = `step-node-${i}`; d.innerText = `${i+1}. ${step.type}`;
+                 ladder.appendChild(d);
+             });
+             container.appendChild(ladder);
+         }
+
+         ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
+             const row = document.createElement('div'); row.className = `element-row row-${elem}`;
+             const chars = charsData[elem], mid = Math.ceil(chars.length/2);
+             const l = document.createElement('div'); l.className = 'row-half left-half';
+             chars.slice(0,mid).forEach(c => l.appendChild(createChar(c)));
+             const gap = document.createElement('div'); gap.className = 'row-gap';
+             const r = document.createElement('div'); r.className = 'row-half right-half';
+             chars.slice(mid).forEach(c => r.appendChild(createChar(c)));
+             row.appendChild(l); row.appendChild(gap); row.appendChild(r);
+             container.appendChild(row);
+         });
+     }
+
+     function createChar(char) {
+         const el = document.createElement('div'); el.className = 'char-option'; el.id = `char-${char.id}`;
+         el.innerHTML = `<img src="${char.img}">`;
+         el.onclick = () => {
+             if(!isGameStarted || myRole === 'spectator') return;
+             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
+             selectedCharId = char.id; el.classList.add('selected-pending');
+             document.getElementById('confirm-btn').disabled = false;
+         };
+         return el;
+     }
+
+     function confirmSelection() {
+         if(selectedCharId && currentRoom) {
+             socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
+             selectedCharId = null; document.getElementById('confirm-btn').disabled = true;
+             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
+         }
+     }
+
+     function updateImmunityTop(state) {
+         const topDisp = document.getElementById('immunity-top-display');
+         if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
+         topDisp.style.display = 'flex';
+         const row = document.getElementById('immunity-icons-row');
+         row.innerHTML = '';
+         const bans = state.immunityBans || [];
+         const picks = state.immunityPool || [];
+         const slots = [ { val: bans[0], type: 'ban' }, { val: picks[0], type: 'pick' }, { val: picks[1], type: 'pick' }, { val: bans[1], type: 'ban' } ];
+         slots.forEach(slot => {
+             const div = document.createElement('div');
+             div.className = `im-icon im-${slot.type}`;
+             if (slot.val === 'skipped') {
+                 div.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`;
+                 div.style.background = '#222';
+             } else if (slot.val) {
+                 let all = []; Object.values(charsData).forEach(a => all.push(...a));
+                 const char = all.find(c => c.id === slot.val);
+                 if(char) div.innerHTML = `<img src="${char.img}">`;
+             } else div.classList.add('im-empty');
+             row.appendChild(div);
+         });
+     }
+
+     function updateUI(state) {
+         isGameStarted = state.gameStarted; activeTeam = state.currentTeam;
+         document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
+         document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
+         if(!state.gameStarted) {
+             state.ready.blue ? document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
+             state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
+         }
+         document.getElementById('blue-name-display').innerText = state.blueName;
+         document.getElementById('red-name-display').innerText = state.redName;
+         
+         let txt = "WAITING...";
+         if(state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
+         else if(state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
+         document.getElementById('status').innerText = txt.toUpperCase();
+
+         updateImmunityTop(state);
+
+         // Кнопка SKIP
+         const skipBtn = document.getElementById('skip-btn');
+         const isMyTurn = (myRole === state.currentTeam);
+         
+         skipBtn.classList.remove('skip-left', 'skip-right');
+         
+         if (state.immunityPhaseActive && isMyTurn) {
+             skipBtn.style.display = 'block';
+             if (state.currentTeam === 'blue') {
+                 skipBtn.classList.add('skip-left');
+             } else {
+                 skipBtn.classList.add('skip-right');
+             }
+         } else {
+             skipBtn.style.display = 'none';
+         }
+
+         const idx = state.stepIndex - 1;
+         const currentSchema = DRAFT_RULES[currentDraftType];
+         
+         if(!state.immunityPhaseActive && currentSchema) {
+             const len = currentSchema.length;
+             for(let i=0; i<len; i++) {
+                 const n = document.getElementById(`step-node-${i}`);
+                 if(!n) continue;
+                 n.classList.remove('step-active','step-done');
+                 if(i < idx) n.classList.add('step-done');
+                 else if(i === idx && state.gameStarted) {
+                     n.classList.add('step-active');
+                     setTimeout(() => n.scrollIntoView({behavior:'smooth', block:'center'}), 50);
+                 }
+             }
+         }
+
+         renderSlots(state);
+
+         document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
+         state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
+         [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
+         if(state.immunityPhaseActive) {
+             [...state.immunityBans, ...state.immunityPool].forEach(id => {
+                 if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
+             });
+         } else {
+             const step = currentSchema ? currentSchema[idx] : null;
+             const isImmunityTurn = step && step.immunity;
+             state.immunityPool.forEach(id => {
+                 if(id === 'skipped') return;
+                 const el = document.getElementById(`char-${id}`);
+                 if(!el) return;
+                 if(state.currentAction === 'ban') el.classList.add('disabled');
+                 else if (state.currentAction === 'pick') {
+                     if(isImmunityTurn) {
+                         const myPicks = activeTeam === 'blue' ? state.bluePicks : state.redPicks;
+                         if(!myPicks.includes(id)) { el.classList.remove('disabled'); el.classList.add('immunity-highlight'); }
+                     } else el.classList.add('disabled');
+                 }
+             });
+         }
+         if(state.gameStarted && myRole !== 'spectator' && myRole !== state.currentTeam) {
+             document.querySelectorAll('.char-option').forEach(el => el.classList.add('disabled'));
+         }
+     }
+
+     function getStepsFor(schema, team, type) {
+         if (!schema) return [];
+         return schema
+             .map((step, index) => ({ ...step, globalIndex: index + 1 }))
+             .filter(step => step.team === team && step.type === type)
+             .map(step => ({ num: step.globalIndex, immunity: step.immunity }));
+     }
+
+     function renderSlots(state) {
+         const currentSchema = DRAFT_RULES[currentDraftType];
+         if (!currentSchema) return;
+
+         const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban');
+         const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
+         const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick');
+         const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
+
+         const fill = (containerId, items, stepData, isBan) => {
+             const div = document.getElementById(containerId);
+             if(!div) return;
+             div.innerHTML = ''; 
+             stepData.forEach((step, i) => {
+                 const slot = document.createElement('div');
+                 slot.className = 'slot-circle';
+                 if (isBan) slot.classList.add('slot-ban');
+                 if (step.immunity) slot.classList.add('slot-immunity-pick');
+                 
+                 if (!state.immunityPhaseActive && state.gameStarted && 
+                     step.num === state.stepIndex) {
+                     slot.classList.add('active-slot');
+                 }
+
+                 let charId = null;
+                 if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
+
+                 if (charId) {
+                     let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
+                     const char = allFlat.find(c => c.id === charId);
+                     if (char) slot.innerHTML = `<img src="${char.img}">`;
+                 } else slot.innerHTML = `<span class="step-number">${step.num}</span>`;
+                 div.appendChild(slot);
+             });
+         };
+
+         fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true);
+         fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
+         
+         if (currentDraftType === 'generals_2') {
+             fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
+             fill('blue-picks-2', [], [], false); 
+             fill('red-picks-1', state.redPicks, redPickSteps, false);
+             fill('red-picks-2', [], [], false);
+         } else if (currentDraftType === 'classic') {
+             fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
+             fill('blue-picks-2', [], [], false);
+             fill('red-picks-1', state.redPicks, redPickSteps, false);
+             fill('red-picks-2', [], [], false);
+         } else {
+             fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false);
+             fill('blue-picks-2', state.bluePicks.slice(5, 9), bluePickSteps.slice(5, 9), false);
+             fill('red-picks-1', state.redPicks.slice(0, 5), redPickSteps.slice(0, 5), false);
+             fill('red-picks-2', state.redPicks.slice(5, 9), redPickSteps.slice(5, 9), false);
+         }
+     }
+ </script>
+
+<%- include('../partials/footer') %>
