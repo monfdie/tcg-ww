@@ -1,1 +1,88 @@
+<%- include('../partials/header') %>
 
+<style>
+    .page-title { text-align: center; margin-bottom: 40px; margin-top: 20px; }
+    .page-title h1 { font-family: 'Cinzel', serif; font-size: 2.5em; color: #fff; text-shadow: 0 0 10px #d4af37; margin: 0; }
+    .page-title p { color: #8da4c4; font-size: 1.1em; margin-top: 10px; font-family: 'Segoe UI', sans-serif; }
+
+    .tournaments-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 25px;
+        justify-content: center;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .tournament-card {
+        background: rgba(22, 28, 48, 0.95);
+        border: 1px solid #3c4566;
+        border-top: 2px solid #d4af37; /* Золотой акцент для турниров */
+        padding: 25px;
+        width: 280px;
+        border-radius: 4px;
+        text-align: center;
+        transition: 0.3s;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+    .tournament-card:hover { 
+        transform: translateY(-5px); 
+        box-shadow: 0 10px 25px rgba(212, 175, 55, 0.2); 
+        border-color: #d4af37; 
+    }
+    
+    .tournament-card h2 { font-family: 'Cinzel', serif; color: #fff; margin-top: 0; letter-spacing: 1px; }
+    .tournament-info { color: #aaa; font-size: 0.95em; margin-bottom: 25px; line-height: 1.6; font-family: 'Segoe UI', sans-serif; }
+    .tournament-info span { color: #ece5d8; font-weight: bold; }
+    
+    .btn-view {
+        background: transparent; border: 1px solid #d4af37; color: #d4af37;
+        padding: 10px 20px; text-decoration: none; font-weight: bold; 
+        font-family: 'Segoe UI', sans-serif; text-transform: uppercase; letter-spacing: 1px;
+        transition: 0.3s; display: inline-block; border-radius: 2px;
+    }
+    .btn-view:hover { background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); color: #fff; }
+    
+    /* Стили для неактивного турнира */
+    .card-closed { border-top-color: #555; }
+    .card-closed .btn-view { border-color: #555; color: #777; pointer-events: none; }
+</style>
+
+<div class="page-title">
+    <h1>Tournaments Hub</h1>
+    <p>Join official events, view brackets, and follow the competitive scene.</p>
+</div>
+
+<div class="tournaments-grid">
+    <div class="tournament-card">
+        <h2>GITCG CUP #5</h2>
+        <div class="tournament-info">
+            Status: <span style="color: #50b36b;">Registration Open</span><br>
+            Format: <span>Immunity Draft</span><br>
+            Prize Pool: <span>$100</span>
+        </div>
+        <a href="#" class="btn-view" onclick="alert('В будущем здесь откроется страница с сеткой и правилами')">View Details</a>
+    </div>
+    
+    <div class="tournament-card">
+        <h2>Weekly Scrims</h2>
+        <div class="tournament-info">
+            Status: <span style="color: #4facfe;">Ongoing</span><br>
+            Format: <span>Generals 2</span><br>
+            Prize Pool: <span>For Fun</span>
+        </div>
+        <a href="#" class="btn-view" onclick="alert('В будущем здесь откроется страница с сеткой и правилами')">View Details</a>
+    </div>
+
+    <div class="tournament-card card-closed">
+        <h2>GITCG CUP #4</h2>
+        <div class="tournament-info">
+            Status: <span>Finished</span><br>
+            Winner: <span style="color: #d4af37;">PlayerOne</span><br>
+            Format: <span>Classic</span>
+        </div>
+        <a href="#" class="btn-view">Completed</a>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
