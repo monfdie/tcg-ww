@@ -17,15 +17,29 @@ router.get('/history', async (req, res) => {
     try {
         const matches = await Match.find().sort({ date: -1 }).limit(6);
         res.render('pages/history', { title: 'History', matches });
-    } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
+    } catch (e) {
+        res.render('pages/history', { title: 'History', matches: [] });
+    }
 });
 
-router.get('/game/:id', (req, res) => {
-    res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id });
+router.get('/game/:id', async (req, res) => {
+    try {
+        // Обязательно ищем матч в базе данных, чтобы история работала
+        const match = await Match.findOne({ roomId: req.params.id });
+        res.render('pages/game', { 
+            title: `Room ${req.params.id}`, 
+            roomId: req.params.id, 
+            savedData: match || null 
+        });
+    } catch (e) {
+        res.render('pages/game', { title: "Error", roomId: req.params.id, savedData: null });
+    }
 });
 
 router.get('/auth/discord', passport.authenticate('discord'));
 router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => res.redirect('/'));
-router.get('/logout', (req, res, next) => { req.logout((err) => { if (err) return next(err); res.redirect('/'); }); });
+router.get('/logout', (req, res, next) => {
+    req.logout((err) => { if (err) return next(err); res.redirect('/'); });
+});
 
 module.exports = router;
