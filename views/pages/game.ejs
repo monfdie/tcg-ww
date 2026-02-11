@@ -1,146 +1,35 @@
-<%- include('../partials/header') %>
+function renderSlots(state) {
+    const fill = (id, items, side, type) => {
+        const div = document.getElementById(id);
+        if (!div) return;
+        div.innerHTML = '';
+        
+        // Создаем плоский массив всех персонажей для поиска по ID
+        let allCharacters = [];
+        if (charsData) {
+            Object.values(charsData).forEach(elementGroup => {
+                allCharacters.push(...elementGroup);
+            });
+        }
 
-<div id="game-screen" style="display: flex; flex-direction: column; height: 100%; width: 100%; margin-top: -40px;">
-    <div class="header" style="height: 6vh; display: flex; gap: 30px; align-items: center; justify-content: center; background: rgba(10, 12, 20, 0.95); border-bottom: 2px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 30; flex-shrink: 0;">
-        <div id="room-container" style="position: absolute; left: 20px; display: flex; align-items: center; gap: 10px;">
-            <div id="room-display" onclick="copyRoomCode()" style="font-family: 'Segoe UI', monospace; font-size: 14px; color: #d4af37; background: rgba(255, 215, 0, 0.1); padding: 4px 8px; border: 1px solid #554400; border-radius: 4px; cursor: pointer;">CODE: <%= roomId %></div>
-            <span id="copy-toast" style="visibility: hidden; background-color: #28a745; color: #fff; padding: 4px 8px; font-size: 12px; border-radius: 4px;">Code Copied!</span>
-        </div>
-        <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div> <div id="status">Waiting...</div>
-        <div class="reserve-timer red-res"><span id="red-res">3:00</span></div> </div>
-
-    <div class="draft-area">
-        <div class="team-side blue-side">
-            <div class="player-header">
-                <div id="blue-timer" class="turn-timer">45</div> <h2 id="blue-name-display">PLAYER 1</h2>
-                <div id="blue-ready-switch" class="ready-switch" onclick="toggleReady('blue')">
-                    <div class="switch-circle"></div>
-                </div>
-            </div>
-            <div class="ban-row" id="blue-bans"></div>
-            <div class="pick-row" id="blue-picks-1"></div>
-            <div class="pick-row-small" id="blue-picks-2"></div>
-        </div>
-
-        <div class="center-axis">
-            <div class="mid-label ban-label">BANS</div>
-            <div class="mid-label pick-label">PICKS</div>
-        </div>
-
-        <div class="team-side red-side">
-            <div class="player-header">
-                <div id="red-ready-switch" class="ready-switch" onclick="toggleReady('red')">
-                    <div class="switch-circle"></div>
-                </div>
-                <h2 id="red-name-display">PLAYER 2</h2>
-                <div id="red-timer" class="turn-timer">45</div> </div>
-            <div class="ban-row" id="red-bans"></div>
-            <div class="pick-row" id="red-picks-1"></div>
-            <div class="pick-row-small" id="red-picks-2"></div>
-        </div>
-    </div>
-
-    <div class="controls-area">
-        <button id="skip-btn" class="round-btn" onclick="skipTurn()" style="display:none;">SKIP</button>
-        <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled>SELECT</button>
-    </div>
-
-    <div class="char-pool" id="char-pool-container"></div>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="/draft-rules.js"></script> 
-
-<script>
-    const currentRoom = '<%= roomId %>';
-    let charsData = {}, myRole = 'spectator', myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
-    sessionStorage.setItem('draft_user_id', myUserId);
-    let activeTeam = 'blue';
-
-    const socket = io({ transports: ['websocket'] });
-
-    window.onload = async () => {
-        const res = await fetch('/characters.json');
-        charsData = await res.json();
-        renderRows();
-        socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId });
+        items.forEach(item => {
+            const s = document.createElement('div');
+            s.className = 'slot-circle' + (type === 'ban' ? ' slot-ban' : '');
+            
+            // Получаем ID (учитываем, что бан может быть объектом {id, team})
+            const charId = (typeof item === 'object' && item !== null) ? item.id : item;
+            
+            const character = allCharacters.find(x => x.id === charId);
+            if (character) {
+                s.innerHTML = `<img src="${character.img}" style="width:100%; height:100%; object-fit:cover;">`;
+            }
+            div.appendChild(s);
+        });
     };
 
-    function renderSlots(state) {
-        const fill = (id, items, side, type) => {
-            const div = document.getElementById(id); if(!div) return;
-            div.innerHTML = '';
-            items.forEach(item => {
-                const s = document.createElement('div');
-                s.className = 'slot-circle' + (type==='ban'?' slot-ban':'');
-                const charId = typeof item === 'object' ? item.id : item;
-                let all = []; Object.values(charsData).forEach(a => all.push(...a));
-                const c = all.find(x => x.id === charId);
-                if(c) s.innerHTML = `<img src="${c.img}">`;
-                div.appendChild(s);
-            });
-        };
-        fill('blue-bans', state.bans.filter(b => b.team === 'blue'), 'blue', 'ban');
-        fill('red-bans', state.bans.filter(b => b.team === 'red'), 'red', 'ban');
-        fill('blue-picks-1', state.bluePicks, 'blue', 'pick');
-        fill('red-picks-1', state.redPicks, 'red', 'pick');
-    }
-
-    function renderRows() {
-        const container = document.getElementById('char-pool-container');
-        container.innerHTML = '';
-        Object.entries(charsData).forEach(([elem, chars]) => {
-            const row = document.createElement('div'); row.className = `element-row row-${elem}`;
-            chars.forEach(c => {
-                const el = document.createElement('div'); el.className = 'char-option'; el.id = `char-${c.id}`;
-                el.innerHTML = `<img src="${c.img}">`;
-                el.onclick = () => {
-                    document.querySelectorAll('.char-option').forEach(x => x.classList.remove('selected-pending'));
-                    el.classList.add('selected-pending');
-                    window.selectedId = c.id;
-                    document.getElementById('confirm-btn').disabled = false;
-                };
-                row.appendChild(el);
-            });
-            container.appendChild(row);
-        });
-    }
-
-    function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
-    function confirmSelection() { 
-        if(window.selectedId) {
-            socket.emit('action', { roomId: currentRoom, charId: window.selectedId });
-            document.getElementById('confirm-btn').disabled = true;
-        }
-    }
-
-    function updateUI(state) {
-        document.getElementById('status').innerText = state.gameStarted ? "DRAFTING..." : "WAITING...";
-        document.getElementById('blue-name-display').innerText = state.blueName;
-        document.getElementById('red-name-display').innerText = state.redName;
-        activeTeam = state.currentTeam;
-        renderSlots(state);
-    }
-
-    socket.on('init_game', (data) => { myRole = data.role; updateUI(data.state); });
-    socket.on('update_state', updateUI);
-    socket.on('game_over', () => alert("Draft Completed!"));
-    
-    socket.on('timer_tick', (data) => {
-        const t = data.main;
-        const b = document.getElementById('blue-timer'), r = document.getElementById('red-timer');
-        if(activeTeam==='blue') { b.innerText=t; r.innerText="45"; b.style.color=t<10?'#ff5555':'#4facfe'; }
-        else { r.innerText=t; b.innerText="45"; r.style.color=t<10?'#ff5555':'#ff6b6b'; }
-        
-        document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
-        document.getElementById('red-res').innerText = formatTime(data.redReserve);
-    });
-
-    function formatTime(s) { 
-        if (s < 0) s = 0;
-        const m=Math.floor(s/60), sec=s%60; 
-        return `${m}:${sec<10?'0':''}${sec}`; 
-    }
-</script>
-
-<%- include('../partials/footer') %>
+    // Заполнение слотов для обеих сторон
+    fill('blue-bans', state.bans.filter(b => b.team === 'blue'), 'blue', 'ban');
+    fill('red-bans', state.bans.filter(b => b.team === 'red'), 'red', 'ban');
+    fill('blue-picks-1', state.bluePicks, 'blue', 'pick');
+    fill('red-picks-1', state.redPicks, 'red', 'pick');
+}
