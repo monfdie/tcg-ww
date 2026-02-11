@@ -1,31 +1,29 @@
-const express = require('express');
-const router = express.Router();
-const passport = require('passport');
-const Match = require('../models/Match');
+<%- include('../partials/header') %>
 
-router.use((req, res, next) => {
-    res.locals.user = req.user || null;
-    res.locals.path = req.path;
-    next();
-});
+<div class="page-container">
+    <div class="page-title">
+        <h1>История матчей</h1>
+        <p>Список последних завершенных сессий драфта.</p>
+    </div>
 
-router.get('/', (req, res) => res.render('pages/home', { title: 'Home' }));
-router.get('/create', (req, res) => res.render('pages/create', { title: 'Create' }));
-router.get('/tournaments', (req, res) => res.render('pages/tournaments', { title: 'Tournaments' }));
+    <div style="background: rgba(22, 28, 48, 0.95); border: 1px solid #3c4566; padding: 20px; border-radius: 4px;">
+        <% if (matches && matches.length > 0) { %>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <% matches.forEach(match => { %>
+                    <li style="padding: 15px; border-bottom: 1px solid #2a3454; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-family: 'Segoe UI', monospace; color: #d4af37; font-weight: bold;">
+                            КОД КОМНАТЫ: <%= match.roomId %>
+                        </span>
+                        <span style="color: #8da4c4; font-size: 0.9em;">
+                            <%= new Date(match.date).toLocaleString() %>
+                        </span>
+                    </li>
+                <% }); %>
+            </ul>
+        <% } else { %>
+            <p style="text-align: center; color: #8da4c4;">История пуста.</p>
+        <% } %>
+    </div>
+</div>
 
-router.get('/history', async (req, res) => {
-    try {
-        const matches = await Match.find().sort({ date: -1 }).limit(6);
-        res.render('pages/history', { title: 'History', matches });
-    } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
-});
-
-router.get('/game/:id', (req, res) => {
-    res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id });
-});
-
-router.get('/auth/discord', passport.authenticate('discord'));
-router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => res.redirect('/'));
-router.get('/logout', (req, res, next) => { req.logout((err) => { if (err) return next(err); res.redirect('/'); }); });
-
-module.exports = router;
+<%- include('../partials/footer') %>
