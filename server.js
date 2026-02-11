@@ -1,4 +1,4 @@
-require('dotenv').config(); // Загружаем ключи из .env
+require('dotenv').config(); // Загружаем переменные окружения из .env
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -6,15 +6,16 @@ const path = require('path');
 const session = require('express-session');
 const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
-const mongoose = require('mongoose'); // Подключаем MongoDB
+const mongoose = require('mongoose');
 
-const User = require('./models/User'); // Наша модель пользователя
+// Подключаем модель пользователя для Базы Данных
+const User = require('./models/User');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// === ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ ===
+// === ПОДКЛЮЧЕНИЕ К MONGODB ===
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('✅ Connected to MongoDB!'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
@@ -27,14 +28,14 @@ const sessionMiddleware = session({
 });
 app.use(sessionMiddleware);
 
-// === НАСТРОЙКА DISCORD PASSPORT ===
+// === НАСТРОЙКА DISCORD PASSPORT И БАЗЫ ДАННЫХ ===
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Сохраняем ТОЛЬКО id юзера в сессию
+// Сохраняем в сессию ID пользователя из нашей базы данных (MongoDB _id)
 passport.serializeUser((user, done) => done(null, user.id));
 
-// Достаем юзера из базы по его ID при каждом запросе
+// Достаем пользователя из базы данных по его ID
 passport.deserializeUser(async (id, done) => {
     try {
         const user = await User.findById(id);
@@ -53,10 +54,10 @@ passport.use(new DiscordStrategy({
     scope: ['identify']
 }, async function(accessToken, refreshToken, profile, done) {
     try {
-        // Ищем пользователя в базе
+        // Ищем пользователя в нашей базе по его Discord ID
         let user = await User.findOne({ discordId: profile.id });
         
-        // Если его нет - создаем нового
+        // Если его нет - регистрируем (создаем новую запись в БД)
         if (!user) {
             user = await User.create({
                 discordId: profile.id,
@@ -65,7 +66,7 @@ passport.use(new DiscordStrategy({
             });
             console.log('🌟 New user registered:', user.username);
         } else {
-            // Если аватар или ник изменились - обновляем
+            // Если он уже есть, обновляем ему ник и аватарку (вдруг он их сменил в дискорде)
             user.username = profile.global_name || profile.username;
             user.avatar = profile.avatar;
             await user.save();
@@ -77,9 +78,7 @@ passport.use(new DiscordStrategy({
     }
 }));
 
-// Дальше идет твой код: // Настройка EJS и статики...
-
-// Настройка EJS и статики
+// === НАСТРОЙКА ШАБЛОНИЗАТОРА И СТАТИКИ ===
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -194,7 +193,11 @@ function nextImmunityStep(roomId) {
 function nextStep(roomId) {
     const s = sessions[roomId]; s.stepIndex++; s.timer = 60;
     if (s.stepIndex >= s.draftOrder.length) {
-        s.finishedAt = Date.now(); io.to(roomId).emit('game_over', getPublicState(s)); clearInterval(s.timerInterval); return;
+        s.finishedAt = Date.now(); 
+        io.to(roomId).emit('game_over', getPublicState(s)); 
+        clearInterval(s.timerInterval); 
+        // ЗДЕСЬ В БУДУЩЕМ МЫ БУДЕМ СОХРАНЯТЬ ИГРУ В БАЗУ ДАННЫХ
+        return;
     }
     const c = s.draftOrder[s.stepIndex]; s.currentTeam = c.team; s.currentAction = c.type;
     io.to(roomId).emit('update_state', getPublicState(s));
@@ -280,7 +283,7 @@ function getPublicState(session) {
     };
 }
 
-// Очистка мертвых сессий
+// Очистка мертвых сессий из оперативной памяти
 setInterval(() => {
     const now = Date.now();
     Object.keys(sessions).forEach(roomId => {
