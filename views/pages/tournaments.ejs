@@ -1,180 +1,119 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* --- Стили для страницы Турниров --- */
+    /* --- Стили страницы --- */
+    .tournament-section { margin-bottom: 60px; }
 
-    .tournament-section {
-        margin-bottom: 60px;
-    }
-
+    /* Заголовки разделов (без иконок) */
     .section-header {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 25px;
-        border-bottom: 1px solid #2a3454;
-        padding-bottom: 15px;
+        display: flex; align-items: center; gap: 15px; margin-bottom: 25px;
+        border-bottom: 1px solid #2a3454; padding-bottom: 15px;
     }
-    
-    .live-dot {
-        width: 12px; height: 12px;
-        background-color: #ff4444;
-        border-radius: 50%;
-        box-shadow: 0 0 10px #ff4444;
-        animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-    
-    .archive-icon {
-        color: #8da4c4;
-        font-size: 1.2em;
-    }
-
     .section-title {
-        font-family: 'Cinzel', serif;
-        font-size: 2em;
-        color: #fff;
-        margin: 0;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        font-family: 'Cinzel', serif; font-size: 2em; color: #fff; margin: 0;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); text-transform: uppercase;
     }
 
-    /* --- Фильтры (Чипсы) --- */
-    .filters-container {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 30px;
-        flex-wrap: wrap;
-    }
+    /* --- Фильтры --- */
+    .filters-container { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
     .filter-chip {
-        background: rgba(43, 52, 82, 0.6);
-        border: 1px solid #3c4566;
-        padding: 8px 20px; /* Чуть больше паддинг для кликабельности */
-        border-radius: 20px;
-        color: #8da4c4;
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 0.95em;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        user-select: none;
+        background: rgba(43, 52, 82, 0.6); border: 1px solid #3c4566;
+        padding: 8px 24px; border-radius: 20px; color: #8da4c4;
+        font-family: 'Segoe UI', sans-serif; font-size: 0.95em; font-weight: 600;
+        cursor: pointer; transition: all 0.2s; user-select: none;
     }
-    .filter-chip:hover {
-        background: rgba(79, 172, 254, 0.2);
-        color: #fff;
-        border-color: #4facfe;
-    }
-    /* Активный стиль (как на скрине - голубой) */
+    .filter-chip:hover { background: rgba(79, 172, 254, 0.2); color: #fff; border-color: #4facfe; }
     .filter-chip.active {
-        background: #4facfe;
-        color: #fff;
-        border-color: #4facfe;
+        background: #4facfe; color: #fff; border-color: #4facfe;
         box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
     }
 
-    /* --- Сетка и Карточки --- */
-    .tournament-list {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        min-height: 50px; 
-    }
+    /* --- Сетка турниров --- */
+    .tournament-list { display: flex; flex-direction: column; gap: 15px; min-height: 50px; }
     
-    .empty-message {
-        text-align: center;
-        color: #556;
-        padding: 40px;
-        border: 1px dashed #2a3454;
-        border-radius: 6px;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
+    /* Карточка */
     .tour-card {
-        display: flex;
-        height: 140px;
-        background: rgba(22, 28, 48, 0.8);
-        border: 1px solid #2a3454;
-        border-radius: 6px;
-        overflow: hidden;
+        display: flex; height: 140px; background: rgba(22, 28, 48, 0.8);
+        border: 1px solid #2a3454; border-radius: 6px; overflow: hidden;
         transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-        position: relative;
-        text-decoration: none;
+        cursor: pointer; text-decoration: none; position: relative;
     }
-
     .tour-card:hover {
-        transform: translateX(5px);
-        border-color: #4facfe;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-        background: rgba(26, 32, 55, 0.95);
+        transform: translateX(5px); border-color: #4facfe;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.5); background: rgba(26, 32, 55, 0.95);
     }
-
-    .tour-img-wrapper {
-        width: 280px;
-        flex-shrink: 0;
-        position: relative;
-        overflow: hidden;
-    }
-    .tour-img-wrapper img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s;
-    }
-    .tour-card:hover .tour-img-wrapper img {
-        transform: scale(1.05);
-    }
+    .tour-img-wrapper { width: 280px; flex-shrink: 0; position: relative; overflow: hidden; }
+    .tour-img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+    .tour-card:hover .tour-img-wrapper img { transform: scale(1.05); }
     
-    .tour-status-overlay {
-        position: absolute;
-        top: 10px; left: 10px;
-        background: rgba(0, 0, 0, 0.7);
-        padding: 2px 8px;
-        font-size: 0.75em;
-        border-radius: 4px;
-        border: 1px solid #ff4444;
-        color: #ff4444;
-        font-weight: bold;
-        text-transform: uppercase;
-        display: none;
-    }
-    .is-live .tour-status-overlay { display: block; }
-    .is-live { border-left: 3px solid #ff4444; }
-
-    .tour-content {
-        flex-grow: 1;
-        padding: 20px 25px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .tour-title {
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 1.4em;
-        font-weight: bold;
-        color: #fff;
-        margin-bottom: 8px;
-    }
-    
-    .tour-meta {
-        font-size: 0.9em;
-        color: #8da4c4;
-        margin-bottom: 12px;
-        display: flex;
-        gap: 15px;
-    }
-    
+    .tour-content { flex-grow: 1; padding: 20px 25px; display: flex; flex-direction: column; justify-content: center; }
+    .tour-title { font-family: 'Segoe UI', sans-serif; font-size: 1.4em; font-weight: bold; color: #fff; margin-bottom: 8px; }
+    .tour-meta { font-size: 0.9em; color: #8da4c4; margin-bottom: 12px; display: flex; gap: 15px; }
     .tour-tags { display: flex; gap: 8px; }
-    .tag-badge {
-        background: rgba(255, 255, 255, 0.05);
-        color: #aaa;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.85em;
-        font-family: 'Segoe UI', sans-serif;
-    }
-    
+    .tag-badge { background: rgba(255, 255, 255, 0.05); color: #aaa; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; }
     .tag-region { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
     .tag-system { color: #4facfe; background: rgba(79, 172, 254, 0.1); }
+
+    .empty-message { text-align: center; color: #556; padding: 40px; border: 1px dashed #2a3454; border-radius: 6px; }
+
+    /* --- МОДАЛЬНОЕ ОКНО (ВКЛАДКА) --- */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+        z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s;
+        align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; opacity: 1; }
+
+    .modal-content {
+        width: 90%; max-width: 1100px;
+        background: #0b0d17; border: 1px solid #3c4566; border-radius: 8px;
+        box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden;
+        animation: slideUp 0.3s ease-out; position: relative;
+    }
+    @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Баннер внутри модалки (как на скрине) */
+    .banner-header {
+        background: linear-gradient(90deg, #0f1524 0%, #161d30 50%, #0f1524 100%);
+        padding: 20px 40px; display: flex; align-items: center; justify-content: space-between;
+        border-bottom: 1px solid #2a3454; position: relative;
+        min-height: 120px;
+    }
+    
+    .banner-left { display: flex; align-items: center; gap: 25px; }
+    .banner-logo { width: 100px; height: 100px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(79,172,254,0.5)); }
+    
+    .banner-info h1 {
+        font-family: 'Segoe UI', sans-serif; font-size: 1.8em; color: #fff; margin: 0 0 15px 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .banner-actions { display: flex; gap: 10px; align-items: center; }
+    .action-btn {
+        display: flex; align-items: center; gap: 8px;
+        background: rgba(255,255,255,0.1); color: #fff;
+        padding: 8px 16px; border-radius: 20px; text-decoration: none;
+        font-size: 0.9em; font-family: 'Segoe UI', sans-serif; font-weight: 500;
+        transition: 0.2s; border: 1px solid transparent;
+    }
+    .action-btn:hover { background: rgba(255,255,255,0.2); border-color: #aaa; }
+    .action-btn i { font-style: normal; }
+
+    .banner-right { text-align: right; }
+    .prize-pool { font-size: 2.5em; font-family: 'Segoe UI', sans-serif; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .prize-icon { font-size: 0.8em; color: #d4af37; }
+
+    .close-modal {
+        position: absolute; top: 15px; right: 20px; font-size: 30px; color: #555; cursor: pointer; z-index: 10;
+    }
+    .close-modal:hover { color: #fff; }
+
+    .modal-body-empty {
+        height: 300px; display: flex; align-items: center; justify-content: center;
+        color: #3c4566; font-family: 'Cinzel', serif; font-size: 1.5em;
+        background: radial-gradient(circle at center, rgba(30,30,50,0.3) 0%, transparent 70%);
+    }
 
 </style>
 
@@ -182,8 +121,7 @@
     
     <div class="tournament-section">
         <div class="section-header">
-            <div class="live-dot"></div>
-            <h2 class="section-title">Live & Upcoming</h2>
+            <h2 class="section-title">LIVE</h2>
         </div>
 
         <div class="filters-container" id="filters-live">
@@ -196,60 +134,23 @@
 
         <div class="tournament-list" id="grid-live">
             
-            <a href="#" class="tour-card is-live" data-tags="EU Draft">
-                <div class="tour-img-wrapper">
-                    <img src="https://i.ytimg.com/vi/uKq9p9tZ0k8/maxresdefault.jpg" alt="Tournament">
-                    <div class="tour-status-overlay">LIVE NOW</div>
-                </div>
-                <div class="tour-content">
-                    <div class="tour-title">Abyss Cup Winter 2026 Playoff</div>
-                    <div class="tour-meta">
-                        <span>📅 Feb 12, 18:00 CET</span>
-                        <span>🏆 Prize: $500</span>
-                    </div>
-                    <div class="tour-tags">
-                        <span class="tag-badge tag-region">#EU</span>
-                        <span class="tag-badge tag-system">#Draft</span>
-                        <span class="tag-badge">#AbyssCup</span>
-                    </div>
-                </div>
-            </a>
-
-            <a href="#" class="tour-card" data-tags="AS Allpick">
+            <div class="tour-card" data-tags="AS Allpick" onclick="openModal('https://tonamel.com/competition/KkDrM')">
                 <div class="tour-img-wrapper">
                     <img src="https://upload-os-bbs.hoyolab.com/upload/2022/12/06/11485989/4e3419992a7a4214571999981324750c_6888636437936109315.png" alt="Tournament">
                 </div>
                 <div class="tour-content">
-                    <div class="tour-title">Cat's Tail Gathering S5</div>
+                    <div class="tour-title">Genshin Impact TCG Asia Tournament</div>
                     <div class="tour-meta">
                         <span>📅 Feb 20, 2026</span>
-                        <span>🏆 Prize: Gems</span>
+                        <span>🏆 Prize: TBD</span>
                     </div>
                     <div class="tour-tags">
-                        <span class="tag-badge tag-region">#Asia</span>
+                        <span class="tag-badge tag-region">#AS</span>
                         <span class="tag-badge tag-system">#Allpick</span>
-                        <span class="tag-badge">#Official</span>
+                        <span class="tag-badge">#Tonamel</span>
                     </div>
                 </div>
-            </a>
-
-            <a href="#" class="tour-card" data-tags="NA Draft">
-                <div class="tour-img-wrapper">
-                    <img src="https://img.youtube.com/vi/m2D2Kz4-eIM/maxresdefault.jpg" alt="Tournament">
-                </div>
-                <div class="tour-content">
-                    <div class="tour-title">Weekly Scrims NA #42</div>
-                    <div class="tour-meta">
-                        <span>📅 Every Saturday</span>
-                        <span>🏆 Prize: Fame</span>
-                    </div>
-                    <div class="tour-tags">
-                        <span class="tag-badge tag-region">#NA</span>
-                        <span class="tag-badge tag-system">#Draft</span>
-                        <span class="tag-badge">#Weekly</span>
-                    </div>
-                </div>
-            </a>
+            </div>
 
         </div>
     </div>
@@ -257,7 +158,6 @@
 
     <div class="tournament-section">
         <div class="section-header">
-            <span class="archive-icon">📂</span>
             <h2 class="section-title" style="color: #8da4c4;">Archive</h2>
         </div>
 
@@ -276,16 +176,49 @@
 
 </div>
 
-<script>
-    function toggleFilter(tag, btnElement, gridId) {
-        // 1. Переключаем класс active (можно выбрать несколько)
-        btnElement.classList.toggle('active');
+<div id="tournament-modal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal(event)">×</span>
         
+        <div class="banner-header">
+            <div class="banner-left">
+                <img src="https://upload-os-bbs.hoyolab.com/upload/2022/12/06/11485989/4e3419992a7a4214571999981324750c_6888636437936109315.png" class="banner-logo" alt="Logo">
+                
+                <div class="banner-info">
+                    <h1>Genshin Impact TCG Asia Tournament</h1>
+                    <div class="banner-actions">
+                        <a href="https://tonamel.com/competition/KkDrM" target="_blank" class="action-btn">
+                            <i>⚙️</i> Tonamel Page
+                        </a>
+                        <a href="#" class="action-btn"><i>📄</i> Regulations</a>
+                        <a href="#" class="action-btn"><i>📑</i> Docs</a>
+                        
+                        <div style="margin-left: 10px; color:#888;">#AS #Allpick</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="banner-right">
+                <div class="prize-pool">
+                    <span class="prize-icon">🏆</span> TBD
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-body-empty">
+            NO MATCHES AVAILABLE
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Логика фильтров ---
+    function toggleFilter(tag, btnElement, gridId) {
+        btnElement.classList.toggle('active');
         applyFilters(btnElement.parentElement, gridId);
     }
 
     function applyFilters(filterContainer, gridId) {
-        // 2. Собираем все активные теги
         const activeChips = filterContainer.querySelectorAll('.filter-chip.active');
         const activeTags = Array.from(activeChips).map(chip => chip.innerText.trim());
 
@@ -294,26 +227,35 @@
         
         const cards = grid.querySelectorAll('.tour-card');
         
-        // 3. Если ничего не выбрано - показываем всё
         if (activeTags.length === 0) {
             cards.forEach(card => card.style.display = 'flex');
             return;
         }
 
-        // 4. Фильтруем (карточка должна содержать ВСЕ выбранные теги)
-        // Если вы выбрали EU и Draft, покажет только то, что и EU и Draft.
         cards.forEach(card => {
             const cardTags = card.getAttribute('data-tags');
-            
-            // Проверяем, содержит ли cardTags каждый активный тег
             const matchesAll = activeTags.every(tag => cardTags.includes(tag));
-            
-            if (matchesAll) {
-                card.style.display = 'flex';
-            } else {
-                card.style.display = 'none';
-            }
+            if (matchesAll) card.style.display = 'flex';
+            else card.style.display = 'none';
         });
+    }
+
+    // --- Логика Модального окна ---
+    const modal = document.getElementById('tournament-modal');
+
+    function openModal(link) {
+        // Можно динамически менять ссылку, если турниров будет много
+        const tonamelBtn = modal.querySelector('a[href*="tonamel"]');
+        if(tonamelBtn) tonamelBtn.href = link;
+        
+        modal.classList.add('open');
+    }
+
+    function closeModal(e) {
+        // Закрываем, если клик по фону или крестику
+        if (e.target === modal || e.target.classList.contains('close-modal')) {
+            modal.classList.remove('open');
+        }
     }
 </script>
 
