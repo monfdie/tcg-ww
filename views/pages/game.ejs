@@ -45,7 +45,7 @@
     </div>
 
     <div class="controls-area">
-        <button id="skip-btn" class="round-btn" onclick="skipTurn()">SKIP</button>
+        <button id="skip-btn" class="round-btn" onclick="skipTurn()" style="display:none;">SKIP</button>
         <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled>SELECT</button>
     </div>
 
@@ -57,7 +57,6 @@
 
 <script>
     const currentRoom = '<%= roomId %>';
-    // Исправлено: безопасная вставка данных
     const savedMatchData = <%- savedData ? JSON.stringify(savedData) : 'null' %>;
     
     let charsData = {}, myRole = 'spectator', myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
@@ -85,32 +84,54 @@
         document.getElementById('blue-ready-switch').style.display = 'none';
         document.getElementById('red-ready-switch').style.display = 'none';
         document.querySelector('.controls-area').style.display = 'none';
-        document.getElementById('char-pool-container').style.opacity = '0.3';
+        document.getElementById('char-pool-container').style.opacity = '0.2';
         
-        renderSlots({
+        const fakeState = {
             bluePicks: data.bluePicks, redPicks: data.redPicks, bans: data.bans,
             draftType: data.draftType, gameStarted: true, stepIndex: 100, ready: { blue: true, red: true }
-        });
+        };
+        renderSlots(fakeState);
     }
 
-    // --- Все остальные функции отрисовки (renderSlots, renderRows и т.д.) ---
     function renderSlots(state) {
-        const fill = (id, items, side) => {
-            const div = document.getElementById(id); if(!div) return;
+        const currentSchema = DRAFT_RULES[state.draftType || 'gitcg'];
+        
+        const fill = (containerId, items, side, type) => {
+            const div = document.getElementById(containerId);
+            if (!div) return;
             div.innerHTML = '';
-            items.forEach(item => {
-                const s = document.createElement('div'); s.className = 'slot-circle';
-                const id = typeof item === 'object' ? item.id : item;
-                let all = []; Object.values(charsData).forEach(a => all.push(...a));
-                const c = all.find(x => x.id === id);
-                if(c) s.innerHTML = `<img src="${c.img}">`;
-                div.appendChild(s);
-            });
+            
+            // Определяем сколько слотов должно быть
+            let slotsCount = 0;
+            if (type === 'ban') slotsCount = currentSchema.filter(s => s.team === side && s.type === 'ban').length;
+            else slotsCount = currentSchema.filter(s => s.team === side && s.type === 'pick').length;
+
+            for (let i = 0; i < slotsCount; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'slot-circle' + (type === 'ban' ? ' slot-ban' : '');
+                
+                const charId = items[i] ? (typeof items[i] === 'object' ? items[i].id : items[i]) : null;
+                if (charId) {
+                    let all = []; Object.values(charsData).forEach(a => all.push(...a));
+                    const char = all.find(c => c.id === charId);
+                    if (char) slot.innerHTML = `<img src="${char.img}">`;
+                }
+                div.appendChild(slot);
+            }
         };
-        fill('blue-bans', state.bans.filter(b => b.team === 'blue'));
-        fill('red-bans', state.bans.filter(b => b.team === 'red'));
-        fill('blue-picks-1', state.bluePicks);
-        fill('red-picks-1', state.redPicks);
+
+        fill('blue-bans', state.bans.filter(b => b.team === 'blue'), 'blue', 'ban');
+        fill('red-bans', state.bans.filter(b => b.team === 'red'), 'red', 'ban');
+        
+        if (state.draftType === 'classic' || state.draftType === 'generals_2') {
+            fill('blue-picks-1', state.bluePicks, 'blue', 'pick');
+            fill('red-picks-1', state.redPicks, 'red', 'pick');
+        } else {
+            fill('blue-picks-1', state.bluePicks.slice(0, 5), 'blue', 'pick');
+            fill('blue-picks-2', state.bluePicks.slice(5, 9), 'blue', 'pick');
+            fill('red-picks-1', state.redPicks.slice(0, 5), 'red', 'pick');
+            fill('red-picks-2', state.redPicks.slice(5, 9), 'red', 'pick');
+        }
     }
 
     function renderRows() {
@@ -119,9 +140,10 @@
         Object.entries(charsData).forEach(([elem, chars]) => {
             const row = document.createElement('div'); row.className = `element-row row-${elem}`;
             chars.forEach(c => {
-                const el = document.createElement('div'); el.className = 'char-option';
+                const el = document.createElement('div'); el.className = 'char-option'; el.id = `char-${c.id}`;
                 el.innerHTML = `<img src="${c.img}">`;
                 el.onclick = () => {
+                    if (savedMatchData) return;
                     document.querySelectorAll('.char-option').forEach(x => x.classList.remove('selected-pending'));
                     el.classList.add('selected-pending');
                     window.selectedId = c.id;
@@ -133,7 +155,8 @@
         });
     }
 
-    function confirmSelection() {
+    function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
+    function confirmSelection() { 
         if(window.selectedId) {
             socket.emit('action', { roomId: currentRoom, charId: window.selectedId });
             document.getElementById('confirm-btn').disabled = true;
@@ -141,11 +164,14 @@
     }
 
     function updateUI(state) {
-        document.getElementById('status').innerText = state.gameStarted ? "DRAFTING..." : "WAITING...";
+        document.getElementById('status').innerText = state.gameStarted ? 
+            `${state.currentTeam} is ${state.currentAction}` : "WAITING...";
         renderSlots(state);
     }
 
+    socket.on('init_game', (data) => { myRole = data.role; updateUI(data.state); });
     socket.on('update_state', updateUI);
+    socket.on('error_msg', (msg) => { if(!savedMatchData) alert(msg); });
 </script>
 
 <%- include('../partials/footer') %>
