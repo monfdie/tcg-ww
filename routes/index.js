@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
+const Match = require('../models/Match'); // Подключаем модель матчей
 
-// Мидлвар, который передает данные юзера во все шаблоны
+// Мидлвар: передает данные пользователя и текущий путь во все шаблоны
 router.use((req, res, next) => {
     res.locals.user = req.user || null;
     res.locals.path = req.path;
@@ -13,16 +14,26 @@ router.use((req, res, next) => {
 router.get('/', (req, res) => res.render('pages/home', { title: 'GITCG Draft - Home' }));
 router.get('/create', (req, res) => res.render('pages/create', { title: 'Create Draft' }));
 router.get('/tournaments', (req, res) => res.render('pages/tournaments', { title: 'Tournaments' }));
-router.get('/history', (req, res) => res.render('pages/history', { title: 'Match History' }));
+
+// РОУТ ИСТОРИИ (Берет матчи из БД)
+router.get('/history', async (req, res) => {
+    try {
+        const matches = await Match.find().sort({ date: -1 }).limit(20);
+        res.render('pages/history', { title: 'Match History', matches: matches });
+    } catch (err) {
+        console.error("Ошибка загрузки истории:", err);
+        res.render('pages/history', { title: 'Match History', matches: [] });
+    }
+});
+
 router.get('/game/:id', (req, res) => res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id }));
 
-// --- РОУТЫ DISCORD АВТОРИЗАЦИИ ---
+// --- РОУТЫ DISCORD ---
 router.get('/auth/discord', passport.authenticate('discord'));
 
 router.get('/auth/discord/callback', passport.authenticate('discord', {
     failureRedirect: '/'
 }), (req, res) => {
-    // При успешном входе кидаем юзера на главную
     res.redirect('/'); 
 });
 
