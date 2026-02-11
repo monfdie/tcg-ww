@@ -1,4 +1,4 @@
-require('dotenv').config(); // Загружаем переменные окружения из .env
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -8,8 +8,9 @@ const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const mongoose = require('mongoose');
 
-// Подключаем модель пользователя для Базы Данных
+// Модели БД
 const User = require('./models/User');
+const Match = require('./models/Match'); // <-- Добавили модель матча
 
 const app = express();
 const server = http.createServer(app);
@@ -28,14 +29,12 @@ const sessionMiddleware = session({
 });
 app.use(sessionMiddleware);
 
-// === НАСТРОЙКА DISCORD PASSPORT И БАЗЫ ДАННЫХ ===
+// === НАСТРОЙКА DISCORD PASSPORT ===
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Сохраняем в сессию ID пользователя из нашей базы данных (MongoDB _id)
 passport.serializeUser((user, done) => done(null, user.id));
 
-// Достаем пользователя из базы данных по его ID
 passport.deserializeUser(async (id, done) => {
     try {
         const user = await User.findById(id);
@@ -54,56 +53,46 @@ passport.use(new DiscordStrategy({
     scope: ['identify']
 }, async function(accessToken, refreshToken, profile, done) {
     try {
-        // Ищем пользователя в нашей базе по его Discord ID
         let user = await User.findOne({ discordId: profile.id });
-        
-        // Если его нет - регистрируем (создаем новую запись в БД)
         if (!user) {
             user = await User.create({
                 discordId: profile.id,
                 username: profile.global_name || profile.username,
                 avatar: profile.avatar
             });
-            console.log('🌟 New user registered:', user.username);
         } else {
-            // Если он уже есть, обновляем ему ник и аватарку (вдруг он их сменил в дискорде)
             user.username = profile.global_name || profile.username;
             user.avatar = profile.avatar;
             await user.save();
         }
-        
         return done(null, user);
     } catch (err) {
         return done(err, null);
     }
 }));
 
-// === НАСТРОЙКА ШАБЛОНИЗАТОРА И СТАТИКИ ===
+// Настройка EJS и статики
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// === ДАННЫЕ И ПРАВИЛА ===
 const CHARACTERS_BY_ELEMENT = require('./characters.json');
 const { DRAFT_RULES, IMMUNITY_ORDER } = require('./public/draft-rules.js');
 
-// === МАРШРУТЫ ===
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 
-// === ЛОГИКА ИГРОВЫХ СЕССИЙ (SOCKET.IO) ===
+// === ЛОГИКА СОКЕТОВ ===
 const sessions = {};
 
 io.on('connection', (socket) => {
     socket.on('create_game', ({ nickname, draftType, userId }) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = draftType || 'gitcg';
-        const selectedSchema = DRAFT_RULES[type];
-
         sessions[roomId] = {
             id: roomId, bluePlayer: socket.id, blueUserId: userId, redPlayer: null, redUserId: null,
             spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
-            draftType: type, draftOrder: selectedSchema, gameStarted: false, immunityPhaseActive: false,
+            draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false, immunityPhaseActive: false,
             lastActive: Date.now(), finishedAt: null, stepIndex: 0, currentTeam: null, currentAction: null,
             immunityStepIndex: 0, immunityPool: [], immunityBans: [], timer: 60, blueReserve: 300, redReserve: 300,
             timerInterval: null, bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false }
@@ -196,7 +185,21 @@ function nextStep(roomId) {
         s.finishedAt = Date.now(); 
         io.to(roomId).emit('game_over', getPublicState(s)); 
         clearInterval(s.timerInterval); 
-        // ЗДЕСЬ В БУДУЩЕМ МЫ БУДЕМ СОХРАНЯТЬ ИГРУ В БАЗУ ДАННЫХ
+        
+        // СОХРАНЕНИЕ МАТЧА В БАЗУ ДАННЫХ
+        Match.create({
+            roomId: s.id,
+            draftType: s.draftType,
+            blueName: s.blueName,
+            redName: s.redName,
+            blueDiscordId: s.blueUserId,
+            redDiscordId: s.redUserId,
+            bans: s.bans,
+            bluePicks: s.bluePicks,
+            redPicks: s.redPicks
+        }).then(() => console.log(`✅ Match ${s.id} saved to DB!`))
+          .catch(err => console.error("❌ Error saving match:", err));
+
         return;
     }
     const c = s.draftOrder[s.stepIndex]; s.currentTeam = c.team; s.currentAction = c.type;
@@ -220,7 +223,6 @@ function autoPick(roomId) {
     const session = sessions[roomId];
     let allFlat = [];
     Object.values(CHARACTERS_BY_ELEMENT).forEach(arr => allFlat.push(...arr));
-
     session.lastActive = Date.now();
 
     if (session.immunityPhaseActive) {
@@ -274,8 +276,7 @@ function autoPick(roomId) {
 function getPublicState(session) {
     return {
         stepIndex: session.stepIndex + 1,
-        currentTeam: session.currentTeam, 
-        currentAction: session.currentAction,
+        currentTeam: session.currentTeam, currentAction: session.currentAction,
         bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
         immunityPhaseActive: session.immunityPhaseActive, immunityPool: session.immunityPool, immunityBans: session.immunityBans,
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
@@ -283,7 +284,6 @@ function getPublicState(session) {
     };
 }
 
-// Очистка мертвых сессий из оперативной памяти
 setInterval(() => {
     const now = Date.now();
     Object.keys(sessions).forEach(roomId => {
