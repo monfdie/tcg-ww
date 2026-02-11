@@ -1,4 +1,4 @@
-/* G E N S H I N   S T Y L E   C S S */
+/* G E N S H I N   S T Y L E   C S S - MERGED */
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap');
 
@@ -13,6 +13,7 @@ body {
     user-select: none;
 }
 
+/* --- СТИЛИ ЛЕЙАУТА (НОВЫЙ САЙТ) --- */
 #lobby-screen { 
     display: flex; align-items: center; justify-content: center;
     height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
@@ -46,10 +47,14 @@ button {
 .separator span { background: #161c30; padding: 0 10px; color: #555; font-size: 0.8em; position: relative; z-index: 1; }
 .separator::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #3c4566; z-index: 0; }
 
-#game-screen { display: flex; flex-direction: column; height: 100%; }
-.header { 
+/* --- СТИЛИ ДРАФТА (СТАРЫЙ САЙТ) --- */
+#game-screen { display: flex; flex-direction: column; height: 100%; width: 100%; }
+
+/* Хедер внутри игры */
+.game-header { 
     height: 6vh; display: flex; gap: 30px; align-items: center; justify-content: center; 
-    background: rgba(10, 12, 20, 0.95); border-bottom: 2px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 30; flex-shrink: 0; 
+    background: rgba(10, 12, 20, 0.95); border-bottom: 2px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+    z-index: 30; flex-shrink: 0; width: 100%;
 }
 .reserve-timer { font-size: 18px; font-weight: bold; font-family: 'Cinzel', serif; }
 .blue-res { color: #4facfe; } .red-res { color: #ff6b6b; }
@@ -83,89 +88,43 @@ button {
 .blue-side .ban-row, .blue-side .pick-row, .blue-side .pick-row-small { flex-direction: row-reverse; justify-content: flex-start; }
 .red-side .ban-row, .red-side .pick-row, .red-side .pick-row-small { flex-direction: row; justify-content: flex-start; }
 
-/* Кружки пиков (светло-серые) */
+/* Кружки пиков */
 .slot-circle { 
     width: 60px; height: 60px; border-radius: 50%; background: rgba(0, 0, 0, 0.3); 
-    border: 2px solid #ccc; /* Базовый серый */
-    overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center; transition: all 0.3s; 
+    border: 2px solid #ccc; overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center; transition: all 0.3s; 
 }
 .blue-side .slot-circle { border-color: #d3d3d3; }
 .red-side .slot-circle { border-color: #d3d3d3; }
-
-/* Баны всегда красные */
 .slot-ban { border-color: #8b0000 !important; background: rgba(40, 5, 5, 0.4) !important; }
-
-/* Активный слот - желтая подсветка */
 .active-slot { 
-    border-color: #ffd700 !important; /* Желтый */
-    background: rgba(255, 215, 0, 0.1) !important; 
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); 
-    transform: scale(1.1); 
-    z-index: 5;
+    border-color: #ffd700 !important; background: rgba(255, 215, 0, 0.1) !important; 
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); transform: scale(1.1); z-index: 5;
 }
-
 .slot-circle img { width: 100%; height: 100%; object-fit: cover; }
 .step-number { font-family: 'Cinzel', serif; font-size: 20px; color: rgba(255, 255, 255, 0.2); }
+.slot-immunity-pick { border-color: #50b36b !important; background: transparent !important; box-shadow: none; }
 
-.slot-immunity-pick {
-    border-color: #50b36b !important; 
-    background: transparent !important; 
-    box-shadow: none; 
-}
-
-/* --- Controls Area и Кнопки --- */
+/* Кнопки управления */
 .controls-area { 
     display: flex; justify-content: center; align-items: center; 
     height: 40px; position: relative; z-index: 20; 
     margin-top: -20px; margin-bottom: 10px; 
 }
-
-/* Общий стиль для скругленных кнопок */
 .round-btn {
-    font-family: 'Cinzel', serif;
-    font-weight: bold;
-    font-size: 1.1em;
-    padding: 8px 30px;
-    border-radius: 50px; /* Скругление */
-    border: 1px solid #555;
-    background: #222;
-    color: #999;
-    cursor: default;
-    transition: all 0.2s;
-    letter-spacing: 2px;
+    font-family: 'Cinzel', serif; font-weight: bold; font-size: 1.1em;
+    padding: 8px 30px; border-radius: 50px; border: 1px solid #555;
+    background: #222; color: #999; cursor: default; transition: all 0.2s; letter-spacing: 2px;
 }
-
-/* Кнопка Select */
 .confirm-btn:not(:disabled) { 
     background: #d4af37; border-color: #fff; color: #000; 
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5); 
-    cursor: pointer; transform: scale(1.05); 
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5); cursor: pointer; transform: scale(1.05); 
 }
+#skip-btn { position: absolute; background: #444; color: #fff; border: 1px solid #777; cursor: pointer; display: none; }
+#skip-btn:hover { background: #666; border-color: #aaa; transform: scale(1.05); }
+.skip-left { right: 50%; margin-right: 120px; }
+.skip-right { left: 50%; margin-left: 120px; }
 
-/* Кнопка Skip */
-#skip-btn {
-    position: absolute;
-    /* Базовые стили */
-    background: #444; color: #fff; border: 1px solid #777;
-    cursor: pointer;
-    display: none; /* Скрыта по умолчанию */
-}
-#skip-btn:hover {
-    background: #666; border-color: #aaa;
-    transform: scale(1.05);
-}
-
-/* Позиции кнопки Skip относительно центра */
-.skip-left {
-    right: 50%; 
-    margin-right: 120px; /* Слева от центральной кнопки */
-}
-.skip-right {
-    left: 50%;
-    margin-left: 120px; /* Справа от центральной кнопки */
-}
-
-
+/* Immunity */
 .immunity-top-container {
     position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; z-index: 50; gap: 5px;
@@ -179,51 +138,37 @@ button {
 .im-empty { background: rgba(255,255,255,0.05); } 
 .im-icon img { width: 100%; height: 100%; object-fit: cover; }
 
+/* Пул персонажей */
 .char-pool { 
     flex-grow: 1; background: rgba(10, 12, 20, 0.95); border-top: 1px solid #333; 
     display: flex; flex-direction: column; justify-content: flex-start; padding: 20px 0; padding-bottom: 40px; 
-    box-shadow: 0 -10px 30px rgba(0,0,0,0.8); position: relative; overflow-y: auto; scrollbar-width: none; 
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.8); position: relative; overflow-y: auto; scrollbar-width: none; width: 100%;
 }
 .char-pool::-webkit-scrollbar { display: none; }
 
+/* Лесенка */
 .ladder-container {
     position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 100px; 
     display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 20px; padding-bottom: 40px; 
     overflow-y: auto; z-index: 10; scrollbar-width: none; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
 }
 .ladder-container::-webkit-scrollbar { display: none; }
-
-/* === ЛЕСЕНКА: СТИЛИ === */
 .ladder-step { 
     font-family: 'Segoe UI', sans-serif; font-size: 11px; font-weight: bold; 
     padding: 2px 6px; border-radius: 2px; text-transform: uppercase; 
     opacity: 0.3; width: 100%; box-sizing: border-box; transition: 0.3s; 
     border: 1px solid transparent;
 }
-
-/* Выравнивание по сторонам (команды) */
 .step-left { text-align: left; border-left: 2px solid; border-right: none; }
 .step-right { text-align: right; border-right: 2px solid; border-left: none; }
-
-/* Цвета по типам действий */
-/* Pick = Синий */
 .step-pick { color: #4facfe; border-color: rgba(79, 172, 254, 0.3); }
-/* Ban = Красный */
 .step-ban { color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3); }
-/* Immunity Pick = Зеленый */
 .step-immunity { color: #50b36b !important; border-color: rgba(80, 179, 107, 0.3) !important; }
-
-/* Активный шаг */
 .step-active { opacity: 1; background: #222; transform: scale(1.1); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-.step-active.step-pick { color: #fff; border-color: #4facfe; text-shadow: 0 0 5px #4facfe; }
-.step-active.step-ban { color: #fff; border-color: #ff6b6b; text-shadow: 0 0 5px #ff6b6b; }
-.step-active.step-immunity { color: #fff !important; border-color: #50b36b !important; text-shadow: 0 0 5px #50b36b; }
-
 .step-done { text-decoration: line-through; opacity: 0.15; }
 
-/* ... остальные стили ... */
+/* Ряды элементов */
 .element-row { min-height: 55px; width: 100%; display: flex; align-items: center; position: relative; border-bottom: none; margin-bottom: 2px; }
-.row-cryo, .row-hydro, .row-pyro, .row-electro, .row-anemo, .row-geo, .row-dendro { background: transparent; }
 .row-half { width: calc(50% - 60px); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .left-half { justify-content: flex-end; padding-right: 20px; } 
 .right-half { justify-content: flex-start; padding-left: 20px; } 
@@ -235,11 +180,5 @@ button {
 .char-option:hover img { opacity: 1; }
 .selected-pending { border-color: #d4af37 !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.5) !important; transform: scale(1.1); z-index: 20; }
 .selected-pending img { opacity: 1; }
-
-.immunity-highlight { 
-    border-color: #50b36b !important; 
-    box-shadow: 0 0 10px rgba(80, 179, 107, 0.6) !important;
-    opacity: 1 !important; 
-    filter: none !important; 
-}
+.immunity-highlight { border-color: #50b36b !important; box-shadow: 0 0 10px rgba(80, 179, 107, 0.6) !important; opacity: 1 !important; filter: none !important; }
 .disabled { opacity: 0.15; filter: grayscale(100%); pointer-events: none; border-color: transparent; }
