@@ -15,20 +15,13 @@ router.get('/tournaments', (req, res) => res.render('pages/tournaments', { title
 
 router.get('/history', async (req, res) => {
     try {
-        const matches = await Match.find().sort({ date: -1 }).limit(5);
+        const matches = await Match.find().sort({ date: -1 }).limit(6);
         res.render('pages/history', { title: 'History', matches });
     } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
 });
 
-router.get('/game/:id', async (req, res) => {
-    try {
-        const match = await Match.findOne({ roomId: req.params.id });
-        res.render('pages/game', { 
-            title: `Room ${req.params.id}`, 
-            roomId: req.params.id, 
-            savedData: match || null 
-        });
-    } catch (e) { res.render('pages/game', { title: "Error", roomId: req.params.id, savedData: null }); }
+router.get('/game/:id', (req, res) => {
+    res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id });
 });
 
 router.get('/auth/discord', passport.authenticate('discord'));
