@@ -6,7 +6,7 @@
         <div class="input-group">
             <label>NICKNAME</label>
             <input id="nickname-input" placeholder="Enter Name" maxlength="15" 
-                   value="<%= user ? (user.global_name || user.username) : '' %>">
+                   value="<%= locals.user ? (locals.user.global_name || locals.user.username) : '' %>">
         </div>
         <div class="input-group">
             <label>DRAFT MODE</label>
@@ -23,7 +23,7 @@
         
         <div class="input-group">
             <label>ROOM CODE</label>
-            <input id="room-input" placeholder="Enter Code">
+            <input id="room-input" placeholder="Enter Code" style="text-transform: uppercase;">
         </div>
         <div class="input-group" style="flex-direction: row; align-items: center; gap: 10px; margin-bottom: 5px;">
             <input type="checkbox" id="spectator-check" style="width: auto; margin: 0;">
@@ -37,8 +37,9 @@
 <script>
     const socket = io({ transports: ['websocket'] });
     
-    // Если пользователь авторизован, берем его Discord ID, если нет - генерируем случайный
-    let myUserId = '<%= user ? user.id : "" %>' || sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
+    // Берем ID дискорда если есть, иначе берем из сессии или генерируем
+    const discordId = '<%= locals.user ? locals.user.id : "" %>';
+    let myUserId = discordId || sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
 
     function createGame() { 
@@ -57,11 +58,9 @@
         window.location.href = `/game/${room}`;
     }
 
-    // При успешном создании комнаты сервер вернет это событие
     socket.on('init_game', (data) => {
         sessionStorage.setItem('draft_room_id', data.roomId);
         sessionStorage.setItem('draft_nickname', document.getElementById('nickname-input').value);
-        // Редирект на страницу игры
         window.location.href = `/game/${data.roomId}`;
     });
 </script>
