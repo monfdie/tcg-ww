@@ -74,7 +74,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const CHARACTERS_BY_ELEMENT = require('./characters.json');
-const { DRAFT_RULES, IMMUNITY_ORDER } = require('./public/draft-rules.js');
+const { DRAFT_RULES } = require('./public/draft-rules.js');
 
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
@@ -88,10 +88,10 @@ io.on('connection', (socket) => {
         sessions[roomId] = {
             id: roomId, bluePlayer: socket.id, blueUserId: userId, redPlayer: null, redUserId: null,
             spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
-            draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false, immunityPhaseActive: false,
-            lastActive: Date.now(), finishedAt: null, stepIndex: 0, currentTeam: null, currentAction: null,
-            immunityStepIndex: 0, immunityPool: [], immunityBans: [], timer: 60, blueReserve: 300, redReserve: 300,
-            timerInterval: null, bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false }
+            draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
+            lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
+            timer: 60, blueReserve: 300, redReserve: 300, timerInterval: null,
+            bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false }
         };
         socket.join(roomId);
         socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
@@ -145,7 +145,6 @@ io.on('connection', (socket) => {
 async function nextStep(roomId) {
     const s = sessions[roomId]; s.stepIndex++; s.timer = 60;
     if (s.stepIndex >= s.draftOrder.length) {
-        s.finishedAt = Date.now(); 
         io.to(roomId).emit('game_over', getPublicState(s)); 
         clearInterval(s.timerInterval); 
         try {
@@ -155,8 +154,8 @@ async function nextStep(roomId) {
                 bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks
             });
             const count = await Match.countDocuments();
-            if (count > 5) {
-                const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 5);
+            if (count > 6) {
+                const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 6);
                 await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
             }
         } catch (e) { console.error(e); }
