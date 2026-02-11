@@ -5,147 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= locals.title || 'GITCG Draft' %></title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="/style.css">
-    
-    <style>
-        /* --- СТИЛИ ДЛЯ БОКОВОГО МЕНЮ И ЛЕЙАУТА --- */
-        body { 
-            margin: 0; 
-            overflow: hidden; /* Убираем лишние скроллы у body */
-        }
-        
-        .app-container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            background-image: radial-gradient(circle at 60% 40%, #2b3452 0%, #080a12 85%);
-        }
-
-        /* САЙДБАР (Левое меню) */
-        .sidebar {
-            width: 250px;
-            background: rgba(16, 20, 32, 0.95);
-            border-right: 1px solid #2a3454;
-            display: flex;
-            flex-direction: column;
-            padding: 30px 20px;
-            box-shadow: 2px 0 20px rgba(0,0,0,0.6);
-            z-index: 100;
-            flex-shrink: 0;
-            box-sizing: border-box;
-        }
-
-        .sidebar-brand {
-            font-family: 'Cinzel', serif;
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #fff;
-            letter-spacing: 2px;
-            margin-bottom: 50px;
-            text-align: center;
-        }
-        .sidebar-brand span { color: #4facfe; }
-
-        .sidebar-links {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex-grow: 1; /* Выталкивает профиль в самый низ */
-        }
-
-        .sidebar-links a {
-            color: #8da4c4;
-            text-decoration: none;
-            font-family: 'Segoe UI', sans-serif;
-            font-size: 1.1em;
-            text-transform: uppercase;
-            padding: 12px 15px;
-            border-radius: 4px;
-            transition: 0.3s;
-            border-left: 3px solid transparent; /* Подготовка под активный стейт */
-        }
-        
-        /* Стили наведения и активной вкладки */
-        .sidebar-links a:hover {
-            background: rgba(79, 172, 254, 0.05);
-            color: #fff;
-        }
-        .sidebar-links a.active {
-            background: rgba(79, 172, 254, 0.1);
-            color: #fff;
-            border-left-color: #4facfe;
-            text-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
-        }
-
-        /* БЛОК ПОЛЬЗОВАТЕЛЯ ВНИЗУ САЙДБАРА */
-        .sidebar-user {
-            margin-top: auto;
-            padding-top: 20px;
-            border-top: 1px solid #2a3454;
-        }
-
-        .login-btn {
-            display: block; width: 100%; text-align: center;
-            background: transparent; border: 1px solid #7289da; color: #7289da;
-            padding: 10px 0; border-radius: 4px; font-family: 'Segoe UI', sans-serif;
-            cursor: pointer; transition: 0.3s; text-decoration: none; box-sizing: border-box;
-        }
-        .login-btn:hover { background: rgba(114, 137, 218, 0.15); box-shadow: 0 0 15px rgba(114, 137, 218, 0.3); color: #fff; }
-
-        .user-profile { display: flex; align-items: center; gap: 12px; }
-        .user-profile img { border-radius: 50%; border: 2px solid #4facfe; width: 40px; height: 40px; }
-        .user-info { display: flex; flex-direction: column; }
-        .user-name { color: #fff; font-family: 'Segoe UI', sans-serif; font-weight: bold; font-size: 0.95em; }
-        .logout-link { color: #ff6b6b; font-size: 0.8em; text-decoration: none; font-family: 'Segoe UI', sans-serif; transition: 0.2s; }
-        .logout-link:hover { text-shadow: 0 0 8px #ff6b6b; }
-
-        /* ПРАВАЯ ЧАСТЬ (КОНТЕНТ) */
-        .main-content {
-            flex-grow: 1;
-            height: 100vh;
-            overflow-y: auto; /* Скролл только внутри контента */
-            position: relative;
-        }
-        
-        /* Внутренний контейнер для страниц (кроме драфта) */
-        .page-container {
-            padding: 40px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-    </style>
 </head>
 <body>
 
 <div class="app-container">
     
     <aside class="sidebar">
-        <div class="sidebar-brand">GITCG<br><span>DRAFT</span></div>
-        
-        <div class="sidebar-links">
-            <a href="/" class="<%= locals.path === '/' ? 'active' : '' %>">Main</a>
-            <a href="/create" class="<%= locals.path === '/create' ? 'active' : '' %>">Create Draft</a>
-            <a href="/tournaments" class="<%= locals.path === '/tournaments' ? 'active' : '' %>">Tournaments</a>
-            <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">History</a>
+        <div class="menu-icon">
+            <span></span>
+            <span></span>
+            <span></span>
         </div>
-        
-        <div class="sidebar-user">
-            <% if (locals.user) { %>
-                <div class="user-profile">
-                    <% if (locals.user.avatar) { %>
-                        <img src="https://cdn.discordapp.com/avatars/<%= locals.user.discordId %>/<%= locals.user.avatar %>.png" alt="Avatar">
-                    <% } else { %>
-                        <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
-                    <% } %>
-                    <div class="user-info">
-                        <span class="user-name"><%= locals.user.username %></span>
-                        <a href="/logout" class="logout-link">Logout</a>
+
+        <div class="sidebar-content">
+            <div class="sidebar-brand">GITCG<br><span>DRAFT</span></div>
+            
+            <div class="sidebar-links">
+                <a href="/" class="<%= locals.path === '/' ? 'active' : '' %>">Main</a>
+                <a href="/create" class="<%= locals.path === '/create' ? 'active' : '' %>">Create Draft</a>
+                <a href="/tournaments" class="<%= locals.path === '/tournaments' ? 'active' : '' %>">Tournaments</a>
+                <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">History</a>
+            </div>
+            
+            <div class="sidebar-user">
+                <% if (locals.user) { %>
+                    <div class="user-profile">
+                        <% if (locals.user.avatar) { %>
+                            <img src="https://cdn.discordapp.com/avatars/<%= locals.user.discordId %>/<%= locals.user.avatar %>.png" alt="Avatar">
+                        <% } else { %>
+                            <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
+                        <% } %>
+                        <div class="user-info">
+                            <span class="user-name"><%= locals.user.username %></span>
+                            <a href="/logout" class="logout-link">Logout</a>
+                        </div>
                     </div>
-                </div>
-            <% } else { %>
-                <a href="/auth/discord" class="login-btn">Discord Login</a>
-            <% } %>
+                <% } else { %>
+                    <a href="/auth/discord" class="login-btn">Discord Login</a>
+                <% } %>
+            </div>
         </div>
     </aside>
 
