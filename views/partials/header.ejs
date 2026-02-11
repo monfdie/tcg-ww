@@ -1,33 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title><%= title %></title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/style.css">
-    <style>
-        .navbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 50px; background: rgba(10, 12, 20, 0.95);
-            border-bottom: 2px solid #3c4566; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            font-family: 'Cinzel', serif;
-        }
-        .nav-brand { font-size: 1.5em; font-weight: bold; color: #fff; letter-spacing: 2px; }
-        .nav-brand span { color: #4facfe; }
-        .nav-links { display: flex; gap: 30px; }
-        .nav-links a {
-            color: #8da4c4; text-decoration: none; font-size: 1.1em;
-            text-transform: uppercase; transition: 0.3s;
-        }
-        .nav-links a:hover, .nav-links a.active { color: #fff; text-shadow: 0 0 10px #4facfe; }
-        .nav-user .login-btn {
-            background: transparent; border: 1px solid #7289da; color: #7289da;
-            padding: 8px 15px; border-radius: 4px; font-family: 'Segoe UI', sans-serif;
-            cursor: pointer; transition: 0.3s;
-        }
-        .nav-user .login-btn:hover { background: rgba(114, 137, 218, 0.2); }
-        .page-container { padding: 40px; }
-    </style>
 </head>
 <body>
 
@@ -39,8 +9,17 @@
         <a href="/tournaments" class="<%= path === '/tournaments' ? 'active' : '' %>">Tournaments</a>
         <a href="/history" class="<%= path === '/history' ? 'active' : '' %>">History</a>
     </div>
+    
     <div class="nav-user">
-        <button class="login-btn">Discord Login</button>
+        <% if (user) { %>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png" alt="Avatar" width="32" style="border-radius: 50%; border: 1px solid #4facfe;">
+                <span style="color: #fff; font-family: 'Segoe UI', sans-serif; font-weight: bold;"><%= user.global_name || user.username %></span>
+                <a href="/logout" style="color: #ff6b6b; font-size: 0.85em; text-decoration: none; margin-left: 10px;">Logout</a>
+            </div>
+        <% } else { %>
+            <a href="/auth/discord" class="login-btn" style="text-decoration: none;">Discord Login</a>
+        <% } %>
     </div>
 </nav>
 
