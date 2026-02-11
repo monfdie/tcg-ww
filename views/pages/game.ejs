@@ -58,6 +58,37 @@
     <div class="char-pool" id="char-pool-container"></div>
 </div>
 
+// Передаем данные из базы в JS (если они есть)
+const savedMatchData = <%- savedData ? JSON.stringify(savedData) : 'null' %>;
+
+if (savedMatchData) {
+    console.log("Загружена завершенная игра из истории");
+    // Здесь мы вызываем отрисовку состояния сразу
+    window.onload = () => {
+        // Заполняем интерфейс данными из базы
+        updateUIFromHistory(savedMatchData);
+    };
+}
+
+function updateUIFromHistory(data) {
+    // Убираем экран ожидания и кнопки готовности
+    const overlay = document.getElementById('ready-overlay');
+    if (overlay) overlay.style.display = 'none';
+
+    // Обновляем имена
+    document.getElementById('blue-name').innerText = data.blueName;
+    document.getElementById('red-name').innerText = data.redName;
+
+    // Отрисовываем пики (тебе нужно будет вызвать свои функции отрисовки)
+    // Например:
+    renderPicks(data.bluePicks, 'blue');
+    renderPicks(data.redPicks, 'red');
+    renderBans(data.bans);
+    
+    // Пишем, что игра завершена
+    document.getElementById('status-text').innerText = "DRAFT COMPLETED (HISTORY)";
+}
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="/draft-rules.js"></script> 
 
