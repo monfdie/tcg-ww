@@ -1,1 +1,97 @@
+<%- include('../partials/header') %>
 
+<style>
+    .page-title { text-align: center; margin-bottom: 40px; margin-top: 20px; }
+    .page-title h1 { font-family: 'Cinzel', serif; font-size: 2.5em; color: #fff; text-shadow: 0 0 10px #4facfe; margin: 0; }
+    .page-title p { color: #8da4c4; font-size: 1.1em; margin-top: 10px; font-family: 'Segoe UI', sans-serif;}
+
+    .history-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: rgba(22, 28, 48, 0.95);
+        border: 1px solid #3c4566;
+        padding: 0; /* Убрал отступ, чтобы таблица была на всю ширину блока */
+        border-radius: 4px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        overflow: hidden; /* Чтобы углы таблицы не вылезали за рамку */
+    }
+    
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    .history-table th, .history-table td {
+        padding: 15px 20px;
+        border-bottom: 1px solid #2a3454;
+    }
+    .history-table th { 
+        background: rgba(0, 0, 0, 0.3);
+        color: #8da4c4; 
+        font-family: 'Cinzel', serif; 
+        letter-spacing: 1px; 
+        font-weight: bold;
+    }
+    .history-table td { color: #ece5d8; }
+    .history-table tr { transition: 0.2s; }
+    .history-table tr:hover { background: rgba(79, 172, 254, 0.05); }
+    .history-table tr:last-child td { border-bottom: none; }
+    
+    .team-blue { color: #4facfe; font-weight: bold; }
+    .team-red { color: #ff6b6b; font-weight: bold; }
+    .vs { color: #555; font-size: 0.9em; margin: 0 8px; font-weight: normal; }
+    
+    .action-link {
+        color: #d4af37;
+        text-decoration: none;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+    .action-link:hover { color: #fff; text-shadow: 0 0 5px #d4af37; }
+    .date-col { color: #7a8aa3; font-size: 0.9em; }
+</style>
+
+<div class="page-title">
+    <h1>Match History</h1>
+    <p>Recent drafts played across the platform</p>
+</div>
+
+<div class="history-container">
+    <table class="history-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Matchup</th>
+                <th>Draft Mode</th>
+                <th>Result</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="date-col">Today, 15:30</td>
+                <td><span class="team-blue">monfdie</span> <span class="vs">vs</span> <span class="team-red">DarkSlayer</span></td>
+                <td>GITCG CUP 2</td>
+                <td style="color: #aaa;">Not recorded yet</td>
+                <td><a href="#" class="action-link" onclick="alert('Здесь будет открываться страница лога (как драфт, но только просмотр)')">View Draft</a></td>
+            </tr>
+            <tr>
+                <td class="date-col">Yesterday, 20:15</td>
+                <td><span class="team-blue">ProGamer</span> <span class="vs">vs</span> <span class="team-red">monfdie</span></td>
+                <td>Classic</td>
+                <td style="color: #aaa;">Not recorded yet</td>
+                <td><a href="#" class="action-link" onclick="alert('Здесь будет открываться страница лога (как драфт, но только просмотр)')">View Draft</a></td>
+            </tr>
+            <tr>
+                <td class="date-col">Feb 10, 12:00</td>
+                <td><span class="team-blue">Traveler</span> <span class="vs">vs</span> <span class="team-red">Paimon</span></td>
+                <td>Generals 2</td>
+                <td style="color: #aaa;">Not recorded yet</td>
+                <td><a href="#" class="action-link" onclick="alert('Здесь будет открываться страница лога (как драфт, но только просмотр)')">View Draft</a></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<%- include('../partials/footer') %>
