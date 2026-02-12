@@ -143,13 +143,11 @@
         const iBans = state.immunityBans || [];
         const iPicks = state.immunitySelections || [];
         
-        // Порядок отображения: Blue Imm Ban, Red Imm Ban, Blue Imm Pick, Red Imm Pick
         const bBan = iBans.find(x => x.team === 'blue');
         const rBan = iBans.find(x => x.team === 'red');
         const bPick = iPicks.find(x => x.team === 'blue');
         const rPick = iPicks.find(x => x.team === 'red');
 
-        // Можете поменять порядок слотов тут, если хотите
         const slots = [ 
             { val: bBan?.id, type: 'ban', team: 'blue' }, 
             { val: rBan?.id, type: 'ban', team: 'red' }, 
@@ -186,7 +184,8 @@
         document.getElementById('red-name-display').innerText = state.redName;
         
         let txt = "WAITING...";
-        if(state.immunityPhaseActive) {
+        // --- ИСПРАВЛЕНИЕ: Добавлена проверка state.currentAction ---
+        if(state.immunityPhaseActive && state.currentAction) {
             const niceAction = state.currentAction.replace('immunity_', '').toUpperCase();
             txt = `IMMUNITY: ${state.currentTeam} ${niceAction}`;
         }
@@ -228,44 +227,33 @@
         // --- ЛОГИКА БЛОКИРОВКИ (DISABLED) ---
         document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
 
-        // 1. Всегда блокируем тех, кто забанен или пикнут в ОСНОВНОЙ игре
         state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
         [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
 
-        // 2. Логика GITCG CUP 2
         if (currentDraftType === 'gitcg_cup_2') {
             const imBans = state.immunityBans || [];
             const imPicks = state.immunitySelections || [];
 
             if (state.immunityPhaseActive) {
-                // В ФАЗЕ ИММУНИТЕТА:
-                // Нельзя выбирать тех, кто уже задействован в иммун-фазе
                 [...imBans, ...imPicks].forEach(item => {
                     document.getElementById(`char-${item.id}`)?.classList.add('disabled');
                 });
             } else {
-                // В ОСНОВНОЙ ИГРЕ:
-                
-                // А) "Иммун-баны" (imBans) остаются ДОСТУПНЫМИ (не блокируем их).
-                
-                // Б) "Имун-пики" (imPicks) заблокированы для всех...
                 imPicks.forEach(item => {
                     document.getElementById(`char-${item.id}`)?.classList.add('disabled');
                 });
 
-                // ...КРОМЕ случая 4-го и 9-го пика владельца
                 if (state.currentAction === 'pick' && activeTeam === myRole) {
                     const myPickCount = activeTeam === 'blue' ? state.bluePicks.length : state.redPicks.length;
-                    const currentPickNum = myPickCount + 1; // 1-й пик, 2-й пик...
+                    const currentPickNum = myPickCount + 1;
 
                     if (currentPickNum === 4 || currentPickNum === 9) {
                         const myImmune = imPicks.find(i => i.team === activeTeam);
-                        // Если у меня есть имун и он еще не пикнут
                         if (myImmune && !(activeTeam === 'blue' ? state.bluePicks : state.redPicks).includes(myImmune.id)) {
                             const el = document.getElementById(`char-${myImmune.id}`);
                             if (el) {
                                 el.classList.remove('disabled');
-                                el.classList.add('immunity-highlight'); // Подсвечиваем
+                                el.classList.add('immunity-highlight');
                             }
                         }
                     }
@@ -280,16 +268,14 @@
 
     function getStepsFor(schema, team, type) {
         if (!schema) return [];
-        // Фильтруем шаги, чтобы убрать фазу иммунитета из подсчета слотов основной игры
-        // Фаза иммунитета - это первые 4 шага в cup_2
         let startIndex = 0;
         if (currentDraftType === 'gitcg_cup_2') startIndex = 4;
 
         return schema
             .map((step, index) => ({ ...step, globalIndex: index + 1 }))
-            .slice(startIndex) // Пропускаем первые 4 шага для рендера слотов
+            .slice(startIndex) 
             .filter(step => step.team === team && step.type === type)
-            .map(step => ({ num: step.globalIndex, immunity: false })); // immunity flag тут уже не нужен для визуала слотов
+            .map(step => ({ num: step.globalIndex, immunity: false })); 
     }
 
     function renderSlots(state) {
@@ -310,7 +296,6 @@
                 slot.className = 'slot-circle';
                 if (isBan) slot.classList.add('slot-ban');
                 
-                // Подсветка активного слота
                 if (!state.immunityPhaseActive && state.gameStarted && step.num === state.stepIndex) {
                     slot.classList.add('active-slot');
                 }
@@ -322,7 +307,7 @@
                     let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
                     const char = allFlat.find(c => c.id === charId);
                     if (char) slot.innerHTML = `<img src="${char.img}">`;
-                } else slot.innerHTML = `<span class="step-number">${step.num}</span>`; // Показываем глобальный номер шага
+                } else slot.innerHTML = `<span class="step-number">${step.num}</span>`; 
                 div.appendChild(slot);
             });
         };
@@ -330,14 +315,12 @@
         fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true);
         fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
 
-        // Отрисовка пиков (стандартная)
         if (currentDraftType === 'generals_2' || currentDraftType === 'classic') {
             fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
             fill('blue-picks-2', [], [], false); 
             fill('red-picks-1', state.redPicks, redPickSteps, false);
             fill('red-picks-2', [], [], false);
         } else {
-            // Для GITCG
             fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false);
             fill('blue-picks-2', state.bluePicks.slice(5, 9), bluePickSteps.slice(5, 9), false);
             fill('red-picks-1', state.redPicks.slice(0, 5), redPickSteps.slice(0, 5), false);
