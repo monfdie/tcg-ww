@@ -22,6 +22,7 @@ router.get('/history', async (req, res) => {
     }
 });
 
+// --- ИЗМЕНЕННАЯ ЧАСТЬ НАЧАЛО ---
 router.get('/game/:id', async (req, res) => {
     try {
         // Обязательно ищем матч в базе данных, чтобы история работала
@@ -29,12 +30,19 @@ router.get('/game/:id', async (req, res) => {
         res.render('pages/game', { 
             title: `Room ${req.params.id}`, 
             roomId: req.params.id, 
-            savedData: match || null 
+            savedData: match || null,
+            hideSidebar: true // <--- Добавлено: скрываем меню
         });
     } catch (e) {
-        res.render('pages/game', { title: "Error", roomId: req.params.id, savedData: null });
+        res.render('pages/game', { 
+            title: "Error", 
+            roomId: req.params.id, 
+            savedData: null,
+            hideSidebar: true // <--- Добавлено: скрываем меню даже при ошибке
+        });
     }
 });
+// --- ИЗМЕНЕННАЯ ЧАСТЬ КОНЕЦ ---
 
 router.get('/auth/discord', passport.authenticate('discord'));
 router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => res.redirect('/'));
