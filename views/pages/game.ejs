@@ -1,4 +1,73 @@
-<script src="/socket.io/socket.io.js"></script>
+<%- include('../partials/header') %>
+
+<style>
+    .page-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+
+<div id="game-screen">
+    <div class="game-header">
+         <div id="room-container">
+             <div id="room-display" onclick="copyRoomCode()" title="Click to copy room code">CODE: <%= roomId %></div>
+             <span id="copy-toast">Code Copied!</span>
+         </div>
+         <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
+         <div id="status">Waiting...</div>
+         <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
+     </div>
+
+     <div class="draft-area">
+         <div id="immunity-top-display" class="immunity-top-container" style="display: none;">
+             <div class="im-label">IMMUNE</div>
+             <div class="im-row" id="immunity-icons-row"></div>
+         </div>
+
+         <div class="team-side blue-side">
+             <div class="player-header">
+                  <div id="blue-timer" class="turn-timer">45</div>
+                 <h2 id="blue-name-display">PLAYER 1</h2>
+                 <div id="blue-ready-switch" class="ready-switch" onclick="toggleReady('blue')">
+                     <div class="switch-circle"></div>
+                 </div>
+              </div>
+             <div class="ban-row" id="blue-bans"></div>
+             <div class="pick-row" id="blue-picks-1"></div>
+             <div class="pick-row-small" id="blue-picks-2"></div>
+         </div>
+
+         <div class="center-axis">
+             <div class="mid-label ban-label">BANS</div>
+             <div class="mid-label pick-label">PICKS</div>
+          </div>
+
+         <div class="team-side red-side">
+             <div class="player-header">
+                 <div id="red-ready-switch" class="ready-switch" onclick="toggleReady('red')">
+                     <div class="switch-circle"></div>
+                 </div>
+                  <h2 id="red-name-display">PLAYER 2</h2>
+                 <div id="red-timer" class="turn-timer">45</div>
+             </div>
+             <div class="ban-row" id="red-bans"></div>
+             <div class="pick-row" id="red-picks-1"></div>
+             <div class="pick-row-small" id="red-picks-2"></div>
+         </div>
+     </div>
+
+     <div class="controls-area">
+         <button id="skip-btn" class="round-btn" onclick="skipTurn()">SKIP</button>
+         <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled>SELECT</button>
+     </div>
+
+     <div class="char-pool" id="char-pool-container"></div>
+ </div>
+
+ <script src="/socket.io/socket.io.js"></script>
  <script src="/draft-rules.js"></script>
 
  <script>
@@ -12,11 +81,10 @@
 
      socket.on('connect', () => {
          if (currentRoom && myUserId) {
-             // Получаем никнейм, сохраненный при нажатии "Join" в create.ejs
              const nick = sessionStorage.getItem('draft_nickname') || 'Player';
              const isSpectator = sessionStorage.getItem('join_as_spectator') === 'true';
 
-             // Используем join_game вместо rejoin_game для корректной регистрации роли
+             // Благодаря обновлению server.js, этот вызов теперь безопасен и для Создателя, и для Игрока 2
              socket.emit('join_game', { 
                  roomId: currentRoom, 
                  nickname: nick, 
@@ -299,3 +367,5 @@
          }
      }
  </script>
+
+<%- include('../partials/footer') %>
