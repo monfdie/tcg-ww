@@ -8,7 +8,6 @@
             <input id="nickname-input" placeholder="Enter Name" maxlength="15" 
                    value="<%= locals.user ? (locals.user.global_name || locals.user.username) : '' %>">
         </div>
-     
         <div class="input-group">
             <label>DRAFT MODE</label>
             <select id="draft-type-select">
@@ -38,61 +37,31 @@
 <script>
     const socket = io({ transports: ['websocket'] });
     
+    // Берем ID дискорда если есть, иначе берем из сессии или генерируем
     const discordId = '<%= locals.user ? locals.user.id : "" %>';
     let myUserId = discordId || sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
 
     function createGame() { 
-        const nickInput = document.getElementById('nickname-input');
-        const typeSelect = document.getElementById('draft-type-select');
+        const nick = document.getElementById('nickname-input').value;
+        const type = document.getElementById('draft-type-select').value;
+        if(!nick) return alert("Enter nickname!");
         
-        if (!nickInput) return;
-        const nick = nickInput.value.trim();
-        const type = typeSelect ? typeSelect.value : 'gitcg';
-        
-        if(!nick) {
-            alert("Пожалуйста, введите никнейм!");
-            return;
-        }
-        
-        sessionStorage.setItem('draft_nickname', nick);
         socket.emit('create_game', { nickname: nick, draftType: type, userId: myUserId }); 
     }
 
     function joinGame() {
-        const roomInput = document.getElementById('room-input');
-        const nickInput = document.getElementById('nickname-input');
-        const specCheck = document.getElementById('spectator-check');
-
-        if(!roomInput || !nickInput) return;
-
-        const room = roomInput.value.toUpperCase().trim();
-        const nick = nickInput.value.trim();
+        const room = document.getElementById('room-input').value.toUpperCase();
+        if(!room) return alert("Enter code!");
         
-        if(!room) {
-            alert("Введите код комнаты!");
-            return;
-        }
-        if(!nick) {
-            alert("Введите никнейм перед входом!");
-            return;
-        }
-        
-        sessionStorage.setItem('draft_nickname', nick);
-        sessionStorage.setItem('join_as_spectator', specCheck ? specCheck.checked : false);
-        
+        sessionStorage.setItem('draft_nickname', document.getElementById('nickname-input').value);
         window.location.href = `/game/${room}`;
     }
 
     socket.on('init_game', (data) => {
-        if (data && data.roomId) {
-            sessionStorage.setItem('draft_room_id', data.roomId);
-            window.location.href = `/game/${data.roomId}`;
-        }
-    });
-
-    socket.on('error_msg', (msg) => {
-        alert("Ошибка: " + msg);
+        sessionStorage.setItem('draft_room_id', data.roomId);
+        sessionStorage.setItem('draft_nickname', document.getElementById('nickname-input').value);
+        window.location.href = `/game/${data.roomId}`;
     });
 </script>
 
