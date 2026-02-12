@@ -4,7 +4,7 @@
     /* --- Стили страницы --- */
     .tournament-section { margin-bottom: 60px; }
 
-    /* Заголовки разделов (без иконок) */
+    /* Заголовки разделов */
     .section-header {
         display: flex; align-items: center; gap: 15px; margin-bottom: 25px;
         border-bottom: 1px solid #2a3454; padding-bottom: 15px;
@@ -43,19 +43,24 @@
         box-shadow: 0 5px 20px rgba(0,0,0,0.5); background: rgba(26, 32, 55, 0.95);
     }
     
-    /* .tour-img-wrapper удален, контент растягивается */
-    
     .tour-content { flex-grow: 1; padding: 20px 25px; display: flex; flex-direction: column; justify-content: center; }
     .tour-title { font-family: 'Segoe UI', sans-serif; font-size: 1.4em; font-weight: bold; color: #fff; margin-bottom: 8px; }
     .tour-meta { font-size: 0.9em; color: #8da4c4; margin-bottom: 12px; display: flex; gap: 15px; }
     .tour-tags { display: flex; gap: 8px; }
-    .tag-badge { background: rgba(255, 255, 255, 0.05); color: #aaa; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; }
-    .tag-region { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
-    .tag-system { color: #4facfe; background: rgba(79, 172, 254, 0.1); }
+    
+    /* Стили бейджей (овалов) */
+    .tag-badge { 
+        background: rgba(255, 255, 255, 0.05); color: #aaa; 
+        padding: 4px 12px; border-radius: 12px; font-size: 0.85em; 
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .tag-region { color: #d4af37; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.2); }
+    .tag-system { color: #4facfe; background: rgba(79, 172, 254, 0.1); border-color: rgba(79, 172, 254, 0.2); }
 
     .empty-message { text-align: center; color: #556; padding: 40px; border: 1px dashed #2a3454; border-radius: 6px; }
 
-    /* --- МОДАЛЬНОЕ ОКНО (ВКЛАДКА) --- */
+    /* --- МОДАЛЬНОЕ ОКНО --- */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
@@ -80,7 +85,6 @@
     }
     
     .banner-left { display: flex; align-items: center; gap: 25px; }
-    /* .banner-logo удален */
     
     .banner-info h1 {
         font-family: 'Segoe UI', sans-serif; font-size: 1.8em; color: #fff; margin: 0 0 15px 0;
@@ -136,7 +140,7 @@
                     <div class="tour-title">Genshin Impact TCG Asia Tournament</div>
                     <div class="tour-meta">
                         <span>📅 Feb 15, 2026</span>
-                        <span>🏆 Prize: TBD</span>
+                        <span>🏆 Prize: 3000 ¥</span>
                     </div>
                     <div class="tour-tags">
                         <span class="tag-badge tag-region">AS</span>
@@ -176,6 +180,7 @@
         
         <div class="banner-header">
             <div class="banner-left">
+                
                 <div class="banner-info">
                     <h1>Genshin Impact TCG Asia Tournament</h1>
                     <div class="banner-actions">
@@ -183,14 +188,17 @@
                             <i>🏆</i> Tonamel Page
                         </a>
                         
-                        <div style="margin-left: 10px; color:#888;">AS Allpick</div>
+                        <div style="display: flex; gap: 8px; margin-left: 15px;">
+                            <span class="tag-badge tag-region">AS</span>
+                            <span class="tag-badge tag-system">Allpick</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="banner-right">
                 <div class="prize-pool">
-                    <span class="prize-icon">🏆</span> TBD
+                    <span class="prize-icon">🏆</span> 3000 ¥
                 </div>
             </div>
         </div>
@@ -233,7 +241,6 @@
     // --- Логика Модального окна ---
     const modal = document.getElementById('tournament-modal');
     function openModal(link) {
-        // Можно динамически менять ссылку, если турниров будет много
         const tonamelBtn = modal.querySelector('a[href*="tonamel"]');
         if(tonamelBtn) tonamelBtn.href = link;
         
@@ -241,7 +248,6 @@
     }
 
     function closeModal(e) {
-        // Закрываем, если клик по фону или крестику
         if (e.target === modal || e.target.classList.contains('close-modal')) {
             modal.classList.remove('open');
         }
