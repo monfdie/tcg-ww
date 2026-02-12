@@ -220,15 +220,72 @@ function startTimer(roomId) {
 }
 
 function getPublicState(session) {
+    // --- ЛОГИКА ИММУНИТЕТА НАЧАЛО ---
+    let immunityPool = [];
+    let immunityBans = [];
+    
+    // Нам нужно пройтись по истории шагов, чтобы понять, какие пики/баны были "иммунными"
+    let banCount = 0;
+    let bluePickCount = 0;
+    let redPickCount = 0;
+
+    // Проходим по всем шагам, которые уже случились (до текущего stepIndex)
+    for (let i = 0; i < session.stepIndex; i++) {
+        const step = session.draftOrder[i];
+        if (!step) break;
+
+        if (step.type === 'ban') {
+            // Если это был шаг бана, берем соответствующий бан из массива bans
+            if (banCount < session.bans.length) {
+                const ban = session.bans[banCount];
+                if (step.immunity) {
+                    immunityBans.push(ban.id);
+                }
+                banCount++;
+            }
+        } else if (step.type === 'pick') {
+            // Если это был шаг пика, берем персонажа из массива пиков соответствующей команды
+            if (step.team === 'blue') {
+                if (bluePickCount < session.bluePicks.length) {
+                    const pick = session.bluePicks[bluePickCount];
+                    if (step.immunity) {
+                        immunityPool.push(pick);
+                    }
+                    bluePickCount++;
+                }
+            } else if (step.team === 'red') {
+                if (redPickCount < session.redPicks.length) {
+                    const pick = session.redPicks[redPickCount];
+                    if (step.immunity) {
+                        immunityPool.push(pick);
+                    }
+                    redPickCount++;
+                }
+            }
+        }
+    }
+    // --- ЛОГИКА ИММУНИТЕТА КОНЕЦ ---
+
     return {
         stepIndex: session.stepIndex + 1,
-        currentTeam: session.currentTeam, currentAction: session.currentAction,
-        bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
-        blueName: session.blueName, redName: session.redName, draftType: session.draftType,
-        ready: session.ready, gameStarted: session.gameStarted,
+        currentTeam: session.currentTeam, 
+        currentAction: session.currentAction,
+        bans: session.bans, 
+        bluePicks: session.bluePicks, 
+        redPicks: session.redPicks,
+        blueName: session.blueName, 
+        redName: session.redName, 
+        draftType: session.draftType,
+        ready: session.ready, 
+        gameStarted: session.gameStarted,
+        
+        // Определяем, активна ли фаза иммунитета ПРЯМО СЕЙЧАС (для заголовка)
         immunityPhaseActive: (session.draftOrder[session.stepIndex] && session.draftOrder[session.stepIndex].immunity),
-        immunityBans: session.bans.filter(b => b.id === 'skipped' || b.id),
-        immunityPool: [],
+        
+        // Теперь отправляем правильные списки
+        immunityBans: immunityBans,
+        immunityPool: immunityPool, 
+        
         // Новые поля для пост-гейма
         postGameActive: session.postGameActive,
         matchResults: session.matchResults,
