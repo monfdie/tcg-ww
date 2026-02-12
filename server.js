@@ -86,16 +86,13 @@ io.on('connection', (socket) => {
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
-            bans: [], bluePicks: [], redPicks: [], 
-            immunityPicks: [], // Храним пики иммунитета отдельно
-            ready: { blue: false, red: false },
-            
-            // --- Post Game Data ---
+            bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false },
+            // --- НОВОЕ: Данные для пост-матча ---
             postGameActive: false,
             matchResults: [
-                { id: 1, blueChars: [null, null, null], redChars: [null, null, null], winner: null },
-                { id: 2, blueChars: [null, null, null], redChars: [null, null, null], winner: null },
-                { id: 3, blueChars: [null, null, null], redChars: [null, null, null], winner: null }
+                { id: 1, blueChar: null, redChar: null, winner: null },
+                { id: 2, blueChar: null, redChar: null, winner: null },
+                { id: 3, blueChar: null, redChar: null, winner: null }
             ],
             finalScore: { blue: 0, red: 0 }
         };
@@ -107,7 +104,7 @@ io.on('connection', (socket) => {
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Room not found');
 
-        // Логика реконнекта
+        // Логика реконнекта (Важно для стабильности!)
         if (session.blueUserId === userId) {
             session.bluePlayer = socket.id;
             socket.join(roomId);
@@ -145,20 +142,8 @@ io.on('connection', (socket) => {
     socket.on('action', ({ roomId, charId }) => {
         const session = sessions[roomId];
         if (!session || !session.gameStarted) return;
-
-        const step = session.draftOrder[session.stepIndex];
-        const isImmunity = step.immunity || false;
-
-        if (session.currentAction === 'ban') {
-            session.bans.push({ id: charId, team: session.currentTeam, immunity: isImmunity });
-        } else {
-            if (session.currentTeam === 'blue') session.bluePicks.push(charId);
-            else session.redPicks.push(charId);
-            
-            if (isImmunity) {
-                session.immunityPicks.push(charId);
-            }
-        }
+        if (session.currentAction === 'ban') session.bans.push({ id: charId, team: session.currentTeam });
+        else session.currentTeam === 'blue' ? session.bluePicks.push(charId) : session.redPicks.push(charId);
         nextStep(roomId);
     });
     
@@ -168,19 +153,14 @@ io.on('connection', (socket) => {
         nextStep(roomId);
     });
 
-    // --- Обработка изменений в таблице результатов (по 3 персонажа) ---
-    socket.on('update_match_result', ({ roomId, gameIndex, type, value, charIndex }) => {
+    // --- НОВОЕ: Обработка изменений в таблице результатов ---
+    socket.on('update_match_result', ({ roomId, gameIndex, field, value }) => {
         const session = sessions[roomId];
         if (!session || !session.postGameActive) return;
 
-        const match = session.matchResults[gameIndex];
-        
-        if (type === 'winner') {
-            match.winner = value;
-        } else if (type === 'blueChar') {
-            if (match.blueChars[charIndex] !== undefined) match.blueChars[charIndex] = value;
-        } else if (type === 'redChar') {
-            if (match.redChars[charIndex] !== undefined) match.redChars[charIndex] = value;
+        // Обновляем данные матча
+        if (session.matchResults[gameIndex]) {
+            session.matchResults[gameIndex][field] = value;
         }
 
         // Пересчет счета
@@ -200,19 +180,20 @@ async function nextStep(roomId) {
     if (s.stepIndex >= s.draftOrder.length) {
         clearInterval(s.timerInterval);
         
-        // Переход в фазу заполнения результатов
+        // Вместо game_over просто активируем пост-гейм фазу
         s.gameStarted = false;
         s.postGameActive = true;
         
         io.to(roomId).emit('update_state', getPublicState(s));
         
-        // Сохраняем в БД
+        // Сохраняем в БД (можно и позже, после заполнения, но для надежности сохраним драфт сейчас)
         try {
             await Match.create({
                 roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
                 blueDiscordId: s.blueUserId, redDiscordId: s.redUserId,
                 bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks
             });
+            // Очистка старых матчей
             const count = await Match.countDocuments();
             if (count > 20) {
                 const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 20);
@@ -245,11 +226,10 @@ function getPublicState(session) {
         bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
         ready: session.ready, gameStarted: session.gameStarted,
-        // Восстановленная логика иммунитета
         immunityPhaseActive: (session.draftOrder[session.stepIndex] && session.draftOrder[session.stepIndex].immunity),
-        immunityBans: session.bans.filter(b => b.immunity).map(b => b.id),
-        immunityPool: session.immunityPicks,
-        // Данные для пост-гейма
+        immunityBans: session.bans.filter(b => b.id === 'skipped' || b.id),
+        immunityPool: [],
+        // Новые поля для пост-гейма
         postGameActive: session.postGameActive,
         matchResults: session.matchResults,
         finalScore: session.finalScore
