@@ -94,6 +94,20 @@ io.on('connection', (socket) => {
     socket.on('join_game', ({roomId, nickname, asSpectator, userId}) => {
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Room not found');
+
+        // --- ИЗМЕНЕНИЕ: Проверка на реконнект (если игрок уже был в игре) ---
+        if (session.blueUserId === userId) {
+            session.bluePlayer = socket.id;
+            socket.join(roomId);
+            return socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+        }
+        if (session.redUserId === userId) {
+            session.redPlayer = socket.id;
+            socket.join(roomId);
+            return socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+        }
+        // -------------------------------------------------------------------
+
         if (!session.redPlayer && !asSpectator) {
             session.redPlayer = socket.id; session.redUserId = userId; session.redName = nickname || 'Player 2';
             socket.join(roomId); socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
@@ -135,7 +149,6 @@ io.on('connection', (socket) => {
         nextStep(roomId);
     });
     
-    // Добавлен пропущенный обработчик skip_action из оригинального файла
     socket.on('skip_action', (roomId) => {
         const session = sessions[roomId];
         if (!session || !session.gameStarted) return;
@@ -187,9 +200,8 @@ function getPublicState(session) {
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
         ready: session.ready, gameStarted: session.gameStarted,
         immunityPhaseActive: (session.draftOrder[session.stepIndex] && session.draftOrder[session.stepIndex].immunity),
-        immunityBans: session.bans.filter(b => b.id === 'skipped' || b.id), // упрощенно
+        immunityBans: session.bans.filter(b => b.id === 'skipped' || b.id), 
         immunityPool: [] 
-        // В оригинале логика иммунитета была чуть сложнее, но для отката достаточно базовой структуры
     };
 }
 
