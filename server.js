@@ -104,12 +104,32 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('rejoin_game', ({ roomId, userId }) => {
+    socket.on('rejoin_game', ({ roomId, userId, nickname }) => { // Добавили nickname
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Session expired');
+        
         let role = 'spectator';
-        if (session.blueUserId === userId) { session.bluePlayer = socket.id; role = 'blue'; } 
-        else if (session.redUserId === userId) { session.redPlayer = socket.id; role = 'red'; }
+        
+        // 1. Если это Синий игрок вернулся
+        if (session.blueUserId === userId) { 
+            session.bluePlayer = socket.id; 
+            role = 'blue'; 
+        } 
+        // 2. Если это Красный игрок вернулся
+        else if (session.redUserId === userId) { 
+            session.redPlayer = socket.id; 
+            role = 'red'; 
+        }
+        // 3. НОВОЕ: Если место Красного свободно — занимаем его!
+        else if (!session.redUserId) {
+            session.redUserId = userId;
+            session.redPlayer = socket.id;
+            session.redName = nickname || 'Player 2'; // Сохраняем имя
+            role = 'red';
+            // Сообщаем всем (в том числе первому игроку), что второй зашел
+            io.to(roomId).emit('update_state', getPublicState(session));
+        }
+
         socket.join(roomId);
         socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
     });
