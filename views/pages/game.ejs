@@ -82,10 +82,14 @@
      let myRole = '', currentDraftType = 'gitcg';
      let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
 
+     // Получаем ник из хранилища (если вводили при входе)
+     const myNickname = sessionStorage.getItem('draft_nickname'); //
+
      socket.on('connect', () => {
          // При загрузке страницы сразу пытаемся переподключиться к комнате
          if (currentRoom && myUserId) {
-             socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId });
+             // Добавляем передачу nickname
+             socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId, nickname: myNickname }); 
          }
      });
 
