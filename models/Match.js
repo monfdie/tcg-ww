@@ -10,6 +10,8 @@ const matchSchema = new mongoose.Schema({
     bans: Array,
     bluePicks: Array,
     redPicks: Array,
+    // Добавлено поле для результатов матчей
+    results: { type: Array, default: [] }, 
     date: { type: Date, default: Date.now }
 });
 
