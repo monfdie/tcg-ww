@@ -1,373 +1,347 @@
-<%- include('../partials/header') %>
+<script>
+    const socket = io({ transports: ['websocket'] });
+    const currentRoom = '<%= roomId %>';
+    const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
+    sessionStorage.setItem('draft_user_id', myUserId);
+    let myRole = '', currentDraftType = 'gitcg';
+    let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
 
-<style>
-    .page-container {
-        padding: 0 !important;
-        max-width: 100% !important;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
+    socket.on('connect', () => {
+        if (currentRoom && myUserId) {
+            const nick = sessionStorage.getItem('draft_nickname') || 'Player';
+            const isSpectator = sessionStorage.getItem('join_as_spectator') === 'true';
+
+            socket.emit('join_game', { 
+                roomId: currentRoom, 
+                nickname: nick, 
+                userId: myUserId,
+                asSpectator: isSpectator 
+            });
+        }
+    });
+
+    socket.on('error_msg', (msg) => {
+        if (msg === 'Session expired' || msg === 'Room not found') {
+            alert("Сессия игры не найдена или истекла.");
+            window.location.href = "/"; 
+        } else {
+            alert(msg);
+        }
+    });
+
+    socket.on('init_game', (data) => {
+        myRole = data.role; 
+        charsData = data.chars;
+        currentDraftType = data.state.draftType || 'gitcg';
+        
+        document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
+        renderRows(); 
+        updateUI(data.state);
+    });
+
+    socket.on('update_state', updateUI);
+    socket.on('game_started', () => { isGameStarted = true; });
+    socket.on('game_over', (state) => { 
+        updateUI(state); 
+        setTimeout(() => alert("Draft Completed!"), 500); 
+    });
+
+    socket.on('timer_tick', (data) => {
+        const t = typeof data === 'object' ? data.main : data;
+        const b = document.getElementById('blue-timer'), r = document.getElementById('red-timer');
+        if(activeTeam==='blue') { b.innerText=t; r.innerText="45"; b.style.color=t<10?'#ff5555':'#4facfe'; }
+        else { r.innerText=t; b.innerText="45"; r.style.color=t<10?'#ff5555':'#ff6b6b'; }
+        if(typeof data === 'object') {
+            document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
+            document.getElementById('red-res').innerText = formatTime(data.redReserve);
+        }
+    });
+
+    function formatTime(s) { 
+        if (s < 0) s = 0;
+        const m=Math.floor(s/60), sec=s%60; 
+        return `${m}:${sec<10?'0':''}${sec}`; 
     }
-</style>
 
-<div id="game-screen">
-    <div class="game-header">
-         <div id="room-container">
-             <div id="room-display" onclick="copyRoomCode()" title="Click to copy room code">CODE: <%= roomId %></div>
-             <span id="copy-toast">Code Copied!</span>
-         </div>
-         <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
-         <div id="status">Waiting...</div>
-         <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
-     </div>
+    function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
+    
+    function copyRoomCode() { 
+        if (!currentRoom) return;
+        navigator.clipboard.writeText(currentRoom).then(() => {
+            const toast = document.getElementById('copy-toast');
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        });
+    }
+    
+    function skipTurn() {
+        if(currentRoom) socket.emit('skip_action', currentRoom);
+    }
+    
+    function renderRows() {
+        const container = document.getElementById('char-pool-container');
+        container.innerHTML = '';
+        const ladder = document.createElement('div'); ladder.className = 'ladder-container';
+        const schema = DRAFT_RULES[currentDraftType];
+        if(schema) {
+            schema.forEach((step, i) => {
+                const d = document.createElement('div');
+                const sideClass = step.team === 'blue' ? 'step-left' : 'step-right';
+                let colorClass = 'step-pick'; 
+                
+                if (step.type.includes('ban')) { colorClass = 'step-ban'; } 
+                else if (step.type.includes('immunity')) { colorClass = 'step-immunity'; }
+                
+                d.className = `ladder-step ${sideClass} ${colorClass}`;
+                d.id = `step-node-${i}`; d.innerText = `${i+1}. ${step.type.replace('immunity_', 'IM ')}`;
+                ladder.appendChild(d);
+            });
+            container.appendChild(ladder);
+        }
 
-     <div class="draft-area">
-         <div id="immunity-top-display" class="immunity-top-container" style="display: none;">
-             <div class="im-label">IMMUNE</div>
-             <div class="im-row" id="immunity-icons-row"></div>
-         </div>
+        ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
+            const row = document.createElement('div'); row.className = `element-row row-${elem}`;
+            const chars = charsData[elem], mid = Math.ceil(chars.length/2);
+            const l = document.createElement('div'); l.className = 'row-half left-half';
+            chars.slice(0,mid).forEach(c => l.appendChild(createChar(c)));
+            const gap = document.createElement('div'); gap.className = 'row-gap';
+            const r = document.createElement('div'); r.className = 'row-half right-half';
+            chars.slice(mid).forEach(c => r.appendChild(createChar(c)));
+            row.appendChild(l); row.appendChild(gap); row.appendChild(r);
+            container.appendChild(row);
+        });
+    }
 
-         <div class="team-side blue-side">
-             <div class="player-header">
-                  <div id="blue-timer" class="turn-timer">45</div>
-                 <h2 id="blue-name-display">PLAYER 1</h2>
-                 <div id="blue-ready-switch" class="ready-switch" onclick="toggleReady('blue')">
-                     <div class="switch-circle"></div>
-                 </div>
-              </div>
-             <div class="ban-row" id="blue-bans"></div>
-             <div class="pick-row" id="blue-picks-1"></div>
-             <div class="pick-row-small" id="blue-picks-2"></div>
-         </div>
+    function createChar(char) {
+        const el = document.createElement('div');
+        el.className = 'char-option'; el.id = `char-${char.id}`;
+        el.innerHTML = `<img src="${char.img}">`;
+        el.onclick = () => {
+            if(!isGameStarted || myRole === 'spectator') return;
+            document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
+            selectedCharId = char.id; el.classList.add('selected-pending');
+            document.getElementById('confirm-btn').disabled = false;
+        };
+        return el;
+    }
 
-         <div class="center-axis">
-             <div class="mid-label ban-label">BANS</div>
-             <div class="mid-label pick-label">PICKS</div>
-          </div>
+    function confirmSelection() {
+        if(selectedCharId && currentRoom) {
+            socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
+            selectedCharId = null; document.getElementById('confirm-btn').disabled = true;
+            document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
+        }
+    }
 
-         <div class="team-side red-side">
-             <div class="player-header">
-                 <div id="red-ready-switch" class="ready-switch" onclick="toggleReady('red')">
-                     <div class="switch-circle"></div>
-                 </div>
-                  <h2 id="red-name-display">PLAYER 2</h2>
-                 <div id="red-timer" class="turn-timer">45</div>
-             </div>
-             <div class="ban-row" id="red-bans"></div>
-             <div class="pick-row" id="red-picks-1"></div>
-             <div class="pick-row-small" id="red-picks-2"></div>
-         </div>
-     </div>
+    function updateImmunityTop(state) {
+        const topDisp = document.getElementById('immunity-top-display');
+        if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
+        topDisp.style.display = 'flex';
+        const row = document.getElementById('immunity-icons-row');
+        row.innerHTML = '';
+        
+        const iBans = state.immunityBans || [];
+        const iPicks = state.immunitySelections || [];
+        
+        // Порядок отображения: Blue Imm Ban, Red Imm Ban, Blue Imm Pick, Red Imm Pick
+        const bBan = iBans.find(x => x.team === 'blue');
+        const rBan = iBans.find(x => x.team === 'red');
+        const bPick = iPicks.find(x => x.team === 'blue');
+        const rPick = iPicks.find(x => x.team === 'red');
 
-     <div class="controls-area">
-         <button id="skip-btn" class="round-btn" onclick="skipTurn()">SKIP</button>
-         <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled>SELECT</button>
-     </div>
+        // Можете поменять порядок слотов тут, если хотите
+        const slots = [ 
+            { val: bBan?.id, type: 'ban', team: 'blue' }, 
+            { val: rBan?.id, type: 'ban', team: 'red' }, 
+            { val: bPick?.id, type: 'pick', team: 'blue' }, 
+            { val: rPick?.id, type: 'pick', team: 'red' } 
+        ];
 
-     <div class="char-pool" id="char-pool-container"></div>
- </div>
+        slots.forEach(slot => {
+            const div = document.createElement('div');
+            div.className = `im-icon im-${slot.type}`;
+            if (slot.val === 'skipped') {
+                div.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`;
+                div.style.background = '#222';
+            } else if (slot.val) {
+                let all = []; Object.values(charsData).forEach(a => all.push(...a));
+                const char = all.find(c => c.id === slot.val);
+                if(char) div.innerHTML = `<img src="${char.img}">`;
+            } else div.classList.add('im-empty');
+            row.appendChild(div);
+        });
+    }
 
- <script src="/socket.io/socket.io.js"></script>
- <script src="/draft-rules.js"></script>
+    function updateUI(state) {
+        isGameStarted = state.gameStarted;
+        activeTeam = state.currentTeam;
+        document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
+        document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
+        if(!state.gameStarted) {
+            state.ready.blue ?
+            document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
+            state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
+        }
+        document.getElementById('blue-name-display').innerText = state.blueName;
+        document.getElementById('red-name-display').innerText = state.redName;
+        
+        let txt = "WAITING...";
+        if(state.immunityPhaseActive) {
+            const niceAction = state.currentAction.replace('immunity_', '').toUpperCase();
+            txt = `IMMUNITY: ${state.currentTeam} ${niceAction}`;
+        }
+        else if(state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
+        document.getElementById('status').innerText = txt.toUpperCase();
 
- <script>
-     const socket = io({ transports: ['websocket'] });
-     const currentRoom = '<%= roomId %>';
-     const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
-     sessionStorage.setItem('draft_user_id', myUserId);
+        updateImmunityTop(state);
 
-     let myRole = '', currentDraftType = 'gitcg';
-     let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
+        const skipBtn = document.getElementById('skip-btn');
+        const isMyTurn = (myRole === state.currentTeam);
+        
+        skipBtn.classList.remove('skip-left', 'skip-right');
+        if (state.immunityPhaseActive && isMyTurn) {
+            skipBtn.style.display = 'block';
+            if (state.currentTeam === 'blue') skipBtn.classList.add('skip-left');
+            else skipBtn.classList.add('skip-right');
+        } else {
+            skipBtn.style.display = 'none';
+        }
 
-     socket.on('connect', () => {
-         if (currentRoom && myUserId) {
-             const nick = sessionStorage.getItem('draft_nickname') || 'Player';
-             const isSpectator = sessionStorage.getItem('join_as_spectator') === 'true';
+        const idx = state.stepIndex - 1;
+        const currentSchema = DRAFT_RULES[currentDraftType];
+        if(!state.immunityPhaseActive && currentSchema) {
+            const len = currentSchema.length;
+            for(let i=0; i<len; i++) {
+                const n = document.getElementById(`step-node-${i}`);
+                if(!n) continue;
+                n.classList.remove('step-active','step-done');
+                if(i < idx) n.classList.add('step-done');
+                else if(i === idx && state.gameStarted) {
+                    n.classList.add('step-active');
+                    setTimeout(() => n.scrollIntoView({behavior:'smooth', block:'center'}), 50);
+                }
+            }
+        }
 
-             // Благодаря обновлению server.js, этот вызов теперь безопасен и для Создателя, и для Игрока 2
-             socket.emit('join_game', { 
-                 roomId: currentRoom, 
-                 nickname: nick, 
-                 userId: myUserId,
-                 asSpectator: isSpectator 
-             });
-         }
-     });
+        renderSlots(state);
 
-     socket.on('error_msg', (msg) => {
-         if (msg === 'Session expired' || msg === 'Room not found') {
-             alert("Сессия игры не найдена или истекла.");
-             window.location.href = "/"; 
-         } else {
-             alert(msg);
-         }
-     });
+        // --- ЛОГИКА БЛОКИРОВКИ (DISABLED) ---
+        document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
 
-     socket.on('init_game', (data) => {
-         myRole = data.role; 
-         charsData = data.chars;
-         currentDraftType = data.state.draftType || 'gitcg';
-         
-         document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
-         renderRows(); 
-         updateUI(data.state);
-     });
+        // 1. Всегда блокируем тех, кто забанен или пикнут в ОСНОВНОЙ игре
+        state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
+        [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
 
-     socket.on('update_state', updateUI);
-     socket.on('game_started', () => { isGameStarted = true; });
-     socket.on('game_over', (state) => { 
-         updateUI(state); 
-         setTimeout(() => alert("Draft Completed!"), 500); 
-     });
+        // 2. Логика GITCG CUP 2
+        if (currentDraftType === 'gitcg_cup_2') {
+            const imBans = state.immunityBans || [];
+            const imPicks = state.immunitySelections || [];
 
-     socket.on('timer_tick', (data) => {
-         const t = typeof data === 'object' ? data.main : data;
-         const b = document.getElementById('blue-timer'), r = document.getElementById('red-timer');
-         if(activeTeam==='blue') { b.innerText=t; r.innerText="45"; b.style.color=t<10?'#ff5555':'#4facfe'; }
-         else { r.innerText=t; b.innerText="45"; r.style.color=t<10?'#ff5555':'#ff6b6b'; }
-         if(typeof data === 'object') {
-             document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
-             document.getElementById('red-res').innerText = formatTime(data.redReserve);
-         }
-     });
+            if (state.immunityPhaseActive) {
+                // В ФАЗЕ ИММУНИТЕТА:
+                // Нельзя выбирать тех, кто уже задействован в иммун-фазе
+                [...imBans, ...imPicks].forEach(item => {
+                    document.getElementById(`char-${item.id}`)?.classList.add('disabled');
+                });
+            } else {
+                // В ОСНОВНОЙ ИГРЕ:
+                
+                // А) "Иммун-баны" (imBans) остаются ДОСТУПНЫМИ (не блокируем их).
+                
+                // Б) "Имун-пики" (imPicks) заблокированы для всех...
+                imPicks.forEach(item => {
+                    document.getElementById(`char-${item.id}`)?.classList.add('disabled');
+                });
 
-     function formatTime(s) { 
-         if (s < 0) s = 0;
-         const m=Math.floor(s/60), sec=s%60; 
-         return `${m}:${sec<10?'0':''}${sec}`; 
-     }
+                // ...КРОМЕ случая 4-го и 9-го пика владельца
+                if (state.currentAction === 'pick' && activeTeam === myRole) {
+                    const myPickCount = activeTeam === 'blue' ? state.bluePicks.length : state.redPicks.length;
+                    const currentPickNum = myPickCount + 1; // 1-й пик, 2-й пик...
 
-     function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
-     
-     function copyRoomCode() { 
-         if (!currentRoom) return;
-         navigator.clipboard.writeText(currentRoom).then(() => {
-             const toast = document.getElementById('copy-toast');
-             toast.classList.add('show');
-             setTimeout(() => { toast.classList.remove('show'); }, 2000);
-         });
-     }
-     
-     function skipTurn() {
-         if(currentRoom) socket.emit('skip_action', currentRoom);
-     }
-     
-     function renderRows() {
-         const container = document.getElementById('char-pool-container');
-         container.innerHTML = '';
-         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
-         const schema = DRAFT_RULES[currentDraftType];
-         if(schema) {
-             schema.forEach((step, i) => {
-                 const d = document.createElement('div');
-                 const sideClass = step.team === 'blue' ? 'step-left' : 'step-right';
-                 let colorClass = 'step-pick'; 
-                 if (step.type.includes('ban')) { colorClass = 'step-ban'; } 
-                 else if (step.immunity) { colorClass = 'step-immunity'; }
-                 d.className = `ladder-step ${sideClass} ${colorClass}`;
-                 d.id = `step-node-${i}`; d.innerText = `${i+1}. ${step.type}`;
-                 ladder.appendChild(d);
-             });
-             container.appendChild(ladder);
-         }
+                    if (currentPickNum === 4 || currentPickNum === 9) {
+                        const myImmune = imPicks.find(i => i.team === activeTeam);
+                        // Если у меня есть имун и он еще не пикнут
+                        if (myImmune && !(activeTeam === 'blue' ? state.bluePicks : state.redPicks).includes(myImmune.id)) {
+                            const el = document.getElementById(`char-${myImmune.id}`);
+                            if (el) {
+                                el.classList.remove('disabled');
+                                el.classList.add('immunity-highlight'); // Подсвечиваем
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-         ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
-             const row = document.createElement('div'); row.className = `element-row row-${elem}`;
-             const chars = charsData[elem], mid = Math.ceil(chars.length/2);
-             const l = document.createElement('div'); l.className = 'row-half left-half';
-             chars.slice(0,mid).forEach(c => l.appendChild(createChar(c)));
-             const gap = document.createElement('div'); gap.className = 'row-gap';
-             const r = document.createElement('div'); r.className = 'row-half right-half';
-             chars.slice(mid).forEach(c => r.appendChild(createChar(c)));
-             row.appendChild(l); row.appendChild(gap); row.appendChild(r);
-             container.appendChild(row);
-         });
-     }
+        if(state.gameStarted && myRole !== 'spectator' && myRole !== state.currentTeam) {
+            document.querySelectorAll('.char-option').forEach(el => el.classList.add('disabled'));
+        }
+    }
 
-     function createChar(char) {
-         const el = document.createElement('div');
-         el.className = 'char-option'; el.id = `char-${char.id}`;
-         el.innerHTML = `<img src="${char.img}">`;
-         el.onclick = () => {
-             if(!isGameStarted || myRole === 'spectator') return;
-             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
-             selectedCharId = char.id; el.classList.add('selected-pending');
-             document.getElementById('confirm-btn').disabled = false;
-         };
-         return el;
-     }
+    function getStepsFor(schema, team, type) {
+        if (!schema) return [];
+        // Фильтруем шаги, чтобы убрать фазу иммунитета из подсчета слотов основной игры
+        // Фаза иммунитета - это первые 4 шага в cup_2
+        let startIndex = 0;
+        if (currentDraftType === 'gitcg_cup_2') startIndex = 4;
 
-     function confirmSelection() {
-         if(selectedCharId && currentRoom) {
-             socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
-             selectedCharId = null; document.getElementById('confirm-btn').disabled = true;
-             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
-         }
-     }
+        return schema
+            .map((step, index) => ({ ...step, globalIndex: index + 1 }))
+            .slice(startIndex) // Пропускаем первые 4 шага для рендера слотов
+            .filter(step => step.team === team && step.type === type)
+            .map(step => ({ num: step.globalIndex, immunity: false })); // immunity flag тут уже не нужен для визуала слотов
+    }
 
-     function updateImmunityTop(state) {
-         const topDisp = document.getElementById('immunity-top-display');
-         if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
-         topDisp.style.display = 'flex';
-         const row = document.getElementById('immunity-icons-row');
-         row.innerHTML = '';
-         const bans = state.immunityBans || [];
-         const picks = state.immunityPool || [];
-         const slots = [ { val: bans[0], type: 'ban' }, { val: picks[0], type: 'pick' }, { val: picks[1], type: 'pick' }, { val: bans[1], type: 'ban' } ];
-         slots.forEach(slot => {
-             const div = document.createElement('div');
-             div.className = `im-icon im-${slot.type}`;
-             if (slot.val === 'skipped') {
-                 div.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`;
-                 div.style.background = '#222';
-             } else if (slot.val) {
-                 let all = []; Object.values(charsData).forEach(a => all.push(...a));
-                 const char = all.find(c => c.id === slot.val);
-                 if(char) div.innerHTML = `<img src="${char.img}">`;
-             } else div.classList.add('im-empty');
-             row.appendChild(div);
-         });
-     }
+    function renderSlots(state) {
+        const currentSchema = DRAFT_RULES[currentDraftType];
+        if (!currentSchema) return;
 
-     function updateUI(state) {
-         isGameStarted = state.gameStarted;
-         activeTeam = state.currentTeam;
-         document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
-         document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
-         if(!state.gameStarted) {
-             state.ready.blue ?
-             document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
-             state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
-         }
-         document.getElementById('blue-name-display').innerText = state.blueName;
-         document.getElementById('red-name-display').innerText = state.redName;
-         
-         let txt = "WAITING...";
-         if(state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
-         else if(state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
-         document.getElementById('status').innerText = txt.toUpperCase();
+        const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban');
+        const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
+        const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick');
+        const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
 
-         updateImmunityTop(state);
+        const fill = (containerId, items, stepData, isBan) => {
+            const div = document.getElementById(containerId);
+            if(!div) return;
+            div.innerHTML = ''; 
+            stepData.forEach((step, i) => {
+                const slot = document.createElement('div');
+                slot.className = 'slot-circle';
+                if (isBan) slot.classList.add('slot-ban');
+                
+                // Подсветка активного слота
+                if (!state.immunityPhaseActive && state.gameStarted && step.num === state.stepIndex) {
+                    slot.classList.add('active-slot');
+                }
 
-         const skipBtn = document.getElementById('skip-btn');
-         const isMyTurn = (myRole === state.currentTeam);
-         
-         skipBtn.classList.remove('skip-left', 'skip-right');
-         if (state.immunityPhaseActive && isMyTurn) {
-             skipBtn.style.display = 'block';
-             if (state.currentTeam === 'blue') skipBtn.classList.add('skip-left');
-             else skipBtn.classList.add('skip-right');
-         } else {
-             skipBtn.style.display = 'none';
-         }
+                let charId = null;
+                if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
 
-         const idx = state.stepIndex - 1;
-         const currentSchema = DRAFT_RULES[currentDraftType];
-         if(!state.immunityPhaseActive && currentSchema) {
-             const len = currentSchema.length;
-             for(let i=0; i<len; i++) {
-                 const n = document.getElementById(`step-node-${i}`);
-                 if(!n) continue;
-                 n.classList.remove('step-active','step-done');
-                 if(i < idx) n.classList.add('step-done');
-                 else if(i === idx && state.gameStarted) {
-                     n.classList.add('step-active');
-                     setTimeout(() => n.scrollIntoView({behavior:'smooth', block:'center'}), 50);
-                 }
-             }
-         }
+                if (charId) {
+                    let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
+                    const char = allFlat.find(c => c.id === charId);
+                    if (char) slot.innerHTML = `<img src="${char.img}">`;
+                } else slot.innerHTML = `<span class="step-number">${step.num}</span>`; // Показываем глобальный номер шага
+                div.appendChild(slot);
+            });
+        };
 
-         renderSlots(state);
-         document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
-         state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
-         [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
-         
-         if(state.immunityPhaseActive) {
-             [...state.immunityBans, ...state.immunityPool].forEach(id => {
-                 if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
-             });
-         } else {
-             const step = currentSchema ? currentSchema[idx] : null;
-             const isImmunityTurn = step && step.immunity;
-             state.immunityPool.forEach(id => {
-                 if(id === 'skipped') return;
-                 const el = document.getElementById(`char-${id}`);
-                 if(!el) return;
-                 if(state.currentAction === 'ban') el.classList.add('disabled');
-                 else if (state.currentAction === 'pick') {
-                     if(isImmunityTurn) {
-                         const myPicks = activeTeam === 'blue' ? state.bluePicks : state.redPicks;
-                         if(!myPicks.includes(id)) { el.classList.remove('disabled'); el.classList.add('immunity-highlight'); }
-                     } else el.classList.add('disabled');
-                 }
-             });
-         }
-         
-         if(state.gameStarted && myRole !== 'spectator' && myRole !== state.currentTeam) {
-             document.querySelectorAll('.char-option').forEach(el => el.classList.add('disabled'));
-         }
-     }
+        fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true);
+        fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
 
-     function getStepsFor(schema, team, type) {
-         if (!schema) return [];
-         return schema
-             .map((step, index) => ({ ...step, globalIndex: index + 1 }))
-             .filter(step => step.team === team && step.type === type)
-             .map(step => ({ num: step.globalIndex, immunity: step.immunity }));
-     }
-
-     function renderSlots(state) {
-         const currentSchema = DRAFT_RULES[currentDraftType];
-         if (!currentSchema) return;
-
-         const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban');
-         const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
-         const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick');
-         const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
-
-         const fill = (containerId, items, stepData, isBan) => {
-             const div = document.getElementById(containerId);
-             if(!div) return;
-             div.innerHTML = ''; 
-             stepData.forEach((step, i) => {
-                 const slot = document.createElement('div');
-                 slot.className = 'slot-circle';
-                 if (isBan) slot.classList.add('slot-ban');
-                 if (step.immunity) slot.classList.add('slot-immunity-pick');
-                 
-                 if (!state.immunityPhaseActive && state.gameStarted && step.num === state.stepIndex) {
-                     slot.classList.add('active-slot');
-                 }
-
-                 let charId = null;
-                 if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
-
-                 if (charId) {
-                     let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
-                     const char = allFlat.find(c => c.id === charId);
-                     if (char) slot.innerHTML = `<img src="${char.img}">`;
-                 } else slot.innerHTML = `<span class="step-number">${step.num}</span>`;
-                 div.appendChild(slot);
-             });
-         };
-
-         fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true);
-         fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
-         
-         if (currentDraftType === 'generals_2' || currentDraftType === 'classic') {
-             fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
-             fill('blue-picks-2', [], [], false); 
-             fill('red-picks-1', state.redPicks, redPickSteps, false);
-             fill('red-picks-2', [], [], false);
-         } else {
-             fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false);
-             fill('blue-picks-2', state.bluePicks.slice(5, 9), bluePickSteps.slice(5, 9), false);
-             fill('red-picks-1', state.redPicks.slice(0, 5), redPickSteps.slice(0, 5), false);
-             fill('red-picks-2', state.redPicks.slice(5, 9), redPickSteps.slice(5, 9), false);
-         }
-     }
- </script>
-
-<%- include('../partials/footer') %>
-
-
+        // Отрисовка пиков (стандартная)
+        if (currentDraftType === 'generals_2' || currentDraftType === 'classic') {
+            fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
+            fill('blue-picks-2', [], [], false); 
+            fill('red-picks-1', state.redPicks, redPickSteps, false);
+            fill('red-picks-2', [], [], false);
+        } else {
+            // Для GITCG
+            fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false);
+            fill('blue-picks-2', state.bluePicks.slice(5, 9), bluePickSteps.slice(5, 9), false);
+            fill('red-picks-1', state.redPicks.slice(0, 5), redPickSteps.slice(0, 5), false);
+            fill('red-picks-2', state.redPicks.slice(5, 9), redPickSteps.slice(5, 9), false);
+        }
+    }
+</script>
