@@ -85,7 +85,13 @@ io.on('connection', (socket) => {
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
-            bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false }
+            bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false },
+            // НОВОЕ: Хранение результатов матчей (3 игры)
+            matchResults: [
+                { blueChar: null, redChar: null, winner: null }, // Game 1
+                { blueChar: null, redChar: null, winner: null }, // Game 2
+                { blueChar: null, redChar: null, winner: null }  // Game 3
+            ]
         };
         socket.join(roomId);
         socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
@@ -134,6 +140,24 @@ io.on('connection', (socket) => {
         else session.currentTeam === 'blue' ? session.bluePicks.push(charId) : session.redPicks.push(charId);
         nextStep(roomId);
     });
+
+    // НОВОЕ: Обработка обновления результатов
+    socket.on('update_results', ({ roomId, gameIndex, field, value }) => {
+        const session = sessions[roomId];
+        if (!session) return;
+        
+        // Обновляем данные (например: gameIndex: 0, field: 'blueChar', value: 'diluc')
+        if (session.matchResults[gameIndex]) {
+            session.matchResults[gameIndex][field] = value;
+        }
+
+        // Если это обновление победителя, пытаемся сохранить в БД (если драфт окончен)
+        if (field === 'winner' || field === 'blueChar' || field === 'redChar') {
+           updateMatchInDb(session);
+        }
+
+        io.to(roomId).emit('update_state', getPublicState(session));
+    });
 });
 
 async function nextStep(roomId) {
@@ -141,22 +165,33 @@ async function nextStep(roomId) {
     if (s.stepIndex >= s.draftOrder.length) {
         io.to(roomId).emit('game_over', getPublicState(s)); 
         clearInterval(s.timerInterval); 
-        try {
-            await Match.create({
-                roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
-                blueDiscordId: s.blueUserId, redDiscordId: s.redUserId,
-                bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks
-            });
-            const count = await Match.countDocuments();
-            if (count > 6) {
-                const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 6);
-                await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
-            }
-        } catch (e) { console.error(e); }
+        await updateMatchInDb(s); // Сохраняем драфт
         return;
     }
     const c = s.draftOrder[s.stepIndex]; s.currentTeam = c.team; s.currentAction = c.type;
     io.to(roomId).emit('update_state', getPublicState(s));
+}
+
+// НОВОЕ: Функция сохранения/обновления матча
+async function updateMatchInDb(s) {
+    try {
+        const matchData = {
+            roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
+            blueDiscordId: s.blueUserId, redDiscordId: s.redUserId,
+            bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks,
+            results: s.matchResults // Сохраняем результаты
+        };
+        
+        // Используем findOneAndUpdate с upsert, чтобы создавать или обновлять
+        await Match.findOneAndUpdate({ roomId: s.id }, matchData, { upsert: true, new: true });
+        
+        // Очистка старых (оставляем логику как была, но лучше вынести в отдельный крон)
+        const count = await Match.countDocuments();
+        if (count > 20) { // Увеличил лимит до 20 для надежности
+            const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 20);
+            await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
+        }
+    } catch (e) { console.error("DB Error:", e); }
 }
 
 function startTimer(roomId) {
@@ -178,7 +213,8 @@ function getPublicState(session) {
         currentTeam: session.currentTeam, currentAction: session.currentAction,
         bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
-        ready: session.ready, gameStarted: session.gameStarted
+        ready: session.ready, gameStarted: session.gameStarted,
+        matchResults: session.matchResults // Передаем на фронт
     };
 }
 
