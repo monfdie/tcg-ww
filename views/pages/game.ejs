@@ -8,67 +8,12 @@
         display: flex;
         flex-direction: column;
     }
-
-    /* --- POST GAME SUMMARY STYLES --- */
-    #post-game-screen {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(11, 13, 23, 0.98); z-index: 200;
-        display: none; flex-direction: column; align-items: center; justify-content: center;
-        backdrop-filter: blur(10px);
-    }
-    .summary-card {
-        background: #161c30; border: 1px solid #3c4566; border-radius: 8px;
-        width: 1000px; padding: 30px; box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        border-top: 3px solid #d4af37;
-    }
-    .summary-header { text-align: center; margin-bottom: 30px; }
-    .final-score { font-family: 'Cinzel', serif; font-size: 3em; color: #fff; text-shadow: 0 0 20px rgba(212, 175, 55, 0.5); }
-    .vs-text { font-size: 0.5em; color: #556; vertical-align: middle; margin: 0 10px; }
-    
-    .match-row {
-        display: flex; align-items: center; justify-content: space-between;
-        background: rgba(0,0,0,0.3); margin-bottom: 15px; padding: 15px 20px;
-        border-radius: 6px; border: 1px solid #2a3454; transition: 0.3s;
-    }
-    .match-row:hover { background: rgba(255,255,255,0.02); border-color: #444; }
-    
-    .team-deck-group { display: flex; align-items: center; gap: 8px; }
-    .team-deck-group.right { justify-content: flex-end; }
-    
-    /* Стили селектов и превью */
-    .deck-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .char-select {
-        background: #0f131f; border: 1px solid #3c4566; color: #8da4c4;
-        padding: 2px; border-radius: 4px; font-family: 'Segoe UI', sans-serif;
-        width: 100px; font-size: 11px; cursor: pointer;
-    }
-    .char-img-preview {
-        width: 50px; height: 50px; border-radius: 50%; border: 2px solid #333;
-        object-fit: cover; background: #000; transition: 0.2s;
-    }
-    
-    .winner-toggle { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 0 20px; }
-    .game-label { font-family: 'Cinzel', serif; color: #666; font-size: 0.8em; letter-spacing: 2px; font-weight: bold; }
-    .win-controls { display: flex; gap: 10px; }
-    .win-btn {
-        width: 32px; height: 32px; border-radius: 50%; border: 1px solid #444;
-        cursor: pointer; display: flex; align-items: center; justify-content: center;
-        background: #222; font-size: 12px; color: #555; transition: 0.2s; font-weight: bold;
-    }
-    .win-btn:hover { border-color: #888; color: #aaa; }
-    .win-btn.active-blue { background: #4facfe; color: #fff; box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); border-color: #4facfe; }
-    .win-btn.active-red { background: #ff6b6b; color: #fff; box-shadow: 0 0 15px rgba(255, 107, 107, 0.4); border-color: #ff6b6b; }
-    
-    .blue-name { color: #4facfe; font-weight: bold; }
-    .red-name { color: #ff6b6b; font-weight: bold; }
-
-    .finish-info { text-align: center; margin-top: 20px; color: #555; font-size: 0.9em; font-style: italic; }
 </style>
 
 <div id="game-screen">
     <div class="game-header">
          <div id="room-container">
-             <div id="room-display" onclick="copyRoomCode()">CODE: <%= roomId %></div>
+             <div id="room-display" onclick="copyRoomCode()" title="Click to copy room code">CODE: <%= roomId %></div>
              <span id="copy-toast">Code Copied!</span>
          </div>
          <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
@@ -120,377 +65,250 @@
      </div>
 
      <div class="char-pool" id="char-pool-container"></div>
-</div>
+ </div>
 
-<div id="post-game-screen">
-    <div class="summary-card">
-        <div class="summary-header">
-            <div class="final-score">
-                <span id="score-blue">0</span>
-                <span class="vs-text">VS</span>
-                <span id="score-red">0</span>
-            </div>
-            <div style="margin-top: 10px;">
-                <span id="final-blue-name" class="blue-name">Player 1</span>
-                &nbsp;&nbsp;MATCH RESULTS&nbsp;&nbsp;
-                <span id="final-red-name" class="red-name">Player 2</span>
-            </div>
-        </div>
+ <script src="/socket.io/socket.io.js"></script>
+ <script src="/draft-rules.js"></script>
 
-        <div id="match-rows-container">
-            </div>
+ <script>
+     const socket = io({ transports: ['websocket'] });
+     const currentRoom = '<%= roomId %>';
+     const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
+     sessionStorage.setItem('draft_user_id', myUserId);
 
-        <div class="finish-info">
-            Screenshot this screen to share results! 📸
-        </div>
-    </div>
-</div>
+     let myRole = '', currentDraftType = 'gitcg';
+     let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="/draft-rules.js"></script>
+     socket.on('connect', () => {
+         if (currentRoom && myUserId) {
+             const nick = sessionStorage.getItem('draft_nickname') || 'Player';
+             const isSpectator = sessionStorage.getItem('join_as_spectator') === 'true';
 
-<script>
-    const socket = io({ transports: ['websocket'] });
-    const currentRoom = '<%= roomId %>';
-    const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
-    sessionStorage.setItem('draft_user_id', myUserId);
+             // Благодаря обновлению server.js, этот вызов теперь безопасен и для Создателя, и для Игрока 2
+             socket.emit('join_game', { 
+                 roomId: currentRoom, 
+                 nickname: nick, 
+                 userId: myUserId,
+                 asSpectator: isSpectator 
+             });
+         }
+     });
 
-    let myRole = '', currentDraftType = 'gitcg';
-    let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
-    let fullCharsList = [];
+     socket.on('error_msg', (msg) => {
+         if (msg === 'Session expired' || msg === 'Room not found') {
+             alert("Сессия игры не найдена или истекла.");
+             window.location.href = "/"; 
+         } else {
+             alert(msg);
+         }
+     });
 
-    socket.on('connect', () => {
-        if (currentRoom && myUserId) {
-            const nick = sessionStorage.getItem('draft_nickname') || 'Player';
-            const isSpectator = sessionStorage.getItem('join_as_spectator') === 'true';
-            
-            socket.emit('join_game', { 
-                roomId: currentRoom, 
-                nickname: nick, 
-                userId: myUserId,
-                asSpectator: isSpectator 
-            });
-        }
-    });
+     socket.on('init_game', (data) => {
+         myRole = data.role; 
+         charsData = data.chars;
+         currentDraftType = data.state.draftType || 'gitcg';
+         
+         document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
+         renderRows(); 
+         updateUI(data.state);
+     });
 
-    socket.on('error_msg', (msg) => {
-        if (msg === 'Session expired' || msg === 'Room not found') {
-            alert("Session not found."); window.location.href = "/"; 
-        } else { alert(msg); }
-    });
+     socket.on('update_state', updateUI);
+     socket.on('game_started', () => { isGameStarted = true; });
+     socket.on('game_over', (state) => { 
+         updateUI(state); 
+         setTimeout(() => alert("Draft Completed!"), 500); 
+     });
 
-    socket.on('init_game', (data) => {
-        myRole = data.role; 
-        charsData = data.chars;
-        
-        fullCharsList = [];
-        Object.values(charsData).forEach(arr => fullCharsList.push(...arr));
+     socket.on('timer_tick', (data) => {
+         const t = typeof data === 'object' ? data.main : data;
+         const b = document.getElementById('blue-timer'), r = document.getElementById('red-timer');
+         if(activeTeam==='blue') { b.innerText=t; r.innerText="45"; b.style.color=t<10?'#ff5555':'#4facfe'; }
+         else { r.innerText=t; b.innerText="45"; r.style.color=t<10?'#ff5555':'#ff6b6b'; }
+         if(typeof data === 'object') {
+             document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
+             document.getElementById('red-res').innerText = formatTime(data.redReserve);
+         }
+     });
 
-        currentDraftType = data.state.draftType || 'gitcg';
-        document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
-        renderRows(); 
-        updateUI(data.state);
-    });
+     function formatTime(s) { 
+         if (s < 0) s = 0;
+         const m=Math.floor(s/60), sec=s%60; 
+         return `${m}:${sec<10?'0':''}${sec}`; 
+     }
 
-    socket.on('update_state', updateUI);
-    socket.on('game_started', () => { isGameStarted = true; });
+     function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
+     
+     function copyRoomCode() { 
+         if (!currentRoom) return;
+         navigator.clipboard.writeText(currentRoom).then(() => {
+             const toast = document.getElementById('copy-toast');
+             toast.classList.add('show');
+             setTimeout(() => { toast.classList.remove('show'); }, 2000);
+         });
+     }
+     
+     function skipTurn() {
+         if(currentRoom) socket.emit('skip_action', currentRoom);
+     }
+     
+     function renderRows() {
+         const container = document.getElementById('char-pool-container');
+         container.innerHTML = '';
+         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
+         const schema = DRAFT_RULES[currentDraftType];
+         if(schema) {
+             schema.forEach((step, i) => {
+                 const d = document.createElement('div');
+                 const sideClass = step.team === 'blue' ? 'step-left' : 'step-right';
+                 let colorClass = 'step-pick'; 
+                 if (step.type.includes('ban')) { colorClass = 'step-ban'; } 
+                 else if (step.immunity) { colorClass = 'step-immunity'; }
+                 d.className = `ladder-step ${sideClass} ${colorClass}`;
+                 d.id = `step-node-${i}`; d.innerText = `${i+1}. ${step.type}`;
+                 ladder.appendChild(d);
+             });
+             container.appendChild(ladder);
+         }
 
-    socket.on('timer_tick', (data) => {
-        const t = typeof data === 'object' ? data.main : data;
-        const b = document.getElementById('blue-timer'), r = document.getElementById('red-timer');
-        if(activeTeam==='blue') { b.innerText=t; r.innerText="45"; b.style.color=t<10?'#ff5555':'#4facfe'; }
-        else { r.innerText=t; b.innerText="45"; r.style.color=t<10?'#ff5555':'#ff6b6b'; }
-        if(typeof data === 'object') {
-            document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
-            document.getElementById('red-res').innerText = formatTime(data.redReserve);
-        }
-    });
+         ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
+             const row = document.createElement('div'); row.className = `element-row row-${elem}`;
+             const chars = charsData[elem], mid = Math.ceil(chars.length/2);
+             const l = document.createElement('div'); l.className = 'row-half left-half';
+             chars.slice(0,mid).forEach(c => l.appendChild(createChar(c)));
+             const gap = document.createElement('div'); gap.className = 'row-gap';
+             const r = document.createElement('div'); r.className = 'row-half right-half';
+             chars.slice(mid).forEach(c => r.appendChild(createChar(c)));
+             row.appendChild(l); row.appendChild(gap); row.appendChild(r);
+             container.appendChild(row);
+         });
+     }
 
-    function formatTime(s) { 
-        if (s < 0) s = 0;
-        const m=Math.floor(s/60), sec=s%60; 
-        return `${m}:${sec<10?'0':''}${sec}`; 
-    }
+     function createChar(char) {
+         const el = document.createElement('div');
+         el.className = 'char-option'; el.id = `char-${char.id}`;
+         el.innerHTML = `<img src="${char.img}">`;
+         el.onclick = () => {
+             if(!isGameStarted || myRole === 'spectator') return;
+             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
+             selectedCharId = char.id; el.classList.add('selected-pending');
+             document.getElementById('confirm-btn').disabled = false;
+         };
+         return el;
+     }
 
-    function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
-    
-    function copyRoomCode() { 
-        if (!currentRoom) return;
-        navigator.clipboard.writeText(currentRoom).then(() => {
-            const toast = document.getElementById('copy-toast');
-            toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 2000);
-        });
-    }
-    
-    function skipTurn() { if(currentRoom) socket.emit('skip_action', currentRoom); }
-    
-    function renderRows() {
-        const container = document.getElementById('char-pool-container');
-        container.innerHTML = '';
-        const ladder = document.createElement('div'); ladder.className = 'ladder-container';
-        const schema = DRAFT_RULES[currentDraftType];
-        if(schema) {
-            schema.forEach((step, i) => {
-                const d = document.createElement('div');
-                const sideClass = step.team === 'blue' ? 'step-left' : 'step-right';
-                let colorClass = 'step-pick'; 
-                if (step.type.includes('ban')) { colorClass = 'step-ban'; } 
-                else if (step.immunity) { colorClass = 'step-immunity'; }
-                d.className = `ladder-step ${sideClass} ${colorClass}`;
-                d.id = `step-node-${i}`; d.innerText = `${i+1}. ${step.type}`;
-                ladder.appendChild(d);
-            });
-            container.appendChild(ladder);
-        }
+     function confirmSelection() {
+         if(selectedCharId && currentRoom) {
+             socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
+             selectedCharId = null; document.getElementById('confirm-btn').disabled = true;
+             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
+         }
+     }
 
-        ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
-            const row = document.createElement('div'); row.className = `element-row row-${elem}`;
-            const chars = charsData[elem], mid = Math.ceil(chars.length/2);
-            const l = document.createElement('div'); l.className = 'row-half left-half';
-            chars.slice(0,mid).forEach(c => l.appendChild(createChar(c)));
-            const gap = document.createElement('div'); gap.className = 'row-gap';
-            const r = document.createElement('div'); r.className = 'row-half right-half';
-            chars.slice(mid).forEach(c => r.appendChild(createChar(c)));
-            row.appendChild(l); row.appendChild(gap); row.appendChild(r);
-            container.appendChild(row);
-        });
-    }
+     function updateImmunityTop(state) {
+         const topDisp = document.getElementById('immunity-top-display');
+         if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
+         topDisp.style.display = 'flex';
+         const row = document.getElementById('immunity-icons-row');
+         row.innerHTML = '';
+         const bans = state.immunityBans || [];
+         const picks = state.immunityPool || [];
+         const slots = [ { val: bans[0], type: 'ban' }, { val: picks[0], type: 'pick' }, { val: picks[1], type: 'pick' }, { val: bans[1], type: 'ban' } ];
+         slots.forEach(slot => {
+             const div = document.createElement('div');
+             div.className = `im-icon im-${slot.type}`;
+             if (slot.val === 'skipped') {
+                 div.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`;
+                 div.style.background = '#222';
+             } else if (slot.val) {
+                 let all = []; Object.values(charsData).forEach(a => all.push(...a));
+                 const char = all.find(c => c.id === slot.val);
+                 if(char) div.innerHTML = `<img src="${char.img}">`;
+             } else div.classList.add('im-empty');
+             row.appendChild(div);
+         });
+     }
 
-    function createChar(char) {
-        const el = document.createElement('div');
-        el.className = 'char-option'; el.id = `char-${char.id}`;
-        el.innerHTML = `<img src="${char.img}">`;
-        el.onclick = () => {
-            if(!isGameStarted || myRole === 'spectator') return;
-            document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
-            selectedCharId = char.id; el.classList.add('selected-pending');
-            document.getElementById('confirm-btn').disabled = false;
-        };
-        return el;
-    }
+     function updateUI(state) {
+         isGameStarted = state.gameStarted;
+         activeTeam = state.currentTeam;
+         document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
+         document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
+         if(!state.gameStarted) {
+             state.ready.blue ?
+             document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
+             state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
+         }
+         document.getElementById('blue-name-display').innerText = state.blueName;
+         document.getElementById('red-name-display').innerText = state.redName;
+         
+         let txt = "WAITING...";
+         if(state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
+         else if(state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
+         document.getElementById('status').innerText = txt.toUpperCase();
 
-    function confirmSelection() {
-        if(selectedCharId && currentRoom) {
-            socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
-            selectedCharId = null; document.getElementById('confirm-btn').disabled = true;
-            document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
-        }
-    }
+         updateImmunityTop(state);
 
-    function updateImmunityTop(state) {
-        const topDisp = document.getElementById('immunity-top-display');
-        if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
-        topDisp.style.display = 'flex';
-        const row = document.getElementById('immunity-icons-row');
-        row.innerHTML = '';
-        const bans = state.immunityBans || [];
-        const picks = state.immunityPool || [];
-        // Ожидаем порядок: Бан, Пик, Пик, Бан (стандартная визуализация)
-        // Если bans пустые, будут пустые кружки, что нормально
-        const slots = [ { val: bans[0], type: 'ban' }, { val: picks[0], type: 'pick' }, { val: picks[1], type: 'pick' }, { val: bans[1], type: 'ban' } ];
-        slots.forEach(slot => {
-            const div = document.createElement('div');
-            div.className = `im-icon im-${slot.type}`;
-            if (slot.val === 'skipped') {
-                div.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`;
-                div.style.background = '#222';
-            } else if (slot.val) {
-                const char = fullCharsList.find(c => c.id === slot.val);
-                if(char) div.innerHTML = `<img src="${char.img}">`;
-            } else div.classList.add('im-empty');
-            row.appendChild(div);
-        });
-    }
+         const skipBtn = document.getElementById('skip-btn');
+         const isMyTurn = (myRole === state.currentTeam);
+         
+         skipBtn.classList.remove('skip-left', 'skip-right');
+         if (state.immunityPhaseActive && isMyTurn) {
+             skipBtn.style.display = 'block';
+             if (state.currentTeam === 'blue') skipBtn.classList.add('skip-left');
+             else skipBtn.classList.add('skip-right');
+         } else {
+             skipBtn.style.display = 'none';
+         }
 
-    function updateUI(state) {
-        isGameStarted = state.gameStarted;
-        activeTeam = state.currentTeam;
-        
-        // --- POST GAME LOGIC ---
-        const postScreen = document.getElementById('post-game-screen');
-        // Показываем экран результатов только для поддерживаемых режимов и когда активна фаза
-        if (state.postGameActive) {
-            postScreen.style.display = 'flex';
-            renderPostGameTable(state);
-        } else {
-            postScreen.style.display = 'none';
-        }
-        // -----------------------
+         const idx = state.stepIndex - 1;
+         const currentSchema = DRAFT_RULES[currentDraftType];
+         if(!state.immunityPhaseActive && currentSchema) {
+             const len = currentSchema.length;
+             for(let i=0; i<len; i++) {
+                 const n = document.getElementById(`step-node-${i}`);
+                 if(!n) continue;
+                 n.classList.remove('step-active','step-done');
+                 if(i < idx) n.classList.add('step-done');
+                 else if(i === idx && state.gameStarted) {
+                     n.classList.add('step-active');
+                     setTimeout(() => n.scrollIntoView({behavior:'smooth', block:'center'}), 50);
+                 }
+             }
+         }
 
-        document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
-        document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
-        if(!state.gameStarted) {
-            state.ready.blue ?
-            document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
-            state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
-        }
-        document.getElementById('blue-name-display').innerText = state.blueName;
-        document.getElementById('red-name-display').innerText = state.redName;
-        
-        let txt = "WAITING...";
-        if(state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
-        else if(state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
-        document.getElementById('status').innerText = txt.toUpperCase();
+         renderSlots(state);
+         document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
+         state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
+         [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
+         
+         if(state.immunityPhaseActive) {
+             [...state.immunityBans, ...state.immunityPool].forEach(id => {
+                 if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
+             });
+         } else {
+             const step = currentSchema ? currentSchema[idx] : null;
+             const isImmunityTurn = step && step.immunity;
+             state.immunityPool.forEach(id => {
+                 if(id === 'skipped') return;
+                 const el = document.getElementById(`char-${id}`);
+                 if(!el) return;
+                 if(state.currentAction === 'ban') el.classList.add('disabled');
+                 else if (state.currentAction === 'pick') {
+                     if(isImmunityTurn) {
+                         const myPicks = activeTeam === 'blue' ? state.bluePicks : state.redPicks;
+                         if(!myPicks.includes(id)) { el.classList.remove('disabled'); el.classList.add('immunity-highlight'); }
+                     } else el.classList.add('disabled');
+                 }
+             });
+         }
+         
+         if(state.gameStarted && myRole !== 'spectator' && myRole !== state.currentTeam) {
+             document.querySelectorAll('.char-option').forEach(el => el.classList.add('disabled'));
+         }
+     }
 
-        updateImmunityTop(state);
-
-        const skipBtn = document.getElementById('skip-btn');
-        const isMyTurn = (myRole === state.currentTeam);
-        
-        skipBtn.classList.remove('skip-left', 'skip-right');
-        if (state.immunityPhaseActive && isMyTurn) {
-            skipBtn.style.display = 'block';
-            if (state.currentTeam === 'blue') skipBtn.classList.add('skip-left');
-            else skipBtn.classList.add('skip-right');
-        } else {
-            skipBtn.style.display = 'none';
-        }
-
-        const idx = state.stepIndex - 1;
-        const currentSchema = DRAFT_RULES[currentDraftType];
-        if(!state.immunityPhaseActive && currentSchema) {
-            const len = currentSchema.length;
-            for(let i=0; i<len; i++) {
-                const n = document.getElementById(`step-node-${i}`);
-                if(!n) continue;
-                n.classList.remove('step-active','step-done');
-                if(i < idx) n.classList.add('step-done');
-                else if(i === idx && state.gameStarted) {
-                    n.classList.add('step-active');
-                    setTimeout(() => n.scrollIntoView({behavior:'smooth', block:'center'}), 50);
-                }
-            }
-        }
-
-        renderSlots(state);
-        document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
-        state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
-        [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
-        
-        if(state.immunityPhaseActive) {
-            [...state.immunityBans, ...state.immunityPool].forEach(id => {
-                if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
-            });
-        } else {
-            const step = currentSchema ? currentSchema[idx] : null;
-            const isImmunityTurn = step && step.immunity;
-            state.immunityPool.forEach(id => {
-                if(id === 'skipped') return;
-                const el = document.getElementById(`char-${id}`);
-                if(!el) return;
-                if(state.currentAction === 'ban') el.classList.add('disabled');
-                else if (state.currentAction === 'pick') {
-                    if(isImmunityTurn) {
-                        const myPicks = activeTeam === 'blue' ? state.bluePicks : state.redPicks;
-                        if(!myPicks.includes(id)) { el.classList.remove('disabled'); el.classList.add('immunity-highlight'); }
-                    } else el.classList.add('disabled');
-                }
-            });
-        }
-        
-        if(state.gameStarted && myRole !== 'spectator' && myRole !== state.currentTeam) {
-            document.querySelectorAll('.char-option').forEach(el => el.classList.add('disabled'));
-        }
-    }
-
-    function renderPostGameTable(state) {
-        document.getElementById('final-blue-name').innerText = state.blueName;
-        document.getElementById('final-red-name').innerText = state.redName;
-        document.getElementById('score-blue').innerText = state.finalScore.blue;
-        document.getElementById('score-red').innerText = state.finalScore.red;
-
-        const container = document.getElementById('match-rows-container');
-        container.innerHTML = ''; 
-
-        state.matchResults.forEach((match, index) => {
-            const row = document.createElement('div');
-            row.className = 'match-row';
-            
-            // Генерация 3-х слотов для синего
-            let blueHTML = '';
-            for(let i=0; i<3; i++) {
-                const val = match.blueChars[i];
-                const img = getCharImg(val);
-                blueHTML += `
-                    <div class="deck-slot">
-                        <img src="${img}" class="char-img-preview">
-                        <select class="char-select" onchange="sendMatchUpdate(${index}, 'blueChar', this.value, ${i})" ${myRole !== 'blue' ? 'disabled' : ''}>
-                            <option value="">Select</option>
-                            ${generateOptions(state.bluePicks, val)}
-                        </select>
-                    </div>
-                `;
-            }
-
-            // Генерация 3-х слотов для красного
-            let redHTML = '';
-            for(let i=0; i<3; i++) {
-                const val = match.redChars[i];
-                const img = getCharImg(val);
-                redHTML += `
-                    <div class="deck-slot">
-                        <img src="${img}" class="char-img-preview">
-                        <select class="char-select" onchange="sendMatchUpdate(${index}, 'redChar', this.value, ${i})" ${myRole !== 'red' ? 'disabled' : ''}>
-                            <option value="">Select</option>
-                            ${generateOptions(state.redPicks, val)}
-                        </select>
-                    </div>
-                `;
-            }
-
-            const blueWinClass = match.winner === 'blue' ? 'active-blue' : '';
-            const redWinClass = match.winner === 'red' ? 'active-red' : '';
-
-            row.innerHTML = `
-                <div class="team-deck-group">
-                    ${blueHTML}
-                </div>
-
-                <div class="winner-toggle">
-                    <div class="game-label">GAME ${index + 1}</div>
-                    <div class="win-controls">
-                        <div class="win-btn ${blueWinClass}" onclick="sendMatchUpdate(${index}, 'winner', 'blue')">W</div>
-                        <div class="win-btn ${redWinClass}" onclick="sendMatchUpdate(${index}, 'winner', 'red')">W</div>
-                    </div>
-                </div>
-
-                <div class="team-deck-group right">
-                    ${redHTML}
-                </div>
-            `;
-            container.appendChild(row);
-        });
-    }
-
-    function generateOptions(pickIds, selectedId) {
-        return pickIds.map(id => {
-            const char = fullCharsList.find(c => c.id === id);
-            const name = char ? char.name : id;
-            const sel = id === selectedId ? 'selected' : '';
-            return `<option value="${id}" ${sel}>${name}</option>`;
-        }).join('');
-    }
-
-    function getCharImg(id) {
-        if(!id) return 'https://cdn.discordapp.com/embed/avatars/0.png';
-        const char = fullCharsList.find(c => c.id === id);
-        return char ? char.img : 'https://cdn.discordapp.com/embed/avatars/0.png';
-    }
-
-    function sendMatchUpdate(gameIndex, type, value, charIndex = 0) {
-        if (myRole === 'spectator') return;
-        socket.emit('update_match_result', {
-            roomId: currentRoom,
-            gameIndex: gameIndex,
-            type: type,
-            value: value,
-            charIndex: charIndex
-        });
-    }
-
-    // --- HELPER FUNCTIONS ---
-    function getStepsFor(schema, team, type) {
+     function getStepsFor(schema, team, type) {
          if (!schema) return [];
          return schema
              .map((step, index) => ({ ...step, globalIndex: index + 1 }))
@@ -525,7 +343,8 @@
                  if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
 
                  if (charId) {
-                     const char = fullCharsList.find(c => c.id === charId);
+                     let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
+                     const char = allFlat.find(c => c.id === charId);
                      if (char) slot.innerHTML = `<img src="${char.img}">`;
                  } else slot.innerHTML = `<span class="step-number">${step.num}</span>`;
                  div.appendChild(slot);
@@ -547,6 +366,8 @@
              fill('red-picks-2', state.redPicks.slice(5, 9), redPickSteps.slice(5, 9), false);
          }
      }
-</script>
+ </script>
 
 <%- include('../partials/footer') %>
+
+
