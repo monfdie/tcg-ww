@@ -1,101 +1,40 @@
-<%- include('../partials/header') %>
-
-<style>
-    .page-container {
-        padding: 0 !important;
-        max-width: 100% !important;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-</style>
-
-<div id="game-screen">
-    <div class="game-header">
-         <div id="room-container">
-             <div id="room-display" onclick="copyRoomCode()" title="Click to copy room code">CODE: <%= roomId %></div>
-             <span id="copy-toast">Code Copied!</span>
-         </div>
-         <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
-         <div id="status">Waiting...</div>
-         <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
-     </div>
-
-     <div class="draft-area">
-         <div id="immunity-top-display" class="immunity-top-container" style="display: none;">
-             <div class="im-label">IMMUNE</div>
-             <div class="im-row" id="immunity-icons-row"></div>
-         </div>
-
-         <div class="team-side blue-side">
-             <div class="player-header">
-                 <div id="blue-timer" class="turn-timer">45</div>
-                 <h2 id="blue-name-display">PLAYER 1</h2>
-                 <div id="blue-ready-switch" class="ready-switch" onclick="toggleReady('blue')">
-                     <div class="switch-circle"></div>
-                 </div>
-             </div>
-             <div class="ban-row" id="blue-bans"></div>
-             <div class="pick-row" id="blue-picks-1"></div>
-             <div class="pick-row-small" id="blue-picks-2"></div>
-         </div>
-
-         <div class="center-axis">
-             <div class="mid-label ban-label">BANS</div>
-             <div class="mid-label pick-label">PICKS</div>
-         </div>
-
-         <div class="team-side red-side">
-             <div class="player-header">
-                 <div id="red-ready-switch" class="ready-switch" onclick="toggleReady('red')">
-                     <div class="switch-circle"></div>
-                 </div>
-                 <h2 id="red-name-display">PLAYER 2</h2>
-                 <div id="red-timer" class="turn-timer">45</div>
-             </div>
-             <div class="ban-row" id="red-bans"></div>
-             <div class="pick-row" id="red-picks-1"></div>
-             <div class="pick-row-small" id="red-picks-2"></div>
-         </div>
-     </div>
-
-     <div class="controls-area">
-         <button id="skip-btn" class="round-btn" onclick="skipTurn()">SKIP</button>
-         <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled>SELECT</button>
-     </div>
-
-     <div class="char-pool" id="char-pool-container"></div>
- </div>
-
- <script src="/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
  <script src="/draft-rules.js"></script>
 
  <script>
      const socket = io({ transports: ['websocket'] });
-     // Получаем ID комнаты из URL
      const currentRoom = '<%= roomId %>';
-     // Получаем UserID из сессии
      const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
      sessionStorage.setItem('draft_user_id', myUserId);
-     
+
      let myRole = '', currentDraftType = 'gitcg';
      let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
-     
+
      socket.on('connect', () => {
          if (currentRoom && myUserId) {
-             socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId });
+             // Получаем никнейм, сохраненный при нажатии "Join" в create.ejs
+             const nick = sessionStorage.getItem('draft_nickname') || 'Player';
+             const isSpectator = sessionStorage.getItem('join_as_spectator') === 'true';
+
+             // Используем join_game вместо rejoin_game для корректной регистрации роли
+             socket.emit('join_game', { 
+                 roomId: currentRoom, 
+                 nickname: nick, 
+                 userId: myUserId,
+                 asSpectator: isSpectator 
+             });
          }
      });
-     
+
      socket.on('error_msg', (msg) => {
          if (msg === 'Session expired' || msg === 'Room not found') {
-             alert("Game session expired or not found.");
+             alert("Сессия игры не найдена или истекла.");
              window.location.href = "/"; 
          } else {
              alert(msg);
          }
      });
-     
+
      socket.on('init_game', (data) => {
          myRole = data.role; 
          charsData = data.chars;
@@ -112,7 +51,7 @@
          updateUI(state); 
          setTimeout(() => alert("Draft Completed!"), 500); 
      });
-     
+
      socket.on('timer_tick', (data) => {
          const t = typeof data === 'object' ? data.main : data;
          const b = document.getElementById('blue-timer'), r = document.getElementById('red-timer');
@@ -131,6 +70,7 @@
      }
 
      function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
+     
      function copyRoomCode() { 
          if (!currentRoom) return;
          navigator.clipboard.writeText(currentRoom).then(() => {
@@ -141,9 +81,7 @@
      }
      
      function skipTurn() {
-         if(currentRoom) {
-             socket.emit('skip_action', currentRoom);
-         }
+         if(currentRoom) socket.emit('skip_action', currentRoom);
      }
      
      function renderRows() {
@@ -230,7 +168,7 @@
          document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
          if(!state.gameStarted) {
              state.ready.blue ?
-                 document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
+             document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
              state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
          }
          document.getElementById('blue-name-display').innerText = state.blueName;
@@ -247,14 +185,10 @@
          const isMyTurn = (myRole === state.currentTeam);
          
          skipBtn.classList.remove('skip-left', 'skip-right');
-         
          if (state.immunityPhaseActive && isMyTurn) {
              skipBtn.style.display = 'block';
-             if (state.currentTeam === 'blue') {
-                 skipBtn.classList.add('skip-left');
-             } else {
-                 skipBtn.classList.add('skip-right');
-             }
+             if (state.currentTeam === 'blue') skipBtn.classList.add('skip-left');
+             else skipBtn.classList.add('skip-right');
          } else {
              skipBtn.style.display = 'none';
          }
@@ -322,7 +256,7 @@
          const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
          const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick');
          const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
-         
+
          const fill = (containerId, items, stepData, isBan) => {
              const div = document.getElementById(containerId);
              if(!div) return;
@@ -333,8 +267,7 @@
                  if (isBan) slot.classList.add('slot-ban');
                  if (step.immunity) slot.classList.add('slot-immunity-pick');
                  
-                 if (!state.immunityPhaseActive && state.gameStarted && 
-                     step.num === state.stepIndex) {
+                 if (!state.immunityPhaseActive && state.gameStarted && step.num === state.stepIndex) {
                      slot.classList.add('active-slot');
                  }
 
@@ -353,14 +286,9 @@
          fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true);
          fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
          
-         if (currentDraftType === 'generals_2') {
+         if (currentDraftType === 'generals_2' || currentDraftType === 'classic') {
              fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
              fill('blue-picks-2', [], [], false); 
-             fill('red-picks-1', state.redPicks, redPickSteps, false);
-             fill('red-picks-2', [], [], false);
-         } else if (currentDraftType === 'classic') {
-             fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
-             fill('blue-picks-2', [], [], false);
              fill('red-picks-1', state.redPicks, redPickSteps, false);
              fill('red-picks-2', [], [], false);
          } else {
@@ -371,5 +299,3 @@
          }
      }
  </script>
-
-<%- include('../partials/footer') %>
