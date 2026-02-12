@@ -1,14 +1,12 @@
 {
-  "name": "gitcg-draft",
-  "version": "1.0.0",
-  "description": "Genshin Impact TCG Draft Tool",
-  "license": "MIT",   <--- ДОБАВЬ ВОТ ЭТУ СТРОЧКУ
+  "name": "genshin-draft-platform",
+  "version": "2.0.0",
+  "description": "Multipage Draft Platform",
+  "license": "MIT",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server.js"
   },
-}
   "dependencies": {
     "connect-mongo": "^5.1.0",
     "dotenv": "^16.4.5",
