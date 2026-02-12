@@ -1,110 +1,13 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* --- СТИЛИ ДРАФТА --- */
     .page-container {
-        padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column;
+        padding: 0 !important;
+        max-width: 100% !important;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
-
-    /* --- НОВЫЕ СТИЛИ ДЛЯ MATCH SUMMARY --- */
-    .summary-btn {
-        position: fixed; bottom: 20px; right: 20px; z-index: 1000;
-        background: linear-gradient(90deg, #d4af37, #f2d05e);
-        border: 2px solid #fff; color: #000; font-family: 'Cinzel', serif;
-        font-weight: bold; padding: 10px 25px; border-radius: 30px;
-        box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); cursor: pointer;
-        font-size: 1.2em; display: none; /* Скрыта по умолчанию */
-        animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .summary-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
-    @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-    .summary-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.9); z-index: 2000;
-        display: none; align-items: center; justify-content: center;
-        backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.3s;
-    }
-    .summary-overlay.open { display: flex; opacity: 1; }
-
-    /* КАРТОЧКА РЕЗУЛЬТАТОВ (ДЛЯ СКРИНШОТА) */
-    .summary-card {
-        width: 800px; background: #121520;
-        border: 2px solid #3c4566; border-radius: 10px;
-        box-shadow: 0 0 60px rgba(0,0,0,0.8);
-        position: relative; overflow: hidden;
-        background-image: radial-gradient(circle at 50% 0%, #2b3454 0%, #0b0d17 70%);
-        padding-bottom: 20px;
-    }
-    .summary-header {
-        text-align: center; padding: 20px;
-        border-bottom: 1px solid #3c4566;
-        background: rgba(0,0,0,0.3);
-    }
-    .summary-title {
-        font-family: 'Cinzel', serif; font-size: 2.5em; color: #d4af37;
-        text-shadow: 0 0 15px rgba(212, 175, 55, 0.4); margin: 0;
-    }
-    .summary-subtitle {
-        font-family: 'Segoe UI', sans-serif; color: #8da4c4; font-size: 1.1em;
-        margin-top: 5px; text-transform: uppercase; letter-spacing: 2px;
-    }
-
-    .match-rows { padding: 30px; display: flex; flex-direction: column; gap: 20px; }
-    
-    .match-row {
-        display: flex; align-items: center; justify-content: space-between;
-        background: rgba(255, 255, 255, 0.03); border: 1px solid #2a3454;
-        border-radius: 8px; padding: 10px 30px; height: 100px;
-        transition: 0.3s;
-    }
-    .match-row:hover { background: rgba(255, 255, 255, 0.06); border-color: #4facfe; }
-
-    .player-side { display: flex; align-items: center; gap: 20px; width: 40%; }
-    .player-side.right { flex-direction: row-reverse; text-align: right; }
-    
-    .char-slot {
-        width: 80px; height: 80px; border-radius: 50%; background: #000;
-        border: 2px dashed #444; position: relative; cursor: pointer;
-        overflow: hidden; transition: 0.2s;
-    }
-    .char-slot:hover { border-color: #aaa; transform: scale(1.05); }
-    .char-slot img { width: 100%; height: 100%; object-fit: cover; }
-    .char-slot.empty::after { content: '+'; color: #444; font-size: 40px; position: absolute; top:50%; left:50%; transform:translate(-50%, -55%); }
-
-    .score-display {
-        font-family: 'Cinzel', serif; font-size: 2.5em; color: #555;
-        cursor: pointer; user-select: none; width: 20%; text-align: center;
-        transition: 0.2s;
-    }
-    .score-display:hover { color: #fff; text-shadow: 0 0 10px #fff; }
-    
-    /* Стили победителя */
-    .match-row.blue-win .score-display { color: #4facfe; text-shadow: 0 0 15px rgba(79, 172, 254, 0.6); }
-    .match-row.blue-win .player-side.left .char-slot { border: 2px solid #4facfe; box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
-    .match-row.red-win .score-display { color: #ff6b6b; text-shadow: 0 0 15px rgba(255, 107, 107, 0.6); }
-    .match-row.red-win .player-side.right .char-slot { border: 2px solid #ff6b6b; box-shadow: 0 0 15px rgba(255, 107, 107, 0.4); }
-
-    .player-label { font-family: 'Cinzel', serif; font-size: 1.2em; color: #ccc; }
-    
-    .close-summary {
-        position: absolute; top: 15px; right: 20px; font-size: 30px; color: #555;
-        cursor: pointer; transition: 0.2s;
-    }
-    .close-summary:hover { color: #fff; }
-
-    /* Мини-пикер персонажей */
-    .char-picker-modal {
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        background: #1a1e2e; border: 1px solid #4facfe; padding: 20px;
-        border-radius: 8px; z-index: 3000; display: none;
-        box-shadow: 0 0 30px #000; width: 400px;
-        flex-wrap: wrap; gap: 10px; justify-content: center;
-    }
-    .picker-option { width: 60px; height: 60px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
-    .picker-option:hover { transform: scale(1.1); border-color: #fff; }
-    .picker-option img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-
 </style>
 
 <div id="game-screen">
@@ -164,77 +67,26 @@
      <div class="char-pool" id="char-pool-container"></div>
  </div>
 
- <button id="open-summary-btn" class="summary-btn" onclick="toggleSummary()">🏆 MATCH SUMMARY</button>
-
- <div id="summary-overlay" class="summary-overlay">
-     <div class="summary-card">
-         <span class="close-summary" onclick="toggleSummary()">×</span>
-         <div class="summary-header">
-             <h1 class="summary-title">GITCG CUP</h1>
-             <div class="summary-subtitle">Official Match Result</div>
-         </div>
-         
-         <div class="match-rows">
-            <div class="match-row" id="match-row-0">
-                <div class="player-side left">
-                    <div class="char-slot empty" onclick="openCharPicker(0, 'blue')"></div>
-                    <span class="player-label blue-name-sum">Player 1</span>
-                </div>
-                <div class="score-display" onclick="toggleWinner(0)">VS</div>
-                <div class="player-side right">
-                    <div class="char-slot empty" onclick="openCharPicker(0, 'red')"></div>
-                    <span class="player-label red-name-sum">Player 2</span>
-                </div>
-            </div>
-            <div class="match-row" id="match-row-1">
-                <div class="player-side left">
-                    <div class="char-slot empty" onclick="openCharPicker(1, 'blue')"></div>
-                    <span class="player-label blue-name-sum">Player 1</span>
-                </div>
-                <div class="score-display" onclick="toggleWinner(1)">VS</div>
-                <div class="player-side right">
-                    <div class="char-slot empty" onclick="openCharPicker(1, 'red')"></div>
-                    <span class="player-label red-name-sum">Player 2</span>
-                </div>
-            </div>
-            <div class="match-row" id="match-row-2">
-                <div class="player-side left">
-                    <div class="char-slot empty" onclick="openCharPicker(2, 'blue')"></div>
-                    <span class="player-label blue-name-sum">Player 1</span>
-                </div>
-                <div class="score-display" onclick="toggleWinner(2)">VS</div>
-                <div class="player-side right">
-                    <div class="char-slot empty" onclick="openCharPicker(2, 'red')"></div>
-                    <span class="player-label red-name-sum">Player 2</span>
-                </div>
-            </div>
-         </div>
-     </div>
-     
-     <div id="char-picker" class="char-picker-modal"></div>
- </div>
-
  <script src="/socket.io/socket.io.js"></script>
  <script src="/draft-rules.js"></script>
 
  <script>
      const socket = io({ transports: ['websocket'] });
+     // Получаем ID комнаты из URL
      const currentRoom = '<%= roomId %>';
+     // Получаем UserID из сессии
      const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
      sessionStorage.setItem('draft_user_id', myUserId);
      
      let myRole = '', currentDraftType = 'gitcg';
      let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
      
-     // Сохраняем состояние для Summary
-     let globalState = null;
-     let pickerContext = { gameIndex: 0, team: '' };
-
      socket.on('connect', () => {
          if (currentRoom && myUserId) {
              socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId });
          }
      });
+     
      socket.on('error_msg', (msg) => {
          if (msg === 'Session expired' || msg === 'Room not found') {
              alert("Game session expired or not found.");
@@ -243,17 +95,13 @@
              alert(msg);
          }
      });
+     
      socket.on('init_game', (data) => {
          myRole = data.role; 
          charsData = data.chars;
          currentDraftType = data.state.draftType || 'gitcg';
-         document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
          
-         // Показываем кнопку Summary только для CUP режимов
-         if (currentDraftType === 'gitcg' || currentDraftType === 'gitcg_cup_2') {
-             // Кнопка будет показана внутри updateUI если игра окончена
-         }
-
+         document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
          renderRows(); 
          updateUI(data.state);
      });
@@ -262,10 +110,7 @@
      socket.on('game_started', () => { isGameStarted = true; });
      socket.on('game_over', (state) => { 
          updateUI(state); 
-         setTimeout(() => {
-            alert("Draft Completed! Fill in the Match Results.");
-            toggleSummary(); // Авто-открытие в конце
-         }, 500); 
+         setTimeout(() => alert("Draft Completed!"), 500); 
      });
      
      socket.on('timer_tick', (data) => {
@@ -295,7 +140,11 @@
          });
      }
      
-     function skipTurn() { if(currentRoom) socket.emit('skip_action', currentRoom); }
+     function skipTurn() {
+         if(currentRoom) {
+             socket.emit('skip_action', currentRoom);
+         }
+     }
      
      function renderRows() {
          const container = document.getElementById('char-pool-container');
@@ -375,48 +224,37 @@
      }
 
      function updateUI(state) {
-         globalState = state; // Сохраняем стейт
          isGameStarted = state.gameStarted;
          activeTeam = state.currentTeam;
-         
-         // Показываем кнопку Summary только если конец драфта и это CUP
-         const isEnd = state.stepIndex >= DRAFT_RULES[currentDraftType].length;
-         const isCup = (state.draftType === 'gitcg' || state.draftType === 'gitcg_cup_2');
-         if (isEnd && isCup) {
-             document.getElementById('open-summary-btn').style.display = 'block';
-         }
-
          document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
          document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
          if(!state.gameStarted) {
-             state.ready.blue ? document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
+             state.ready.blue ?
+                 document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
              state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
          }
+         document.getElementById('blue-name-display').innerText = state.blueName;
+         document.getElementById('red-name-display').innerText = state.redName;
          
-         const blueName = state.blueName || 'Player 1';
-         const redName = state.redName || 'Player 2';
-         document.getElementById('blue-name-display').innerText = blueName;
-         document.getElementById('red-name-display').innerText = redName;
-         
-         // Обновляем имена в Summary
-         document.querySelectorAll('.blue-name-sum').forEach(el => el.innerText = blueName);
-         document.querySelectorAll('.red-name-sum').forEach(el => el.innerText = redName);
-
          let txt = "WAITING...";
          if(state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
          else if(state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
-         else if(isEnd) txt = "DRAFT COMPLETED";
          document.getElementById('status').innerText = txt.toUpperCase();
 
          updateImmunityTop(state);
 
          const skipBtn = document.getElementById('skip-btn');
          const isMyTurn = (myRole === state.currentTeam);
+         
          skipBtn.classList.remove('skip-left', 'skip-right');
+         
          if (state.immunityPhaseActive && isMyTurn) {
              skipBtn.style.display = 'block';
-             if (state.currentTeam === 'blue') skipBtn.classList.add('skip-left');
-             else skipBtn.classList.add('skip-right');
+             if (state.currentTeam === 'blue') {
+                 skipBtn.classList.add('skip-left');
+             } else {
+                 skipBtn.classList.add('skip-right');
+             }
          } else {
              skipBtn.style.display = 'none';
          }
@@ -442,8 +280,30 @@
          state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
          [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
          
-         // Обновляем Summary данные
-         if (state.matchResults) updateSummaryVisuals(state.matchResults);
+         if(state.immunityPhaseActive) {
+             [...state.immunityBans, ...state.immunityPool].forEach(id => {
+                 if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
+             });
+         } else {
+             const step = currentSchema ? currentSchema[idx] : null;
+             const isImmunityTurn = step && step.immunity;
+             state.immunityPool.forEach(id => {
+                 if(id === 'skipped') return;
+                 const el = document.getElementById(`char-${id}`);
+                 if(!el) return;
+                 if(state.currentAction === 'ban') el.classList.add('disabled');
+                 else if (state.currentAction === 'pick') {
+                     if(isImmunityTurn) {
+                         const myPicks = activeTeam === 'blue' ? state.bluePicks : state.redPicks;
+                         if(!myPicks.includes(id)) { el.classList.remove('disabled'); el.classList.add('immunity-highlight'); }
+                     } else el.classList.add('disabled');
+                 }
+             });
+         }
+         
+         if(state.gameStarted && myRole !== 'spectator' && myRole !== state.currentTeam) {
+             document.querySelectorAll('.char-option').forEach(el => el.classList.add('disabled'));
+         }
      }
 
      function getStepsFor(schema, team, type) {
@@ -457,10 +317,12 @@
      function renderSlots(state) {
          const currentSchema = DRAFT_RULES[currentDraftType];
          if (!currentSchema) return;
+
          const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban');
          const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
          const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick');
          const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
+         
          const fill = (containerId, items, stepData, isBan) => {
              const div = document.getElementById(containerId);
              if(!div) return;
@@ -470,21 +332,27 @@
                  slot.className = 'slot-circle';
                  if (isBan) slot.classList.add('slot-ban');
                  if (step.immunity) slot.classList.add('slot-immunity-pick');
-                 if (!state.immunityPhaseActive && state.gameStarted && step.num === state.stepIndex) {
+                 
+                 if (!state.immunityPhaseActive && state.gameStarted && 
+                     step.num === state.stepIndex) {
                      slot.classList.add('active-slot');
                  }
+
                  let charId = null;
                  if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
+
                  if (charId) {
                      let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
                      const char = allFlat.find(c => c.id === charId);
                      if (char) slot.innerHTML = `<img src="${char.img}">`;
                  } else slot.innerHTML = `<span class="step-number">${step.num}</span>`;
                  div.appendChild(slot);
-            });
+             });
          };
+
          fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true);
          fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
+         
          if (currentDraftType === 'generals_2') {
              fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
              fill('blue-picks-2', [], [], false); 
@@ -502,105 +370,6 @@
              fill('red-picks-2', state.redPicks.slice(5, 9), redPickSteps.slice(5, 9), false);
          }
      }
-
-     // --- НОВЫЕ ФУНКЦИИ SUMMARY ---
-     function toggleSummary() {
-         const overlay = document.getElementById('summary-overlay');
-         overlay.classList.toggle('open');
-         document.getElementById('char-picker').style.display = 'none'; // Закрыть пикер
-     }
-
-     function toggleWinner(gameIndex) {
-         if (!currentRoom) return;
-         // Логика переключения: null -> blue -> red -> null
-         const res = globalState.matchResults[gameIndex];
-         let nextWin = null;
-         if (!res.winner) nextWin = 'blue';
-         else if (res.winner === 'blue') nextWin = 'red';
-         else nextWin = null;
-         
-         socket.emit('update_results', { roomId: currentRoom, gameIndex, field: 'winner', value: nextWin });
-     }
-
-     function openCharPicker(gameIndex, team) {
-         pickerContext = { gameIndex, team };
-         const picker = document.getElementById('char-picker');
-         picker.innerHTML = '';
-         picker.style.display = 'flex';
-         
-         // Получаем список доступных персонажей (только те, что были пикнуты)
-         const pool = (team === 'blue') ? globalState.bluePicks : globalState.redPicks;
-         
-         // Добавляем опцию "Пусто"
-         const empty = document.createElement('div');
-         empty.innerText = "✖";
-         empty.style.color = "#fff"; empty.style.fontSize = "30px"; empty.style.textAlign = "center"; empty.style.lineHeight = "60px";
-         empty.className = 'picker-option';
-         empty.onclick = () => selectSummaryChar(null);
-         picker.appendChild(empty);
-
-         pool.forEach(id => {
-             let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
-             const char = allFlat.find(c => c.id === id);
-             if (char) {
-                 const d = document.createElement('div');
-                 d.className = 'picker-option';
-                 d.innerHTML = `<img src="${char.img}">`;
-                 d.onclick = () => selectSummaryChar(id);
-                 picker.appendChild(d);
-             }
-         });
-     }
-
-     function selectSummaryChar(charId) {
-         socket.emit('update_results', { 
-             roomId: currentRoom, 
-             gameIndex: pickerContext.gameIndex, 
-             field: pickerContext.team + 'Char', // blueChar or redChar
-             value: charId 
-         });
-         document.getElementById('char-picker').style.display = 'none';
-     }
-
-     function updateSummaryVisuals(results) {
-         results.forEach((res, i) => {
-             const row = document.getElementById(`match-row-${i}`);
-             const blueSlot = row.querySelector('.player-side.left .char-slot');
-             const redSlot = row.querySelector('.player-side.right .char-slot');
-             const score = row.querySelector('.score-display');
-             
-             // Обновление картинок
-             updateSlotImg(blueSlot, res.blueChar);
-             updateSlotImg(redSlot, res.redChar);
-             
-             // Обновление счета и стилей победителя
-             row.classList.remove('blue-win', 'red-win');
-             if (res.winner === 'blue') {
-                 row.classList.add('blue-win');
-                 score.innerText = "1 - 0";
-             } else if (res.winner === 'red') {
-                 row.classList.add('red-win');
-                 score.innerText = "0 - 1";
-             } else {
-                 score.innerText = "VS";
-             }
-         });
-     }
-
-     function updateSlotImg(slot, charId) {
-         slot.innerHTML = '';
-         slot.className = 'char-slot'; // reset
-         if (charId) {
-             let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
-             const char = allFlat.find(c => c.id === charId);
-             if (char) {
-                 slot.innerHTML = `<img src="${char.img}">`;
-             }
-         } else {
-             slot.classList.add('empty');
-         }
-     }
-
  </script>
 
 <%- include('../partials/footer') %>
