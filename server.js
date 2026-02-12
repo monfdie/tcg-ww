@@ -16,13 +16,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Подключение к БД
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('✅ Connected to MongoDB!'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'gitcg-super-secret-key',
+    secret: 'gitcg-super-secret-key',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI })
@@ -86,22 +85,7 @@ io.on('connection', (socket) => {
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
-            
-            // Основные списки
-            bans: [], bluePicks: [], redPicks: [],
-            
-            // --- СПИСКИ ИММУНИТЕТА ---
-            immunityBans: [],     // Кого запретили брать в имун
-            immunitySelections: [], // Кто выбран имуном
-            
-            ready: { blue: false, red: false },
-            postGameActive: false,
-            matchResults: [
-                { id: 1, blueChar: null, redChar: null, winner: null },
-                { id: 2, blueChar: null, redChar: null, winner: null },
-                { id: 3, blueChar: null, redChar: null, winner: null }
-            ],
-            finalScore: { blue: 0, red: 0 }
+            bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false }
         };
         socket.join(roomId);
         socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
@@ -110,18 +94,6 @@ io.on('connection', (socket) => {
     socket.on('join_game', ({roomId, nickname, asSpectator, userId}) => {
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Room not found');
-
-        if (session.blueUserId === userId) {
-            session.bluePlayer = socket.id;
-            socket.join(roomId);
-            return socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
-        }
-        if (session.redUserId === userId) {
-            session.redPlayer = socket.id;
-            socket.join(roomId);
-            return socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
-        }
-
         if (!session.redPlayer && !asSpectator) {
             session.redPlayer = socket.id; session.redUserId = userId; session.redName = nickname || 'Player 2';
             socket.join(roomId); socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
@@ -130,6 +102,16 @@ io.on('connection', (socket) => {
             session.spectators.push(socket.id); socket.join(roomId);
             socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
         }
+    });
+
+    socket.on('rejoin_game', ({ roomId, userId }) => {
+        const session = sessions[roomId];
+        if (!session) return socket.emit('error_msg', 'Session expired');
+        let role = 'spectator';
+        if (session.blueUserId === userId) { session.bluePlayer = socket.id; role = 'blue'; } 
+        else if (session.redUserId === userId) { session.redPlayer = socket.id; role = 'red'; }
+        socket.join(roomId);
+        socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
     });
 
     socket.on('player_ready', (roomId) => {
@@ -148,64 +130,17 @@ io.on('connection', (socket) => {
     socket.on('action', ({ roomId, charId }) => {
         const session = sessions[roomId];
         if (!session || !session.gameStarted) return;
-        
-        const actionType = session.currentAction;
-        const team = session.currentTeam;
-
-        if (actionType === 'immunity_ban') {
-            session.immunityBans.push({ id: charId, team: team });
-        } else if (actionType === 'immunity_pick') {
-            session.immunitySelections.push({ id: charId, team: team });
-        } else if (actionType === 'ban') {
-            session.bans.push({ id: charId, team: team });
-        } else if (actionType === 'pick') {
-            team === 'blue' ? session.bluePicks.push(charId) : session.redPicks.push(charId);
-        }
-        
+        if (session.currentAction === 'ban') session.bans.push({ id: charId, team: session.currentTeam });
+        else session.currentTeam === 'blue' ? session.bluePicks.push(charId) : session.redPicks.push(charId);
         nextStep(roomId);
-    });
-    
-    socket.on('skip_action', (roomId) => {
-        const session = sessions[roomId];
-        if (!session || !session.gameStarted) return;
-        
-        const actionType = session.currentAction;
-        const team = session.currentTeam;
-        
-        if (actionType === 'immunity_ban') session.immunityBans.push({ id: 'skipped', team });
-        else if (actionType === 'immunity_pick') session.immunitySelections.push({ id: 'skipped', team });
-        
-        nextStep(roomId);
-    });
-
-    socket.on('update_match_result', ({ roomId, gameIndex, field, value }) => {
-        const session = sessions[roomId];
-        if (!session || !session.postGameActive) return;
-
-        if (session.matchResults[gameIndex]) {
-            session.matchResults[gameIndex][field] = value;
-        }
-
-        let b = 0, r = 0;
-        session.matchResults.forEach(m => {
-            if (m.winner === 'blue') b++;
-            if (m.winner === 'red') r++;
-        });
-        session.finalScore = { blue: b, red: r };
-
-        io.to(roomId).emit('update_state', getPublicState(session));
     });
 });
 
 async function nextStep(roomId) {
     const s = sessions[roomId]; s.stepIndex++; s.timer = 45;
     if (s.stepIndex >= s.draftOrder.length) {
-        clearInterval(s.timerInterval);
-        s.gameStarted = false;
-        s.postGameActive = true;
-        
-        io.to(roomId).emit('update_state', getPublicState(s));
-        
+        io.to(roomId).emit('game_over', getPublicState(s)); 
+        clearInterval(s.timerInterval); 
         try {
             await Match.create({
                 roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
@@ -213,8 +148,8 @@ async function nextStep(roomId) {
                 bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks
             });
             const count = await Match.countDocuments();
-            if (count > 20) {
-                const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 20);
+            if (count > 6) {
+                const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 6);
                 await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
             }
         } catch (e) { console.error(e); }
@@ -238,26 +173,12 @@ function startTimer(roomId) {
 }
 
 function getPublicState(session) {
-    // --- ИСПРАВЛЕНИЕ: Добавлено условие session.gameStarted ---
-    // Это предотвращает активацию фазы до начала игры, когда currentAction == null
-    const isImmunityPhase = session.gameStarted && session.draftType === 'gitcg_cup_2' && session.stepIndex < 4;
-
     return {
         stepIndex: session.stepIndex + 1,
         currentTeam: session.currentTeam, currentAction: session.currentAction,
-        
         bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
-        immunityBans: session.immunityBans,
-        immunitySelections: session.immunitySelections,
-        
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
-        ready: session.ready, gameStarted: session.gameStarted,
-        
-        immunityPhaseActive: isImmunityPhase,
-        
-        postGameActive: session.postGameActive,
-        matchResults: session.matchResults,
-        finalScore: session.finalScore
+        ready: session.ready, gameStarted: session.gameStarted
     };
 }
 
