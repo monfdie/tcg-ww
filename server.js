@@ -149,7 +149,6 @@ io.on('connection', (socket) => {
         const session = sessions[roomId];
         if (!session || !session.gameStarted) return;
         
-        // Распределяем персонажей по разным массивам в зависимости от типа хода
         const actionType = session.currentAction;
         const team = session.currentTeam;
 
@@ -169,7 +168,7 @@ io.on('connection', (socket) => {
     socket.on('skip_action', (roomId) => {
         const session = sessions[roomId];
         if (!session || !session.gameStarted) return;
-        // Если пропустили в фазу иммунитета, записываем null/skipped
+        
         const actionType = session.currentAction;
         const team = session.currentTeam;
         
@@ -239,23 +238,21 @@ function startTimer(roomId) {
 }
 
 function getPublicState(session) {
-    // Фаза иммунитета активна, если мы в режиме кубка и еще не прошли первые 4 шага
-    const isImmunityPhase = session.draftType === 'gitcg_cup_2' && session.stepIndex < 4;
+    // --- ИСПРАВЛЕНИЕ: Добавлено условие session.gameStarted ---
+    // Это предотвращает активацию фазы до начала игры, когда currentAction == null
+    const isImmunityPhase = session.gameStarted && session.draftType === 'gitcg_cup_2' && session.stepIndex < 4;
 
     return {
         stepIndex: session.stepIndex + 1,
         currentTeam: session.currentTeam, currentAction: session.currentAction,
         
         bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
-        
-        // Передаем списки иммунитета
         immunityBans: session.immunityBans,
         immunitySelections: session.immunitySelections,
         
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
         ready: session.ready, gameStarted: session.gameStarted,
         
-        // Флаг для клиента
         immunityPhaseActive: isImmunityPhase,
         
         postGameActive: session.postGameActive,
