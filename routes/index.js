@@ -1,31 +1,53 @@
 const express = require('express');
 const router = express.Router();
+const passport = require('passport');
+const Match = require('../models/Match');
 
-// Главная (Main)
-router.get('/', (req, res) => {
-    res.render('pages/home', { title: 'GITCG Draft - Home', path: '/' });
+router.use((req, res, next) => {
+    res.locals.user = req.user || null;
+    res.locals.path = req.path;
+    next();
 });
 
-// Создание драфта (Create Draft)
-router.get('/create', (req, res) => {
-    res.render('pages/create', { title: 'Create Draft', path: '/create' });
+router.get('/', (req, res) => res.render('pages/home', { title: 'Home' }));
+router.get('/create', (req, res) => res.render('pages/create', { title: 'Create' }));
+router.get('/tournaments', (req, res) => res.render('pages/tournaments', { title: 'Tournaments' }));
+
+router.get('/history', async (req, res) => {
+    try {
+        const matches = await Match.find().sort({ date: -1 }).limit(6);
+        res.render('pages/history', { title: 'History', matches });
+    } catch (e) {
+        res.render('pages/history', { title: 'History', matches: [] });
+    }
 });
 
-// Турниры
-router.get('/tournaments', (req, res) => {
-    res.render('pages/tournaments', { title: 'Tournaments', path: '/tournaments' });
+// --- ИЗМЕНЕННАЯ ЧАСТЬ НАЧАЛО ---
+router.get('/game/:id', async (req, res) => {
+    try {
+        // Обязательно ищем матч в базе данных, чтобы история работала
+        const match = await Match.findOne({ roomId: req.params.id });
+        res.render('pages/game', { 
+            title: `Room ${req.params.id}`, 
+            roomId: req.params.id, 
+            savedData: match || null,
+            hideSidebar: true // <--- Добавлено: скрываем меню
+        });
+    } catch (e) {
+        res.render('pages/game', { 
+            title: "Error", 
+            roomId: req.params.id, 
+            savedData: null,
+            hideSidebar: true // <--- Добавлено: скрываем меню даже при ошибке
+        });
+    }
 });
+// --- ИЗМЕНЕННАЯ ЧАСТЬ КОНЕЦ ---
 
-// История
-router.get('/history', (req, res) => {
-    res.render('pages/history', { title: 'Match History', path: '/history' });
-});
-
-// Комната игры (Динамический роут)
-router.get('/game/:id', (req, res) => {
-    const roomId = req.params.id;
-    // Передаем roomId в шаблон
-    res.render('pages/game', { title: `Room ${roomId}`, path: '/game', roomId: roomId });
+router.get('/auth/discord', passport.authenticate('discord'));
+router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => res.redirect('/'));
+router.get('/logout', (req, res, next) => {
+    req.logout((err) => { if (err) return next(err); res.redirect('/'); });
 });
 
 module.exports = router;
