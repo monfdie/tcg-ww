@@ -86,8 +86,15 @@ io.on('connection', (socket) => {
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
-            bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false },
-            // --- НОВОЕ: Данные для пост-матча ---
+            
+            // Основные списки
+            bans: [], bluePicks: [], redPicks: [],
+            
+            // --- СПИСКИ ИММУНИТЕТА ---
+            immunityBans: [],     // Кого запретили брать в имун
+            immunitySelections: [], // Кто выбран имуном
+            
+            ready: { blue: false, red: false },
             postGameActive: false,
             matchResults: [
                 { id: 1, blueChar: null, redChar: null, winner: null },
@@ -104,7 +111,6 @@ io.on('connection', (socket) => {
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Room not found');
 
-        // Логика реконнекта (Важно для стабильности!)
         if (session.blueUserId === userId) {
             session.bluePlayer = socket.id;
             socket.join(roomId);
@@ -142,28 +148,45 @@ io.on('connection', (socket) => {
     socket.on('action', ({ roomId, charId }) => {
         const session = sessions[roomId];
         if (!session || !session.gameStarted) return;
-        if (session.currentAction === 'ban') session.bans.push({ id: charId, team: session.currentTeam });
-        else session.currentTeam === 'blue' ? session.bluePicks.push(charId) : session.redPicks.push(charId);
+        
+        // Распределяем персонажей по разным массивам в зависимости от типа хода
+        const actionType = session.currentAction;
+        const team = session.currentTeam;
+
+        if (actionType === 'immunity_ban') {
+            session.immunityBans.push({ id: charId, team: team });
+        } else if (actionType === 'immunity_pick') {
+            session.immunitySelections.push({ id: charId, team: team });
+        } else if (actionType === 'ban') {
+            session.bans.push({ id: charId, team: team });
+        } else if (actionType === 'pick') {
+            team === 'blue' ? session.bluePicks.push(charId) : session.redPicks.push(charId);
+        }
+        
         nextStep(roomId);
     });
     
     socket.on('skip_action', (roomId) => {
         const session = sessions[roomId];
         if (!session || !session.gameStarted) return;
+        // Если пропустили в фазу иммунитета, записываем null/skipped
+        const actionType = session.currentAction;
+        const team = session.currentTeam;
+        
+        if (actionType === 'immunity_ban') session.immunityBans.push({ id: 'skipped', team });
+        else if (actionType === 'immunity_pick') session.immunitySelections.push({ id: 'skipped', team });
+        
         nextStep(roomId);
     });
 
-    // --- НОВОЕ: Обработка изменений в таблице результатов ---
     socket.on('update_match_result', ({ roomId, gameIndex, field, value }) => {
         const session = sessions[roomId];
         if (!session || !session.postGameActive) return;
 
-        // Обновляем данные матча
         if (session.matchResults[gameIndex]) {
             session.matchResults[gameIndex][field] = value;
         }
 
-        // Пересчет счета
         let b = 0, r = 0;
         session.matchResults.forEach(m => {
             if (m.winner === 'blue') b++;
@@ -179,21 +202,17 @@ async function nextStep(roomId) {
     const s = sessions[roomId]; s.stepIndex++; s.timer = 45;
     if (s.stepIndex >= s.draftOrder.length) {
         clearInterval(s.timerInterval);
-        
-        // Вместо game_over просто активируем пост-гейм фазу
         s.gameStarted = false;
         s.postGameActive = true;
         
         io.to(roomId).emit('update_state', getPublicState(s));
         
-        // Сохраняем в БД (можно и позже, после заполнения, но для надежности сохраним драфт сейчас)
         try {
             await Match.create({
                 roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
                 blueDiscordId: s.blueUserId, redDiscordId: s.redUserId,
                 bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks
             });
-            // Очистка старых матчей
             const count = await Match.countDocuments();
             if (count > 20) {
                 const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 20);
@@ -220,73 +239,25 @@ function startTimer(roomId) {
 }
 
 function getPublicState(session) {
-    // --- ЛОГИКА ИММУНИТЕТА НАЧАЛО ---
-    let immunityPool = [];
-    let immunityBans = [];
-    
-    // Нам нужно пройтись по истории шагов, чтобы понять, какие пики/баны были "иммунными"
-    let banCount = 0;
-    let bluePickCount = 0;
-    let redPickCount = 0;
-
-    // Проходим по всем шагам, которые уже случились (до текущего stepIndex)
-    for (let i = 0; i < session.stepIndex; i++) {
-        const step = session.draftOrder[i];
-        if (!step) break;
-
-        if (step.type === 'ban') {
-            // Если это был шаг бана, берем соответствующий бан из массива bans
-            if (banCount < session.bans.length) {
-                const ban = session.bans[banCount];
-                if (step.immunity) {
-                    immunityBans.push(ban.id);
-                }
-                banCount++;
-            }
-        } else if (step.type === 'pick') {
-            // Если это был шаг пика, берем персонажа из массива пиков соответствующей команды
-            if (step.team === 'blue') {
-                if (bluePickCount < session.bluePicks.length) {
-                    const pick = session.bluePicks[bluePickCount];
-                    if (step.immunity) {
-                        immunityPool.push(pick);
-                    }
-                    bluePickCount++;
-                }
-            } else if (step.team === 'red') {
-                if (redPickCount < session.redPicks.length) {
-                    const pick = session.redPicks[redPickCount];
-                    if (step.immunity) {
-                        immunityPool.push(pick);
-                    }
-                    redPickCount++;
-                }
-            }
-        }
-    }
-    // --- ЛОГИКА ИММУНИТЕТА КОНЕЦ ---
+    // Фаза иммунитета активна, если мы в режиме кубка и еще не прошли первые 4 шага
+    const isImmunityPhase = session.draftType === 'gitcg_cup_2' && session.stepIndex < 4;
 
     return {
         stepIndex: session.stepIndex + 1,
-        currentTeam: session.currentTeam, 
-        currentAction: session.currentAction,
-        bans: session.bans, 
-        bluePicks: session.bluePicks, 
-        redPicks: session.redPicks,
-        blueName: session.blueName, 
-        redName: session.redName, 
-        draftType: session.draftType,
-        ready: session.ready, 
-        gameStarted: session.gameStarted,
+        currentTeam: session.currentTeam, currentAction: session.currentAction,
         
-        // Определяем, активна ли фаза иммунитета ПРЯМО СЕЙЧАС (для заголовка)
-        immunityPhaseActive: (session.draftOrder[session.stepIndex] && session.draftOrder[session.stepIndex].immunity),
+        bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
         
-        // Теперь отправляем правильные списки
-        immunityBans: immunityBans,
-        immunityPool: immunityPool, 
+        // Передаем списки иммунитета
+        immunityBans: session.immunityBans,
+        immunitySelections: session.immunitySelections,
         
-        // Новые поля для пост-гейма
+        blueName: session.blueName, redName: session.redName, draftType: session.draftType,
+        ready: session.ready, gameStarted: session.gameStarted,
+        
+        // Флаг для клиента
+        immunityPhaseActive: isImmunityPhase,
+        
         postGameActive: session.postGameActive,
         matchResults: session.matchResults,
         finalScore: session.finalScore
