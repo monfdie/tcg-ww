@@ -42,9 +42,8 @@
         transform: translateX(5px); border-color: #4facfe;
         box-shadow: 0 5px 20px rgba(0,0,0,0.5); background: rgba(26, 32, 55, 0.95);
     }
-    .tour-img-wrapper { width: 280px; flex-shrink: 0; position: relative; overflow: hidden; }
-    .tour-img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
-    .tour-card:hover .tour-img-wrapper img { transform: scale(1.05); }
+    
+    /* .tour-img-wrapper удален, контент растягивается */
     
     .tour-content { flex-grow: 1; padding: 20px 25px; display: flex; flex-direction: column; justify-content: center; }
     .tour-title { font-family: 'Segoe UI', sans-serif; font-size: 1.4em; font-weight: bold; color: #fff; margin-bottom: 8px; }
@@ -73,7 +72,6 @@
     }
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-    /* Баннер внутри модалки (как на скрине) */
     .banner-header {
         background: linear-gradient(90deg, #0f1524 0%, #161d30 50%, #0f1524 100%);
         padding: 20px 40px; display: flex; align-items: center; justify-content: space-between;
@@ -82,7 +80,7 @@
     }
     
     .banner-left { display: flex; align-items: center; gap: 25px; }
-    .banner-logo { width: 100px; height: 100px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(79,172,254,0.5)); }
+    /* .banner-logo удален */
     
     .banner-info h1 {
         font-family: 'Segoe UI', sans-serif; font-size: 1.8em; color: #fff; margin: 0 0 15px 0;
@@ -91,8 +89,7 @@
     
     .banner-actions { display: flex; gap: 10px; align-items: center; }
     .action-btn {
-        display: flex; align-items: center; gap: 8px;
-        background: rgba(255,255,255,0.1); color: #fff;
+        display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); color: #fff;
         padding: 8px 16px; border-radius: 20px; text-decoration: none;
         font-size: 0.9em; font-family: 'Segoe UI', sans-serif; font-weight: 500;
         transition: 0.2s; border: 1px solid transparent;
@@ -135,19 +132,16 @@
         <div class="tournament-list" id="grid-live">
             
             <div class="tour-card" data-tags="AS Allpick" onclick="openModal('https://tonamel.com/competition/KkDrM')">
-                <div class="tour-img-wrapper">
-                    <img src="https://upload-os-bbs.hoyolab.com/upload/2022/12/06/11485989/4e3419992a7a4214571999981324750c_6888636437936109315.png" alt="Tournament">
-                </div>
                 <div class="tour-content">
                     <div class="tour-title">Genshin Impact TCG Asia Tournament</div>
                     <div class="tour-meta">
-                        <span>📅 Feb 20, 2026</span>
+                        <span>📅 Feb 15, 2026</span>
                         <span>🏆 Prize: TBD</span>
                     </div>
                     <div class="tour-tags">
-                        <span class="tag-badge tag-region">#AS</span>
-                        <span class="tag-badge tag-system">#Allpick</span>
-                        <span class="tag-badge">#Tonamel</span>
+                        <span class="tag-badge tag-region">AS</span>
+                        <span class="tag-badge tag-system">Allpick</span>
+                        <span class="tag-badge">Tonamel</span>
                     </div>
                 </div>
             </div>
@@ -182,18 +176,14 @@
         
         <div class="banner-header">
             <div class="banner-left">
-                <img src="https://upload-os-bbs.hoyolab.com/upload/2022/12/06/11485989/4e3419992a7a4214571999981324750c_6888636437936109315.png" class="banner-logo" alt="Logo">
-                
                 <div class="banner-info">
                     <h1>Genshin Impact TCG Asia Tournament</h1>
                     <div class="banner-actions">
                         <a href="https://tonamel.com/competition/KkDrM" target="_blank" class="action-btn">
-                            <i>⚙️</i> Tonamel Page
+                            <i>🏆</i> Tonamel Page
                         </a>
-                        <a href="#" class="action-btn"><i>📄</i> Regulations</a>
-                        <a href="#" class="action-btn"><i>📑</i> Docs</a>
                         
-                        <div style="margin-left: 10px; color:#888;">#AS #Allpick</div>
+                        <div style="margin-left: 10px; color:#888;">AS Allpick</div>
                     </div>
                 </div>
             </div>
@@ -242,7 +232,6 @@
 
     // --- Логика Модального окна ---
     const modal = document.getElementById('tournament-modal');
-
     function openModal(link) {
         // Можно динамически менять ссылку, если турниров будет много
         const tonamelBtn = modal.querySelector('a[href*="tonamel"]');
