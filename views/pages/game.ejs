@@ -9,7 +9,7 @@
         flex-direction: column;
     }
 
-    /* --- STYLES FOR POST GAME SUMMARY --- */
+    /* --- POST GAME SUMMARY STYLES --- */
     #post-game-screen {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(11, 13, 23, 0.98); z-index: 200;
@@ -18,7 +18,7 @@
     }
     .summary-card {
         background: #161c30; border: 1px solid #3c4566; border-radius: 8px;
-        width: 800px; padding: 30px; box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        width: 1000px; padding: 30px; box-shadow: 0 0 50px rgba(0,0,0,0.8);
         border-top: 3px solid #d4af37;
     }
     .summary-header { text-align: center; margin-bottom: 30px; }
@@ -27,43 +27,42 @@
     
     .match-row {
         display: flex; align-items: center; justify-content: space-between;
-        background: rgba(0,0,0,0.3); margin-bottom: 10px; padding: 10px 20px;
-        border-radius: 4px; border: 1px solid transparent; transition: 0.3s;
+        background: rgba(0,0,0,0.3); margin-bottom: 15px; padding: 15px 20px;
+        border-radius: 6px; border: 1px solid #2a3454; transition: 0.3s;
     }
-    .match-row:hover { background: rgba(255,255,255,0.02); }
+    .match-row:hover { background: rgba(255,255,255,0.02); border-color: #444; }
     
-    .char-select-container { display: flex; align-items: center; gap: 10px; width: 40%; }
-    .char-select-container.right { justify-content: flex-end; }
+    .team-deck-group { display: flex; align-items: center; gap: 8px; }
+    .team-deck-group.right { justify-content: flex-end; }
     
-    /* Стилизованные селекты */
+    /* Стили селектов и превью */
+    .deck-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .char-select {
-        background: #0f131f; border: 1px solid #3c4566; color: #ece5d8;
-        padding: 5px; border-radius: 4px; font-family: 'Segoe UI', sans-serif;
-        width: 150px; cursor: pointer;
+        background: #0f131f; border: 1px solid #3c4566; color: #8da4c4;
+        padding: 2px; border-radius: 4px; font-family: 'Segoe UI', sans-serif;
+        width: 100px; font-size: 11px; cursor: pointer;
     }
     .char-img-preview {
-        width: 40px; height: 40px; border-radius: 50%; border: 1px solid #555;
-        object-fit: cover; background: #000;
+        width: 50px; height: 50px; border-radius: 50%; border: 2px solid #333;
+        object-fit: cover; background: #000; transition: 0.2s;
     }
     
-    .winner-toggle {
-        display: flex; gap: 5px; align-items: center;
-    }
+    .winner-toggle { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 0 20px; }
+    .game-label { font-family: 'Cinzel', serif; color: #666; font-size: 0.8em; letter-spacing: 2px; font-weight: bold; }
+    .win-controls { display: flex; gap: 10px; }
     .win-btn {
-        width: 30px; height: 30px; border-radius: 50%; border: 1px solid #444;
+        width: 32px; height: 32px; border-radius: 50%; border: 1px solid #444;
         cursor: pointer; display: flex; align-items: center; justify-content: center;
-        background: #222; font-size: 12px; color: #555; transition: 0.2s;
+        background: #222; font-size: 12px; color: #555; transition: 0.2s; font-weight: bold;
     }
-    .win-btn:hover { border-color: #888; }
-    .win-btn.active-blue { background: #4facfe; color: #fff; box-shadow: 0 0 10px #4facfe; border-color: #4facfe; }
-    .win-btn.active-red { background: #ff6b6b; color: #fff; box-shadow: 0 0 10px #ff6b6b; border-color: #ff6b6b; }
+    .win-btn:hover { border-color: #888; color: #aaa; }
+    .win-btn.active-blue { background: #4facfe; color: #fff; box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); border-color: #4facfe; }
+    .win-btn.active-red { background: #ff6b6b; color: #fff; box-shadow: 0 0 15px rgba(255, 107, 107, 0.4); border-color: #ff6b6b; }
     
-    .game-label { font-family: 'Cinzel', serif; color: #8da4c4; width: 60px; text-align: center; font-weight: bold; }
-    
-    .blue-name { color: #4facfe; font-weight: bold; font-family: 'Segoe UI', sans-serif; }
-    .red-name { color: #ff6b6b; font-weight: bold; font-family: 'Segoe UI', sans-serif; }
+    .blue-name { color: #4facfe; font-weight: bold; }
+    .red-name { color: #ff6b6b; font-weight: bold; }
 
-    .finish-info { text-align: center; margin-top: 20px; color: #555; font-size: 0.9em; }
+    .finish-info { text-align: center; margin-top: 20px; color: #555; font-size: 0.9em; font-style: italic; }
 </style>
 
 <div id="game-screen">
@@ -142,7 +141,7 @@
             </div>
 
         <div class="finish-info">
-            Results update automatically. Take a screenshot to share! 📸
+            Screenshot this screen to share results! 📸
         </div>
     </div>
 </div>
@@ -158,7 +157,7 @@
 
     let myRole = '', currentDraftType = 'gitcg';
     let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
-    let fullCharsList = []; // Для поиска картинок по ID
+    let fullCharsList = [];
 
     socket.on('connect', () => {
         if (currentRoom && myUserId) {
@@ -184,7 +183,6 @@
         myRole = data.role; 
         charsData = data.chars;
         
-        // Собираем плоский список всех персонажей для удобства
         fullCharsList = [];
         Object.values(charsData).forEach(arr => fullCharsList.push(...arr));
 
@@ -288,6 +286,8 @@
         row.innerHTML = '';
         const bans = state.immunityBans || [];
         const picks = state.immunityPool || [];
+        // Ожидаем порядок: Бан, Пик, Пик, Бан (стандартная визуализация)
+        // Если bans пустые, будут пустые кружки, что нормально
         const slots = [ { val: bans[0], type: 'ban' }, { val: picks[0], type: 'pick' }, { val: picks[1], type: 'pick' }, { val: bans[1], type: 'ban' } ];
         slots.forEach(slot => {
             const div = document.createElement('div');
@@ -303,19 +303,20 @@
         });
     }
 
-    // --- ЛОГИКА ОБНОВЛЕНИЯ UI ---
     function updateUI(state) {
         isGameStarted = state.gameStarted;
         activeTeam = state.currentTeam;
         
-        // 1. Пост-гейм экран
+        // --- POST GAME LOGIC ---
         const postScreen = document.getElementById('post-game-screen');
-        if (state.postGameActive && (state.draftType === 'gitcg' || state.draftType === 'gitcg_cup_2')) {
+        // Показываем экран результатов только для поддерживаемых режимов и когда активна фаза
+        if (state.postGameActive) {
             postScreen.style.display = 'flex';
             renderPostGameTable(state);
         } else {
             postScreen.style.display = 'none';
         }
+        // -----------------------
 
         document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
         document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
@@ -393,9 +394,6 @@
         }
     }
 
-    // --- ФУНКЦИИ РЕНДЕРА ДЛЯ POST GAME ---
-    let isPostGamerendered = false;
-    
     function renderPostGameTable(state) {
         document.getElementById('final-blue-name').innerText = state.blueName;
         document.getElementById('final-red-name').innerText = state.redName;
@@ -403,47 +401,62 @@
         document.getElementById('score-red').innerText = state.finalScore.red;
 
         const container = document.getElementById('match-rows-container');
-        // Перерисовываем полностью, чтобы обновлять значения
         container.innerHTML = ''; 
 
         state.matchResults.forEach((match, index) => {
             const row = document.createElement('div');
             row.className = 'match-row';
             
-            // Генерация опций для Blue
-            const blueOpts = generateOptions(state.bluePicks, match.blueChar);
-            // Генерация опций для Red
-            const redOpts = generateOptions(state.redPicks, match.redChar);
-            
-            // Картинки превью
-            const blueImg = getCharImg(match.blueChar);
-            const redImg = getCharImg(match.redChar);
-            
-            // Кнопки победы
+            // Генерация 3-х слотов для синего
+            let blueHTML = '';
+            for(let i=0; i<3; i++) {
+                const val = match.blueChars[i];
+                const img = getCharImg(val);
+                blueHTML += `
+                    <div class="deck-slot">
+                        <img src="${img}" class="char-img-preview">
+                        <select class="char-select" onchange="sendMatchUpdate(${index}, 'blueChar', this.value, ${i})" ${myRole !== 'blue' ? 'disabled' : ''}>
+                            <option value="">Select</option>
+                            ${generateOptions(state.bluePicks, val)}
+                        </select>
+                    </div>
+                `;
+            }
+
+            // Генерация 3-х слотов для красного
+            let redHTML = '';
+            for(let i=0; i<3; i++) {
+                const val = match.redChars[i];
+                const img = getCharImg(val);
+                redHTML += `
+                    <div class="deck-slot">
+                        <img src="${img}" class="char-img-preview">
+                        <select class="char-select" onchange="sendMatchUpdate(${index}, 'redChar', this.value, ${i})" ${myRole !== 'red' ? 'disabled' : ''}>
+                            <option value="">Select</option>
+                            ${generateOptions(state.redPicks, val)}
+                        </select>
+                    </div>
+                `;
+            }
+
             const blueWinClass = match.winner === 'blue' ? 'active-blue' : '';
             const redWinClass = match.winner === 'red' ? 'active-red' : '';
 
             row.innerHTML = `
-                <div class="char-select-container">
-                    <img src="${blueImg}" class="char-img-preview" id="preview-blue-${index}">
-                    <select class="char-select" onchange="sendMatchUpdate(${index}, 'blueChar', this.value)" ${myRole !== 'blue' ? 'disabled' : ''}>
-                        <option value="">Select Char</option>
-                        ${blueOpts}
-                    </select>
+                <div class="team-deck-group">
+                    ${blueHTML}
                 </div>
 
                 <div class="winner-toggle">
-                    <div class="win-btn ${blueWinClass}" onclick="sendMatchUpdate(${index}, 'winner', 'blue')">W</div>
                     <div class="game-label">GAME ${index + 1}</div>
-                    <div class="win-btn ${redWinClass}" onclick="sendMatchUpdate(${index}, 'winner', 'red')">W</div>
+                    <div class="win-controls">
+                        <div class="win-btn ${blueWinClass}" onclick="sendMatchUpdate(${index}, 'winner', 'blue')">W</div>
+                        <div class="win-btn ${redWinClass}" onclick="sendMatchUpdate(${index}, 'winner', 'red')">W</div>
+                    </div>
                 </div>
 
-                <div class="char-select-container right">
-                    <select class="char-select" onchange="sendMatchUpdate(${index}, 'redChar', this.value)" ${myRole !== 'red' ? 'disabled' : ''}>
-                        <option value="">Select Char</option>
-                        ${redOpts}
-                    </select>
-                    <img src="${redImg}" class="char-img-preview" id="preview-red-${index}">
+                <div class="team-deck-group right">
+                    ${redHTML}
                 </div>
             `;
             container.appendChild(row);
@@ -465,20 +478,18 @@
         return char ? char.img : 'https://cdn.discordapp.com/embed/avatars/0.png';
     }
 
-    function sendMatchUpdate(gameIndex, field, value) {
-        // Разрешаем менять победителя любому из игроков (доверие)
-        // Спектаторы не могут менять
+    function sendMatchUpdate(gameIndex, type, value, charIndex = 0) {
         if (myRole === 'spectator') return;
-        
         socket.emit('update_match_result', {
             roomId: currentRoom,
             gameIndex: gameIndex,
-            field: field,
-            value: value
+            type: type,
+            value: value,
+            charIndex: charIndex
         });
     }
 
-    // --- СТАНДАРТНЫЕ ФУНКЦИИ (без изменений) ---
+    // --- HELPER FUNCTIONS ---
     function getStepsFor(schema, team, type) {
          if (!schema) return [];
          return schema
