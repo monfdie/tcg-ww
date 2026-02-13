@@ -8,6 +8,23 @@
         display: flex;
         flex-direction: column;
     }
+    .player-info-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    .player-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        display: none;
+    }
+    #blue-avatar { border: 2px solid #4facfe; }
+    #red-avatar { border: 2px solid #ff6b6b; }
 </style>
 
 <div id="game-screen">
@@ -30,7 +47,10 @@
          <div class="team-side blue-side">
              <div class="player-header">
                  <div id="blue-timer" class="turn-timer">45</div>
-                 <h2 id="blue-name-display">PLAYER 1</h2>
+                 <div class="player-info-wrapper">
+                     <img id="blue-avatar" class="player-avatar" src="" alt="">
+                     <h2 id="blue-name-display">PLAYER 1</h2>
+                 </div>
                  <div id="blue-ready-switch" class="ready-switch" onclick="toggleReady('blue')">
                      <div class="switch-circle"></div>
                  </div>
@@ -50,7 +70,10 @@
                  <div id="red-ready-switch" class="ready-switch" onclick="toggleReady('red')">
                      <div class="switch-circle"></div>
                  </div>
-                 <h2 id="red-name-display">PLAYER 2</h2>
+                 <div class="player-info-wrapper">
+                     <img id="red-avatar" class="player-avatar" src="" alt="">
+                     <h2 id="red-name-display">PLAYER 2</h2>
+                 </div>
                  <div id="red-timer" class="turn-timer">45</div>
              </div>
              <div class="ban-row" id="red-bans"></div>
@@ -73,44 +96,40 @@
  <script>
      const socket = io({ transports: ['websocket'] });
      
-     // Получаем ID комнаты из URL
      const currentRoom = '<%= roomId %>';
-     // Получаем UserID из сессии
      const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
      sessionStorage.setItem('draft_user_id', myUserId);
 
      let myRole = '', currentDraftType = 'gitcg';
      let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
+     
      const myNickname = sessionStorage.getItem('draft_nickname');
+     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
+     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
 
-     // Получаем данные сервера, чтобы понять - это история или активная игра
      const savedData = <%- JSON.stringify(locals.savedData || null) %>;
      const serverChars = <%- JSON.stringify(locals.chars || null) %>;
 
      if (savedData) {
-         // === РЕЖИМ ПРОСМОТРА ИСТОРИИ ===
-         socket.disconnect(); // Отключаем сокеты, игра уже завершена
+         socket.disconnect(); 
          
          charsData = serverChars;
          currentDraftType = savedData.draftType || 'gitcg';
          myRole = 'spectator';
          isGameStarted = true;
 
-         // Небольшая задержка, чтобы DOM успел прогрузиться
          setTimeout(() => {
              document.getElementById('room-display').innerText = `CODE: ${currentRoom} (FINISHED)`;
              document.getElementById('status').innerText = "MATCH COMPLETED";
              
-             // Скрываем таймеры и кнопки
              document.getElementById('blue-timer').style.display = 'none';
              document.getElementById('red-timer').style.display = 'none';
              document.querySelector('.controls-area').style.display = 'none';
              document.querySelector('.blue-res').style.display = 'none';
              document.querySelector('.red-res').style.display = 'none';
 
-             renderRows(); // Отрисовываем пул персонажей
+             renderRows(); 
 
-             // Создаем искусственный стейт конца игры
              const mockState = {
                  gameStarted: true,
                  currentTeam: 'none',
@@ -120,11 +139,15 @@
                  redPicks: savedData.redPicks || [],
                  blueName: savedData.blueName || 'PLAYER 1',
                  redName: savedData.redName || 'PLAYER 2',
+                 blueDiscordId: savedData.blueDiscordId || null,
+                 redDiscordId: savedData.redDiscordId || null,
+                 blueAvatar: savedData.blueAvatar || null,
+                 redAvatar: savedData.redAvatar || null,
                  draftType: savedData.draftType || 'gitcg',
                  immunityPhaseActive: false,
                  immunityPool: savedData.immunityPool || [],
                  immunityBans: savedData.immunityBans || [],
-                 stepIndex: 999, // Большое число, чтобы все шаги стали перечеркнутыми (выполненными)
+                 stepIndex: 999, 
                  ready: { blue: true, red: true }
              };
 
@@ -132,10 +155,12 @@
          }, 50);
 
      } else {
-         // === РЕЖИМ АКТИВНОЙ ИГРЫ ===
          socket.on('connect', () => {
              if (currentRoom && myUserId) {
-                 socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId, nickname: myNickname }); 
+                 socket.emit('rejoin_game', { 
+                     roomId: currentRoom, userId: myUserId, nickname: myNickname,
+                     discordId: myRealDiscordId, avatar: myAvatarHash 
+                 }); 
              }
          });
 
@@ -223,7 +248,7 @@
          ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
              const row = document.createElement('div'); row.className = `element-row row-${elem}`;
              const chars = charsData[elem], mid = Math.ceil(chars.length/2);
-             if(!chars) return; // Защита, если элементы отсутствуют
+             if(!chars) return; 
              const l = document.createElement('div'); l.className = 'row-half left-half';
              chars.slice(0,mid).forEach(c => l.appendChild(createChar(c)));
              const gap = document.createElement('div'); gap.className = 'row-gap';
@@ -286,8 +311,23 @@
              state.ready.blue ? document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
              state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
          }
+         
          document.getElementById('blue-name-display').innerText = state.blueName;
          document.getElementById('red-name-display').innerText = state.redName;
+
+         // --- ОБНОВЛЕНИЕ АВАТАРОК ---
+         const blueAv = document.getElementById('blue-avatar');
+         if (state.blueAvatar && state.blueDiscordId) {
+             blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`;
+             blueAv.style.display = 'block';
+         } else { blueAv.style.display = 'none'; }
+
+         const redAv = document.getElementById('red-avatar');
+         if (state.redAvatar && state.redDiscordId) {
+             redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`;
+             redAv.style.display = 'block';
+         } else { redAv.style.display = 'none'; }
+         // ---------------------------
          
          let txt = "WAITING...";
          if(state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
@@ -299,7 +339,6 @@
 
          updateImmunityTop(state);
 
-         // Кнопка SKIP
          const skipBtn = document.getElementById('skip-btn');
          const isMyTurn = (myRole === state.currentTeam);
          
