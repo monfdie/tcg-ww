@@ -23,7 +23,7 @@ router.get('/history', async (req, res) => {
     }
 });
 
-// Маршрут для активной игры (твой измененный вариант)
+// Единый роут для Активной игры и для Повторов
 router.get('/game/:id', async (req, res) => {
     try {
         const match = await Match.findOne({ roomId: req.params.id });
@@ -31,6 +31,7 @@ router.get('/game/:id', async (req, res) => {
             title: `Room ${req.params.id}`, 
             roomId: req.params.id, 
             savedData: match || null,
+            chars: CHARACTERS_BY_ELEMENT, // <--- ДОБАВЛЕНО
             hideSidebar: true 
         });
     } catch (e) {
@@ -38,36 +39,9 @@ router.get('/game/:id', async (req, res) => {
             title: "Error", 
             roomId: req.params.id, 
             savedData: null,
+            chars: CHARACTERS_BY_ELEMENT,
             hideSidebar: true 
         });
-    }
-});
-
-// НОВЫЙ маршрут для просмотра завершенной игры из истории
-router.get('/match/:roomId', async (req, res) => {
-    try {
-        const match = await Match.findOne({ roomId: req.params.roomId });
-        if (!match) {
-            return res.status(404).send('Match not found');
-        }
-
-        const charMap = {};
-        for (const element in CHARACTERS_BY_ELEMENT) {
-            CHARACTERS_BY_ELEMENT[element].forEach(c => {
-                charMap[c.id] = c;
-            });
-        }
-
-        res.render('pages/match', {
-            title: `Match ${match.roomId}`,
-            path: '/history', 
-            user: req.user,
-            match: match,
-            charMap: charMap
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server error');
     }
 });
 
