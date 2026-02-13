@@ -75,61 +75,107 @@
      
      // Получаем ID комнаты из URL
      const currentRoom = '<%= roomId %>';
-     // Получаем UserID из сессии (установлен в create.ejs)
+     // Получаем UserID из сессии
      const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
      sessionStorage.setItem('draft_user_id', myUserId);
 
      let myRole = '', currentDraftType = 'gitcg';
      let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
+     const myNickname = sessionStorage.getItem('draft_nickname');
 
-     // Получаем ник из хранилища (если вводили при входе)
-     const myNickname = sessionStorage.getItem('draft_nickname'); //
+     // Получаем данные сервера, чтобы понять - это история или активная игра
+     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
+     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
 
-     socket.on('connect', () => {
-         // При загрузке страницы сразу пытаемся переподключиться к комнате
-         if (currentRoom && myUserId) {
-             // Добавляем передачу nickname
-             socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId, nickname: myNickname }); 
-         }
-     });
-
-     socket.on('error_msg', (msg) => {
-         if (msg === 'Session expired' || msg === 'Room not found') {
-             alert("Game session expired or not found.");
-             window.location.href = "/"; 
-         } else {
-             alert(msg);
-         }
-     });
-
-     socket.on('init_game', (data) => {
-         myRole = data.role; 
-         // currentRoom уже установлен из EJS
-         charsData = data.chars;
-         currentDraftType = data.state.draftType || 'gitcg';
+     if (savedData) {
+         // === РЕЖИМ ПРОСМОТРА ИСТОРИИ ===
+         socket.disconnect(); // Отключаем сокеты, игра уже завершена
          
-         document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
-         renderRows(); 
-         updateUI(data.state);
-     });
+         charsData = serverChars;
+         currentDraftType = savedData.draftType || 'gitcg';
+         myRole = 'spectator';
+         isGameStarted = true;
 
-     socket.on('update_state', updateUI);
-     socket.on('game_started', () => { isGameStarted = true; });
-     socket.on('game_over', (state) => { 
-         updateUI(state); 
-         setTimeout(() => alert("Draft Completed!"), 500); 
-     });
-     
-     socket.on('timer_tick', (data) => {
-         const t = typeof data === 'object' ? data.main : data;
-         const b = document.getElementById('blue-timer'), r = document.getElementById('red-timer');
-         if(activeTeam==='blue') { b.innerText=t; r.innerText="45"; b.style.color=t<10?'#ff5555':'#4facfe'; }
-         else { r.innerText=t; b.innerText="45"; r.style.color=t<10?'#ff5555':'#ff6b6b'; }
-         if(typeof data === 'object') {
-             document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
-             document.getElementById('red-res').innerText = formatTime(data.redReserve);
-         }
-     });
+         // Небольшая задержка, чтобы DOM успел прогрузиться
+         setTimeout(() => {
+             document.getElementById('room-display').innerText = `CODE: ${currentRoom} (FINISHED)`;
+             document.getElementById('status').innerText = "MATCH COMPLETED";
+             
+             // Скрываем таймеры и кнопки
+             document.getElementById('blue-timer').style.display = 'none';
+             document.getElementById('red-timer').style.display = 'none';
+             document.querySelector('.controls-area').style.display = 'none';
+             document.querySelector('.blue-res').style.display = 'none';
+             document.querySelector('.red-res').style.display = 'none';
+
+             renderRows(); // Отрисовываем пул персонажей
+
+             // Создаем искусственный стейт конца игры
+             const mockState = {
+                 gameStarted: true,
+                 currentTeam: 'none',
+                 currentAction: 'none',
+                 bans: savedData.bans || [],
+                 bluePicks: savedData.bluePicks || [],
+                 redPicks: savedData.redPicks || [],
+                 blueName: savedData.blueName || 'PLAYER 1',
+                 redName: savedData.redName || 'PLAYER 2',
+                 draftType: savedData.draftType || 'gitcg',
+                 immunityPhaseActive: false,
+                 immunityPool: savedData.immunityPool || [],
+                 immunityBans: savedData.immunityBans || [],
+                 stepIndex: 999, // Большое число, чтобы все шаги стали перечеркнутыми (выполненными)
+                 ready: { blue: true, red: true }
+             };
+
+             updateUI(mockState);
+         }, 50);
+
+     } else {
+         // === РЕЖИМ АКТИВНОЙ ИГРЫ ===
+         socket.on('connect', () => {
+             if (currentRoom && myUserId) {
+                 socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId, nickname: myNickname }); 
+             }
+         });
+
+         socket.on('error_msg', (msg) => {
+             if (msg === 'Session expired' || msg === 'Room not found') {
+                 alert("Game session expired or not found.");
+                 window.location.href = "/"; 
+             } else {
+                 alert(msg);
+             }
+         });
+
+         socket.on('init_game', (data) => {
+             myRole = data.role; 
+             charsData = data.chars;
+             currentDraftType = data.state.draftType || 'gitcg';
+             
+             document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
+             renderRows(); 
+             updateUI(data.state);
+         });
+
+         socket.on('update_state', updateUI);
+         socket.on('game_started', () => { isGameStarted = true; });
+         socket.on('game_over', (state) => { 
+             updateUI(state); 
+             setTimeout(() => alert("Draft Completed!"), 500); 
+         });
+         
+         socket.on('timer_tick', (data) => {
+             const t = typeof data === 'object' ? data.main : data;
+             const b = document.getElementById('blue-timer'), r = document.getElementById('red-timer');
+             if(activeTeam==='blue') { b.innerText=t; r.innerText="45"; b.style.color=t<10?'#ff5555':'#4facfe'; }
+             else { r.innerText=t; b.innerText="45"; r.style.color=t<10?'#ff5555':'#ff6b6b'; }
+             if(typeof data === 'object') {
+                 document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
+                 document.getElementById('red-res').innerText = formatTime(data.redReserve);
+             }
+         });
+     }
 
      function formatTime(s) { 
          if (s < 0) s = 0; 
@@ -138,6 +184,7 @@
      }
 
      function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
+     
      function copyRoomCode() { 
          if (!currentRoom) return;
          navigator.clipboard.writeText(currentRoom).then(() => {
@@ -148,7 +195,7 @@
      }
      
      function skipTurn() {
-         if(currentRoom) {
+         if(currentRoom && !savedData) {
              socket.emit('skip_action', currentRoom);
          }
      }
@@ -176,6 +223,7 @@
          ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
              const row = document.createElement('div'); row.className = `element-row row-${elem}`;
              const chars = charsData[elem], mid = Math.ceil(chars.length/2);
+             if(!chars) return; // Защита, если элементы отсутствуют
              const l = document.createElement('div'); l.className = 'row-half left-half';
              chars.slice(0,mid).forEach(c => l.appendChild(createChar(c)));
              const gap = document.createElement('div'); gap.className = 'row-gap';
@@ -190,7 +238,7 @@
          const el = document.createElement('div'); el.className = 'char-option'; el.id = `char-${char.id}`;
          el.innerHTML = `<img src="${char.img}">`;
          el.onclick = () => {
-             if(!isGameStarted || myRole === 'spectator') return;
+             if(!isGameStarted || myRole === 'spectator' || savedData) return;
              document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
              selectedCharId = char.id; el.classList.add('selected-pending');
              document.getElementById('confirm-btn').disabled = false;
@@ -199,7 +247,7 @@
      }
 
      function confirmSelection() {
-         if(selectedCharId && currentRoom) {
+         if(selectedCharId && currentRoom && !savedData) {
              socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
              selectedCharId = null; document.getElementById('confirm-btn').disabled = true;
              document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
@@ -244,6 +292,9 @@
          let txt = "WAITING...";
          if(state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
          else if(state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
+         
+         if (savedData) txt = "MATCH COMPLETED";
+         
          document.getElementById('status').innerText = txt.toUpperCase();
 
          updateImmunityTop(state);
@@ -254,7 +305,7 @@
          
          skipBtn.classList.remove('skip-left', 'skip-right');
          
-         if (state.immunityPhaseActive && isMyTurn) {
+         if (state.immunityPhaseActive && isMyTurn && !savedData) {
              skipBtn.style.display = 'block';
              if (state.currentTeam === 'blue') {
                  skipBtn.classList.add('skip-left');
@@ -275,7 +326,7 @@
                  if(!n) continue;
                  n.classList.remove('step-active','step-done');
                  if(i < idx) n.classList.add('step-done');
-                 else if(i === idx && state.gameStarted) {
+                 else if(i === idx && state.gameStarted && !savedData) {
                      n.classList.add('step-active');
                      setTimeout(() => n.scrollIntoView({behavior:'smooth', block:'center'}), 50);
                  }
@@ -307,7 +358,7 @@
                  }
              });
          }
-         if(state.gameStarted && myRole !== 'spectator' && myRole !== state.currentTeam) {
+         if(state.gameStarted && myRole !== 'spectator' && myRole !== state.currentTeam && !savedData) {
              document.querySelectorAll('.char-option').forEach(el => el.classList.add('disabled'));
          }
      }
@@ -339,7 +390,7 @@
                  if (isBan) slot.classList.add('slot-ban');
                  if (step.immunity) slot.classList.add('slot-immunity-pick');
                  
-                 if (!state.immunityPhaseActive && state.gameStarted && 
+                 if (!state.immunityPhaseActive && state.gameStarted && !savedData &&
                      step.num === state.stepIndex) {
                      slot.classList.add('active-slot');
                  }
