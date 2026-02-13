@@ -315,4 +315,27 @@ function getPublicState(session) {
 }
 
 const PORT = process.env.PORT || 3000;
+// --- GARBAGE COLLECTOR (Очистка неактивных комнат) ---
+// Запускается каждые 30 минут
+setInterval(() => {
+    const now = Date.now();
+    let deletedCount = 0;
+    
+    for (const roomId in sessions) {
+        const session = sessions[roomId];
+        // Если комната неактивна более 2 часов (7200000 миллисекунд)
+        if (now - session.lastActive > 7200000) {
+            // Если таймер вдруг остался работать - выключаем его
+            if (session.timerInterval) {
+                clearInterval(session.timerInterval);
+            }
+            delete sessions[roomId]; // Удаляем из оперативной памяти
+            deletedCount++;
+        }
+    }
+    
+    if (deletedCount > 0) {
+        console.log(`[GC] Очищено неактивных комнат: ${deletedCount}. Текущее кол-во активных: ${Object.keys(sessions).length}`);
+    }
+}, 1800000); // 1800000 мс = 30 минут
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
