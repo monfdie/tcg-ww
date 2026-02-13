@@ -70,8 +70,8 @@
     .modal-overlay.open { display: flex; opacity: 1; }
 
     .modal-content {
-        width: 90%; max-width: 1100px;
-        background: #0b0d17; border: 1px solid #3c4566; border-radius: 8px;
+        width: 90%; max-width: 1100px; background: #0b0d17;
+        border: 1px solid #3c4566; border-radius: 8px;
         box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden;
         animation: slideUp 0.3s ease-out; position: relative;
     }
@@ -80,8 +80,7 @@
     .banner-header {
         background: linear-gradient(90deg, #0f1524 0%, #161d30 50%, #0f1524 100%);
         padding: 20px 40px; display: flex; align-items: center; justify-content: space-between;
-        border-bottom: 1px solid #2a3454; position: relative;
-        min-height: 120px;
+        border-bottom: 1px solid #2a3454; position: relative; min-height: 120px;
     }
     
     .banner-left { display: flex; align-items: center; gap: 25px; }
@@ -135,7 +134,22 @@
 
         <div class="tournament-list" id="grid-live">
             
-            <div class="tour-card" data-tags="AS Allpick" onclick="openModal('https://tonamel.com/competition/KkDrM')">
+            <div class="tour-card" data-tags="AS Allpick" onclick="openModal('[LUNA IV Week 5] GI Weekly Asia', 'https://battlefy.com/gitcg/[luna-iv-week-5]-genius-invokation-weekly-asia/698ac4cf51618e0029aa6ec1/info', '800 pitacoin', 'Battlefy', 'AS', 'Allpick')">
+                <div class="tour-content">
+                    <div class="tour-title">[LUNA IV Week 5] Genius Invokation Weekly Asia</div>
+                    <div class="tour-meta">
+                        <span>📅 Feb 15, 2026</span>
+                        <span>🏆 Prize: 800 pitacoin</span>
+                    </div>
+                    <div class="tour-tags">
+                        <span class="tag-badge tag-region">AS</span>
+                        <span class="tag-badge tag-system">Allpick</span>
+                        <span class="tag-badge">Battlefy</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tour-card" data-tags="AS Allpick" onclick="openModal('Genshin Impact TCG Asia Tournament', 'https://tonamel.com/competition/KkDrM', '3000 ¥', 'Tonamel', 'AS', 'Allpick')">
                 <div class="tour-content">
                     <div class="tour-title">Genshin Impact TCG Asia Tournament</div>
                     <div class="tour-meta">
@@ -180,17 +194,16 @@
         
         <div class="banner-header">
             <div class="banner-left">
-                
                 <div class="banner-info">
-                    <h1>Genshin Impact TCG Asia Tournament</h1>
+                    <h1 id="modal-title">Tournament Name</h1>
                     <div class="banner-actions">
-                        <a href="https://tonamel.com/competition/KkDrM" target="_blank" class="action-btn">
-                            <i>🏆</i> Tonamel Page
+                        <a href="#" id="modal-link" target="_blank" class="action-btn">
+                            <i>🏆</i> <span id="modal-platform">Platform Page</span>
                         </a>
                         
                         <div style="display: flex; gap: 8px; margin-left: 15px;">
-                            <span class="tag-badge tag-region">AS</span>
-                            <span class="tag-badge tag-system">Allpick</span>
+                            <span class="tag-badge tag-region" id="modal-region">AS</span>
+                            <span class="tag-badge tag-system" id="modal-system">Allpick</span>
                         </div>
                     </div>
                 </div>
@@ -198,7 +211,7 @@
 
             <div class="banner-right">
                 <div class="prize-pool">
-                    <span class="prize-icon">🏆</span> 3000 ¥
+                    <span class="prize-icon">🏆</span> <span id="modal-prize">0</span>
                 </div>
             </div>
         </div>
@@ -219,12 +232,10 @@
     function applyFilters(filterContainer, gridId) {
         const activeChips = filterContainer.querySelectorAll('.filter-chip.active');
         const activeTags = Array.from(activeChips).map(chip => chip.innerText.trim());
-
         const grid = document.getElementById(gridId);
         if (!grid) return;
         
         const cards = grid.querySelectorAll('.tour-card');
-        
         if (activeTags.length === 0) {
             cards.forEach(card => card.style.display = 'flex');
             return;
@@ -238,11 +249,16 @@
         });
     }
 
-    // --- Логика Модального окна ---
+    // --- Логика Модального окна (Теперь ДИНАМИЧЕСКАЯ!) ---
     const modal = document.getElementById('tournament-modal');
-    function openModal(link) {
-        const tonamelBtn = modal.querySelector('a[href*="tonamel"]');
-        if(tonamelBtn) tonamelBtn.href = link;
+    
+    function openModal(title, link, prize, platform, region, system) {
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-link').href = link;
+        document.getElementById('modal-platform').innerText = platform + ' Page';
+        document.getElementById('modal-prize').innerText = prize;
+        document.getElementById('modal-region').innerText = region;
+        document.getElementById('modal-system').innerText = system;
         
         modal.classList.add('open');
     }
