@@ -2,8 +2,8 @@
 
 <div class="page-container">
     <div class="page-title">
-        <h1>История матчей</h1>
-        </div>
+        <h1>Match History</h1>
+    </div>
 
     <div style="background: rgba(22, 28, 48, 0.95); border: 1px solid #3c4566; padding: 20px; border-radius: 4px;">
         <% if (matches && matches.length > 0) { %>
@@ -12,7 +12,9 @@
                     <li style="padding: 15px; border-bottom: 1px solid #2a3454; display: flex; justify-content: space-between; align-items: center;">
                         
                         <div style="display: flex; align-items: center; gap: 20px;">
-                            <span style="font-family: 'Segoe UI', monospace; color: #d4af37; font-weight: bold; background: rgba(212, 175, 55, 0.1); padding: 5px 10px; border-radius: 4px; border: 1px solid #554400;">
+                            <span style="font-family: 'Segoe UI', monospace; color: #d4af37; font-weight: bold; background: rgba(212, 175, 55, 0.1); padding: 5px 10px; border-radius: 4px; border: 1px solid #554400; cursor: pointer; transition: 0.2s;" 
+                                  title="Click to copy"
+                                  onclick="navigator.clipboard.writeText('<%= match.roomId %>'); const originalText = this.innerText; this.innerText = 'Copied!'; setTimeout(() => { this.innerText = originalText; }, 1000);">
                                 <%= match.roomId %>
                             </span>
 
@@ -37,8 +39,8 @@
             </ul>
         <% } else { %>
             <div style="text-align: center; padding: 40px; color: #8da4c4;">
-                <h3 style="margin-bottom: 10px; color: #fff;">История пуста</h3>
-                <p>Сыграйте первый матч, чтобы он появился здесь.</p>
+                <h3 style="margin-bottom: 10px; color: #fff;">History is empty</h3>
+                <p>Play your first match to see it here.</p>
             </div>
         <% } %>
     </div>
