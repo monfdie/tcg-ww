@@ -1,57 +1,18 @@
-<%- include('../partials/header') %>
+const mongoose = require('mongoose');
 
-<div class="page-container">
-    <div class="page-title">
-        <h1>Match Results: <span style="color: #d4af37;"><%= match.roomId %></span></h1>
-        <p style="color: #8da4c4;"><%= match.date ? new Date(match.date).toLocaleString() : 'Date unknown' %></p>
-    </div>
+const matchSchema = new mongoose.Schema({
+    roomId: String,
+    draftType: String,
+    blueName: String,
+    redName: String,
+    blueDiscordId: String,
+    redDiscordId: String,
+    bans: Array,
+    bluePicks: Array,
+    redPicks: Array,
+    immunityBans: Array, // <--- ДОБАВЛЕНО
+    immunityPool: Array, // <--- ДОБАВЛЕНО
+    date: { type: Date, default: Date.now }
+});
 
-    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 30px;">
-        <div style="flex: 1; min-width: 300px; background: rgba(79, 172, 254, 0.05); border: 1px solid #4facfe; border-radius: 8px; padding: 20px;">
-            <h2 style="color: #4facfe; text-align: center; margin-bottom: 20px; font-family: 'Cinzel', serif;"><%= match.blueName || 'Blue Player' %></h2>
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                <% (match.bluePicks || []).forEach(id => { %>
-                    <div style="width: 80px; text-align: center;">
-                        <img src="<%= charMap[id] ? charMap[id].img : 'https://cdn.discordapp.com/embed/avatars/0.png' %>" alt="<%= id %>" style="width: 100%; border-radius: 5px; border: 2px solid #4facfe; box-shadow: 0 0 10px rgba(79,172,254,0.3);">
-                    </div>
-                <% }); %>
-            </div>
-        </div>
-
-        <div style="flex: 1; min-width: 300px; background: rgba(255, 107, 107, 0.05); border: 1px solid #ff6b6b; border-radius: 8px; padding: 20px;">
-            <h2 style="color: #ff6b6b; text-align: center; margin-bottom: 20px; font-family: 'Cinzel', serif;"><%= match.redName || 'Red Player' %></h2>
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                <% (match.redPicks || []).forEach(id => { %>
-                    <div style="width: 80px; text-align: center;">
-                        <img src="<%= charMap[id] ? charMap[id].img : 'https://cdn.discordapp.com/embed/avatars/0.png' %>" alt="<%= id %>" style="width: 100%; border-radius: 5px; border: 2px solid #ff6b6b; box-shadow: 0 0 10px rgba(255,107,107,0.3);">
-                    </div>
-                <% }); %>
-            </div>
-        </div>
-    </div>
-
-    <div style="margin-top: 30px; background: rgba(22, 28, 48, 0.95); border: 1px solid #3c4566; border-radius: 8px; padding: 20px;">
-        <h2 style="color: #8da4c4; text-align: center; margin-bottom: 20px; font-family: 'Cinzel', serif;">Banned Characters</h2>
-        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-            <% if (match.bans && match.bans.length > 0) { %>
-                <% match.bans.forEach(ban => { %>
-                    <% let banId = ban.id || ban; %>
-                    <div style="width: 60px; position: relative;">
-                        <img src="<%= charMap[banId] ? charMap[banId].img : 'https://cdn.discordapp.com/embed/avatars/0.png' %>" alt="<%= banId %>" style="width: 100%; border-radius: 5px; filter: grayscale(100%); opacity: 0.6;">
-                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,0,0,0.7); font-size: 40px; font-weight: bold; pointer-events: none;">&times;</div>
-                    </div>
-                <% }); %>
-            <% } else { %>
-                <p style="color: #556; width: 100%; text-align: center;">No bans in this match</p>
-            <% } %>
-        </div>
-    </div>
-    
-    <div style="text-align: center; margin-top: 30px;">
-        <a href="/history" style="color: #d4af37; text-decoration: none; border: 1px solid #d4af37; padding: 10px 20px; border-radius: 4px; transition: 0.3s; background: rgba(212, 175, 55, 0.1);">
-            &larr; Back to History
-        </a>
-    </div>
-</div>
-
-<%- include('../partials/footer') %>
+module.exports = mongoose.model('Match', matchSchema);
