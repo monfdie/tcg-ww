@@ -7,11 +7,13 @@ const matchSchema = new mongoose.Schema({
     redName: String,
     blueDiscordId: String,
     redDiscordId: String,
+    blueAvatar: String, // <-- ДОБАВЛЕНО
+    redAvatar: String,  // <-- ДОБАВЛЕНО
     bans: Array,
     bluePicks: Array,
     redPicks: Array,
-    immunityPool: Array, // <-- ДОБАВЛЕНО
-    immunityBans: Array, // <-- ДОБАВЛЕНО
+    immunityPool: Array,
+    immunityBans: Array,
     date: { type: Date, default: Date.now }
 });
 
