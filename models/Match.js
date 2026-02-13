@@ -10,6 +10,8 @@ const matchSchema = new mongoose.Schema({
     bans: Array,
     bluePicks: Array,
     redPicks: Array,
+    immunityPool: Array, // <-- ДОБАВЛЕНО
+    immunityBans: Array, // <-- ДОБАВЛЕНО
     date: { type: Date, default: Date.now }
 });
 
