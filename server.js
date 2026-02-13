@@ -269,7 +269,9 @@ async function nextStep(roomId) {
             await Match.create({
                 roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
                 blueDiscordId: s.blueUserId, redDiscordId: s.redUserId,
-                bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks
+                bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks,
+                immunityPool: s.immunityPool, // <-- ДОБАВЛЕНО
+                immunityBans: s.immunityBans  // <-- ДОБАВЛЕНО
             });
             const count = await Match.countDocuments();
             if (count > 6) {
