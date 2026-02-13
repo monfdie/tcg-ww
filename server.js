@@ -68,7 +68,6 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const CHARACTERS_BY_ELEMENT = require('./characters.json');
-// ДОБАВЛЕН ИМПОРТ IMMUNITY_ORDER
 const { DRAFT_RULES, IMMUNITY_ORDER } = require('./public/draft-rules.js'); 
 
 const indexRouter = require('./routes/index');
@@ -84,7 +83,6 @@ io.on('connection', (socket) => {
             id: roomId, bluePlayer: socket.id, blueUserId: userId, redPlayer: null, redUserId: null,
             spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
-            // НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ ИММУНИТЕТА
             immunityPhaseActive: false, immunityStepIndex: 0, immunityPool: [], immunityBans: [],
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
@@ -141,7 +139,6 @@ io.on('connection', (socket) => {
         if (session.ready.blue && session.ready.red && !session.gameStarted) {
             session.gameStarted = true;
             
-            // ЛОГИКА СТАРТА ДЛЯ ИММУНИТЕТА
             if (session.draftType === 'gitcg_cup_2') {
                 session.immunityPhaseActive = true;
                 session.currentTeam = IMMUNITY_ORDER[0].team;
@@ -157,7 +154,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // ДОБАВЛЕН ОБРАБОТЧИК КНОПКИ SKIP
     socket.on('skip_action', (roomId) => {
         const session = sessions[roomId];
         if (!session || !session.immunityPhaseActive) return;
@@ -178,10 +174,9 @@ io.on('connection', (socket) => {
         nextImmunityStep(roomId);
     });
 
-    // ОБНОВЛЕННАЯ ЛОГИКА ВЫБОРА (ПОДДЕРЖКА ИММУНИТЕТОВ)
     socket.on('action', ({ roomId, charId }) => {
         const session = sessions[roomId];
-        if (!session || !session.redPlayer || !session.gameStarted) return;
+        if (!session || !session.gameStarted) return;
 
         session.lastActive = Date.now();
 
@@ -190,7 +185,6 @@ io.on('connection', (socket) => {
         
         if (!isBlueTurn && !isRedTurn) return;
 
-        // Фаза иммунитета
         if (session.immunityPhaseActive) {
             const isImmunityBanned = session.immunityBans.includes(charId);
             const isImmunityPicked = session.immunityPool.includes(charId);
@@ -205,7 +199,6 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Основной драфт
         const currentConfig = session.draftOrder[session.stepIndex];
         const isImmunityTurn = !!currentConfig.immunity;
 
@@ -224,24 +217,17 @@ io.on('connection', (socket) => {
         }
 
         let isAvailable = !isPickedByBlue && !isPickedByRed;
-        if (isImmunityTurn && isInImmunityPool) {
-            isAvailable = true; 
-        }
+        if (isImmunityTurn && isInImmunityPool) isAvailable = true; 
 
         if (!isAvailable) return;
 
-        if (session.currentAction === 'ban') {
-            session.bans.push({ id: charId, team: session.currentTeam });
-        } else {
-            if (session.currentTeam === 'blue') session.bluePicks.push(charId);
-            else session.redPicks.push(charId);
-        }
+        if (session.currentAction === 'ban') session.bans.push({ id: charId, team: session.currentTeam });
+        else session.currentTeam === 'blue' ? session.bluePicks.push(charId) : session.redPicks.push(charId);
 
         nextStep(roomId);
     });
 });
 
-// ДОБАВЛЕНА ФУНКЦИЯ ШАГОВ ДЛЯ ФАЗЫ ИММУНИТЕТА
 function nextImmunityStep(roomId) {
     const session = sessions[roomId];
     session.immunityStepIndex++;
@@ -269,7 +255,9 @@ async function nextStep(roomId) {
             await Match.create({
                 roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
                 blueDiscordId: s.blueUserId, redDiscordId: s.redUserId,
-                bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks
+                bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks,
+                immunityBans: s.immunityBans || [],  // <--- СОХРАНЕНИЕ
+                immunityPool: s.immunityPool || []   // <--- СОХРАНЕНИЕ
             });
             const count = await Match.countDocuments();
             if (count > 6) {
@@ -296,18 +284,15 @@ function startTimer(roomId) {
     }, 1000);
 }
 
-// ДОБАВЛЕНА СИНХРОНИЗАЦИЯ СТАТУСА ИММУНИТЕТА В ПУБЛИЧНОМ СТЕЙТЕ
 function getPublicState(session) {
     return {
         stepIndex: session.stepIndex + 1,
         currentTeam: session.currentTeam, currentAction: session.currentAction,
         bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
-        
         immunityPhaseActive: session.immunityPhaseActive,
         immunityPool: session.immunityPool || [],
         immunityBans: session.immunityBans || [],
-
         ready: session.ready, gameStarted: session.gameStarted
     };
 }
