@@ -1,6 +1,6 @@
 <%- include('../partials/header') %>
 
-<div>
+<div class="page-container">
     <div class="page-title">
         <h1>Match Results: <span style="color: #d4af37;"><%= match.roomId %></span></h1>
         <p style="color: #8da4c4;"><%= match.date ? new Date(match.date).toLocaleString() : 'Date unknown' %></p>
@@ -12,7 +12,7 @@
             <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                 <% (match.bluePicks || []).forEach(id => { %>
                     <div style="width: 80px; text-align: center;">
-                        <img src="/images/avatars/<%= id %>.png" alt="<%= id %>" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" style="width: 100%; border-radius: 5px; border: 2px solid #4facfe; box-shadow: 0 0 10px rgba(79,172,254,0.3);">
+                        <img src="<%= charMap[id] ? charMap[id].img : 'https://cdn.discordapp.com/embed/avatars/0.png' %>" alt="<%= id %>" style="width: 100%; border-radius: 5px; border: 2px solid #4facfe; box-shadow: 0 0 10px rgba(79,172,254,0.3);">
                     </div>
                 <% }); %>
             </div>
@@ -23,7 +23,7 @@
             <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                 <% (match.redPicks || []).forEach(id => { %>
                     <div style="width: 80px; text-align: center;">
-                        <img src="/images/avatars/<%= id %>.png" alt="<%= id %>" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" style="width: 100%; border-radius: 5px; border: 2px solid #ff6b6b; box-shadow: 0 0 10px rgba(255,107,107,0.3);">
+                        <img src="<%= charMap[id] ? charMap[id].img : 'https://cdn.discordapp.com/embed/avatars/0.png' %>" alt="<%= id %>" style="width: 100%; border-radius: 5px; border: 2px solid #ff6b6b; box-shadow: 0 0 10px rgba(255,107,107,0.3);">
                     </div>
                 <% }); %>
             </div>
@@ -35,8 +35,9 @@
         <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
             <% if (match.bans && match.bans.length > 0) { %>
                 <% match.bans.forEach(ban => { %>
+                    <% let banId = ban.id || ban; %>
                     <div style="width: 60px; position: relative;">
-                        <img src="/images/avatars/<%= ban.id || ban %>.png" alt="ban" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" style="width: 100%; border-radius: 5px; filter: grayscale(100%); opacity: 0.6;">
+                        <img src="<%= charMap[banId] ? charMap[banId].img : 'https://cdn.discordapp.com/embed/avatars/0.png' %>" alt="<%= banId %>" style="width: 100%; border-radius: 5px; filter: grayscale(100%); opacity: 0.6;">
                         <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,0,0,0.7); font-size: 40px; font-weight: bold; pointer-events: none;">&times;</div>
                     </div>
                 <% }); %>
