@@ -1,7 +1,220 @@
 <%- include('../partials/header') %>
 
-<div style="text-align: center; margin-top: 100px;">
-    <h1 style="font-family: 'Cinzel', serif; font-size: 3em; color: #fff;">Genshin Impact TCG</h1>
+<style>
+    /* --- СТИЛИ ГЛАВНОЙ СТРАНИЦЫ --- */
+    .hero-section {
+        text-align: center;
+        margin-top: 40px;
+        margin-bottom: 60px;
+        animation: fadeIn 1s ease-out;
+    }
+    
+    .main-title {
+        font-family: 'Cinzel', serif;
+        font-size: 3.5em;
+        color: #fff;
+        margin: 0;
+        text-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
+        letter-spacing: 2px;
+    }
+    
+    .sub-title {
+        font-family: 'Segoe UI', sans-serif;
+        color: #8da4c4;
+        font-size: 1.2em;
+        margin-top: 10px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+    }
+
+    /* --- КОНТЕЙНЕР ДЛЯ КАРТОЧЕК --- */
+    .news-container {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        flex-wrap: wrap;
+        padding: 0 20px;
+    }
+
+    /* --- ОБЩИЙ ДИЗАЙН КАРТОЧЕК --- */
+    .news-card {
+        background: rgba(22, 28, 48, 0.85);
+        border: 1px solid #2a3454;
+        border-radius: 8px;
+        width: 100%;
+        max-width: 450px;
+        padding: 40px 35px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .news-card:hover {
+        transform: translateY(-5px);
+    }
+
+    /* --- СПЕЦИАЛЬНАЯ КАРТОЧКА: GITCG CUP 2 --- */
+    .cup-card {
+        border-top: 3px solid #d4af37;
+    }
+    .cup-card:hover {
+        border-color: #d4af37;
+        box-shadow: 0 15px 40px rgba(212, 175, 55, 0.2);
+    }
+    .cup-glow {
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    /* --- СПЕЦИАЛЬНАЯ КАРТОЧКА: ТЕКУЩИЙ ТУРНИР --- */
+    .live-card {
+        border-top: 3px solid #4facfe;
+    }
+    .live-card:hover {
+        border-color: #4facfe;
+        box-shadow: 0 15px 40px rgba(79, 172, 254, 0.2);
+    }
+
+    /* --- ЭЛЕМЕНТЫ ВНУТРИ КАРТОЧКИ --- */
+    .badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.75em;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+    .badge-soon {
+        background: rgba(212, 175, 55, 0.15);
+        color: #d4af37;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    .badge-live {
+        background: rgba(40, 167, 69, 0.15);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.3);
+        animation: pulseGreen 2s infinite;
+    }
+
+    .card-title {
+        font-family: 'Cinzel', serif;
+        font-size: 2em;
+        margin: 0 0 15px 0;
+        color: #fff;
+    }
+    
+    .card-desc {
+        color: #a0b4d0;
+        font-size: 1.05em;
+        line-height: 1.6;
+        margin-bottom: 25px;
+        flex-grow: 1;
+    }
+
+    .tour-details {
+        background: rgba(10, 12, 20, 0.5);
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid #1e2640;
+        margin-bottom: 25px;
+        font-size: 0.95em;
+    }
+    .tour-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    .tour-row:last-child { margin-bottom: 0; }
+    .tour-label { color: #556; }
+    .tour-value { color: #fff; font-weight: 500; }
+    .tour-prize { color: #d4af37; font-weight: bold; text-shadow: 0 0 5px rgba(212, 175, 55, 0.4); }
+
+    /* Теги скопированы из tournaments.ejs */
+    .card-tags { display: flex; gap: 8px; margin-bottom: 25px; }
+    .tag-badge { background: rgba(255, 255, 255, 0.05); color: #aaa; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
+    .tag-region { color: #d4af37; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.2); }
+    .tag-system { color: #4facfe; background: rgba(79, 172, 254, 0.1); border-color: rgba(79, 172, 254, 0.2); }
+
+    .pulse-text {
+        display: block;
+        text-align: center;
+        color: #d4af37;
+        font-weight: bold;
+        letter-spacing: 2px;
+        margin-top: 15px;
+        animation: pulseAlpha 2s infinite;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulseAlpha { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+    
+</style>
+
+<div class="hero-section">
+    <h1 class="main-title">Genshin Impact TCG</h1>
+    <p class="sub-title">Multiplayer Draft Platform</p>
+</div>
+
+<div class="news-container">
+    
+    <div class="news-card cup-card">
+        <div class="cup-glow"></div>
+        <div class="badge badge-soon">SOON</div>
+        
+        <h2 class="card-title" style="color: #d4af37;">GITCG CUP 2</h2>
+        
+        <p class="card-desc">
+            The next official tournament is on the horizon. Prepare your strategies for the new <strong>Immunity Draft</strong> format! Practice rooms are already available in the lobby.
+        </p>
+        
+        <div style="margin-top: auto;">
+            <a href="/create" class="btn-primary" style="display: block; text-align: center; text-decoration: none; width: 100%; box-sizing: border-box; background: transparent; border-color: #d4af37; color: #d4af37;">Practice Draft</a>
+            <span class="pulse-text">MORE DETAILS SOON</span>
+        </div>
+    </div>
+
+    <div class="news-card live-card">
+        <div class="badge badge-live">OPEN</div>
+        
+        <h2 class="card-title">Asia Tournament</h2>
+        
+        <div class="tour-details">
+            <div class="tour-row">
+                <span class="tour-label">Date:</span>
+                <span class="tour-value">February 15, 2026</span>
+            </div>
+            <div class="tour-row">
+                <span class="tour-label">Prize Pool:</span>
+                <span class="tour-value tour-prize">3000 ¥</span>
+            </div>
+        </div>
+
+        <div class="card-tags">
+            <span class="tag-badge tag-region">AS</span>
+            <span class="tag-badge tag-system">Allpick</span>
+            <span class="tag-badge">Tonamel</span>
+        </div>
+        
+        <div style="margin-top: auto;">
+            <a href="https://tonamel.com/competition/KkDrM" target="_blank" class="btn-primary" style="display: block; text-align: center; text-decoration: none; width: 100%; box-sizing: border-box;">
+                Register on Tonamel
+            </a>
+        </div>
+    </div>
+
 </div>
 
 <%- include('../partials/footer') %>
