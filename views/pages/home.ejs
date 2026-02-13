@@ -141,11 +141,54 @@
     .tour-value { color: #fff; font-weight: 500; }
     .tour-prize { color: #d4af37; font-weight: bold; text-shadow: 0 0 5px rgba(212, 175, 55, 0.4); }
 
-    /* Теги скопированы из tournaments.ejs */
-    .card-tags { display: flex; gap: 8px; margin-bottom: 25px; }
+    .card-tags { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
     .tag-badge { background: rgba(255, 255, 255, 0.05); color: #aaa; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
     .tag-region { color: #d4af37; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.2); }
     .tag-system { color: #4facfe; background: rgba(79, 172, 254, 0.1); border-color: rgba(79, 172, 254, 0.2); }
+
+    /* --- НОВЫЕ КРАСИВЫЕ КНОПКИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ --- */
+    .home-action-btn {
+        display: block;
+        width: 100%;
+        padding: 15px 20px;
+        border-radius: 50px; /* Полностью закругленные края */
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 1.05em;
+        font-weight: bold;
+        text-align: center;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        border: 2px solid;
+    }
+
+    /* Золотая кнопка */
+    .btn-gold {
+        color: #d4af37;
+        border-color: #d4af37;
+        background: rgba(212, 175, 55, 0.05);
+    }
+    .btn-gold:hover {
+        background: #d4af37;
+        color: #0b0d17;
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        transform: scale(1.03);
+    }
+
+    /* Синяя кнопка */
+    .btn-blue {
+        color: #4facfe;
+        border-color: #4facfe;
+        background: rgba(79, 172, 254, 0.05);
+    }
+    .btn-blue:hover {
+        background: #4facfe;
+        color: #0b0d17;
+        box-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
+        transform: scale(1.03);
+    }
 
     .pulse-text {
         display: block;
@@ -154,6 +197,7 @@
         font-weight: bold;
         letter-spacing: 2px;
         margin-top: 15px;
+        font-size: 0.9em;
         animation: pulseAlpha 2s infinite;
     }
 
@@ -174,14 +218,12 @@
         <div class="cup-glow"></div>
         <div class="badge badge-soon">SOON</div>
         
-        <h2 class="card-title" style="color: #d4af37;">GITCG CUP 2</h2>
-        
-        <p class="card-desc">
-            The next official tournament is on the horizon. Prepare your strategies for the new <strong>Immunity Draft</strong> format! Practice rooms are already available in the lobby.
-        </p>
+        <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; min-height: 150px;">
+            <h2 class="card-title" style="color: #d4af37; font-size: 2.5em; text-align: center; margin: 0; text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);">GITCG CUP 2</h2>
+        </div>
         
         <div style="margin-top: auto;">
-            <a href="/create" class="btn-primary" style="display: block; text-align: center; text-decoration: none; width: 100%; box-sizing: border-box; background: transparent; border-color: #d4af37; color: #d4af37;">Practice Draft</a>
+            <a href="/create" class="home-action-btn btn-gold">Practice Draft</a>
             <span class="pulse-text">MORE DETAILS SOON</span>
         </div>
     </div>
@@ -202,14 +244,14 @@
             </div>
         </div>
 
-        <div class="card-tags">
+        <div class="card-tags" style="flex-grow: 1;">
             <span class="tag-badge tag-region">AS</span>
             <span class="tag-badge tag-system">Allpick</span>
             <span class="tag-badge">Tonamel</span>
         </div>
         
-        <div style="margin-top: auto;">
-            <a href="https://tonamel.com/competition/KkDrM" target="_blank" class="btn-primary" style="display: block; text-align: center; text-decoration: none; width: 100%; box-sizing: border-box;">
+        <div style="margin-top: auto; padding-top: 15px;">
+            <a href="https://tonamel.com/competition/KkDrM" target="_blank" class="home-action-btn btn-blue">
                 Register on Tonamel
             </a>
         </div>
