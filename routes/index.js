@@ -24,14 +24,17 @@ router.get('/history', async (req, res) => {
 });
 
 // Единый роут для Активной игры и для Повторов
+// Единый роут для Активной игры и для Повторов
 router.get('/game/:id', async (req, res) => {
     try {
-        const match = await Match.findOne({ roomId: req.params.id });
+        // ДОБАВЛЕНО .lean() в конце этой строки:
+        const match = await Match.findOne({ roomId: req.params.id }).lean();
+        
         res.render('pages/game', { 
             title: `Room ${req.params.id}`, 
             roomId: req.params.id, 
             savedData: match || null,
-            chars: CHARACTERS_BY_ELEMENT, // <--- ДОБАВЛЕНО
+            chars: CHARACTERS_BY_ELEMENT,
             hideSidebar: true 
         });
     } catch (e) {
