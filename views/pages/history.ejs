@@ -25,16 +25,13 @@
                             </span>
                         </div>
 
-                        <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-                            <div>
-                                <span style="display: block; color: #8da4c4; font-size: 0.9em;">
-                                    <%= new Date(match.date).toLocaleDateString() %>
-                                </span>
-                                <span style="display: block; color: #556; font-size: 0.8em;">
-                                    <%= new Date(match.date).toLocaleTimeString() %>
-                                </span>
-                            </div>
-                            <a href="/game/<%= match.roomId %>" style="background: rgba(79, 172, 254, 0.1); color: #4facfe; border: 1px solid #4facfe; padding: 4px 12px; border-radius: 4px; text-decoration: none; font-size: 0.9em; transition: 0.2s;">View Match</a>
+                        <div style="text-align: right;">
+                            <span style="display: block; color: #8da4c4; font-size: 0.9em;">
+                                <%= new Date(match.date).toLocaleDateString() %>
+                            </span>
+                            <span style="display: block; color: #556; font-size: 0.8em;">
+                                <%= new Date(match.date).toLocaleTimeString() %>
+                            </span>
                         </div>
 
                     </li>
