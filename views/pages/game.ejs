@@ -114,7 +114,6 @@
              document.getElementById('blue-res').innerText = "0:00";
              document.getElementById('red-res').innerText = "0:00";
              
-             // Затемняем всех персонажей в пуле, так как игра окончена
              document.querySelectorAll('.char-option').forEach(el => el.classList.add('disabled'));
          };
      } else {
@@ -228,23 +227,23 @@
          return el;
      }
 
-     function confirmSelection() {
-         if(selectedCharId && currentRoom) {
-             socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
-             selectedCharId = null; document.getElementById('confirm-btn').disabled = true;
-             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
-         }
-     }
-
      function updateImmunityTop(state) {
          const topDisp = document.getElementById('immunity-top-display');
-         if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
-         topDisp.style.display = 'flex';
-         const row = document.getElementById('immunity-icons-row');
-         row.innerHTML = '';
          const bans = state.immunityBans || [];
          const picks = state.immunityPool || [];
+         
+         // Улучшенная проверка: показываем панель, если это нужный мод ИЛИ если в истории есть данные
+         if (state.draftType === 'gitcg_cup_2' || bans.length > 0 || picks.length > 0) {
+             topDisp.style.display = 'flex';
+         } else {
+             topDisp.style.display = 'none'; 
+             return;
+         }
+
+         const row = document.getElementById('immunity-icons-row');
+         row.innerHTML = '';
          const slots = [ { val: bans[0], type: 'ban' }, { val: picks[0], type: 'pick' }, { val: picks[1], type: 'pick' }, { val: bans[1], type: 'ban' } ];
+         
          slots.forEach(slot => {
              const div = document.createElement('div');
              div.className = `im-icon im-${slot.type}`;
@@ -255,7 +254,9 @@
                  let all = []; Object.values(charsData).forEach(a => all.push(...a));
                  const char = all.find(c => c.id === slot.val);
                  if(char) div.innerHTML = `<img src="${char.img}">`;
-             } else div.classList.add('im-empty');
+             } else {
+                 div.classList.add('im-empty');
+             }
              row.appendChild(div);
          });
      }
@@ -316,6 +317,7 @@
          document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
          state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
          [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
+         
          if(state.immunityPhaseActive) {
              [...state.immunityBans, ...state.immunityPool].forEach(id => {
                  if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
