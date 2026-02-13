@@ -31,6 +31,7 @@ router.get('/game/:id', async (req, res) => {
             title: `Room ${req.params.id}`, 
             roomId: req.params.id, 
             savedData: match || null,
+            chars: CHARACTERS_BY_ELEMENT, // <--- ЭТА СТРОЧКА ИСПРАВИТ ОШИБКУ
             hideSidebar: true 
         });
     } catch (e) {
@@ -38,6 +39,7 @@ router.get('/game/:id', async (req, res) => {
             title: "Error", 
             roomId: req.params.id, 
             savedData: null,
+            chars: CHARACTERS_BY_ELEMENT, // <--- И ЗДЕСЬ ТОЖЕ
             hideSidebar: true 
         });
     }
