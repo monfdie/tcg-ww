@@ -162,13 +162,17 @@
      } else {
          socket.on('connect', () => {
              if (currentRoom && myUserId) {
-                 // --- ИЗМЕНЕНИЕ: Читаем флаг наблюдателя ---
+                 // Читаем настройку
                  const asSpectator = sessionStorage.getItem('draft_as_spectator') === 'true';
                  
+                 // СРАЗУ ОЧИЩАЕМ, чтобы при обновлении страницы или следующем входе 
+                 // не закинуло в зрители случайно
+                 sessionStorage.removeItem('draft_as_spectator');
+
                  socket.emit('rejoin_game', { 
                      roomId: currentRoom, userId: myUserId, nickname: myNickname,
                      discordId: myRealDiscordId, avatar: myAvatarHash,
-                     asSpectator: asSpectator // Отправляем на сервер
+                     asSpectator: asSpectator 
                  }); 
              }
          });
