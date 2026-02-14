@@ -30,3 +30,4 @@ const gameSessionSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('GameSession', gameSessionSchema);
+//sqnsqinsiq
