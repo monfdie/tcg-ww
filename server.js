@@ -9,18 +9,20 @@ const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const mongoose = require('mongoose');
 
+// Подключаем существующие модели
 const User = require('./models/User');
 const Match = require('./models/Match');
-const GameSession = require('./models/GameSession');
+// const GameSession = require('./models/GameSession'); // УБРАЛИ, так как файла нет
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Подключение к БД (нужно для User и Match, но не для активных игр теперь)
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log('✅ Connected to MongoDB!');
-        restoreSessions(); // Восстанавливаем игры после перезапуска
+        // restoreSessions(); // УБРАЛИ восстановление, так как не храним сессии в БД
     })
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
@@ -77,51 +79,16 @@ const { DRAFT_RULES, IMMUNITY_ORDER } = require('./public/draft-rules.js');
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 
-// Глобальный объект сессий (для быстродействия), синхронизируется с БД
+// Глобальный объект сессий (ВСЕ игры хранятся здесь, в оперативной памяти)
 const sessions = {};
 
-// Функция восстановления сессий из базы данных при старте сервера
-async function restoreSessions() {
-    try {
-        const storedSessions = await GameSession.find({});
-        storedSessions.forEach(doc => {
-            const s = doc.toObject();
-            sessions[s.roomId] = s;
-            // Перезапускаем таймер, если игра была активна
-            if (s.gameStarted) {
-                startTimer(s.roomId);
-            }
-        });
-        if (storedSessions.length > 0) {
-            console.log(`🔄 Restored ${storedSessions.length} active games from Database.`);
-        }
-    } catch (e) {
-        console.error("Failed to restore sessions:", e);
-    }
-}
-
-// Вспомогательная функция для сохранения состояния в БД
-async function saveSession(roomId) {
-    if (!sessions[roomId]) return;
-    try {
-        // Удаляем поле timerInterval перед сохранением, так как MongoDB не умеет хранить таймеры
-        const { timerInterval, ...sessionData } = sessions[roomId];
-        await GameSession.findOneAndUpdate(
-            { roomId: roomId },
-            sessionData,
-            { upsert: true, new: true }
-        );
-    } catch (e) {
-        console.error(`Error saving session ${roomId}:`, e);
-    }
-}
-
 io.on('connection', (socket) => {
-    socket.on('create_game', async ({ nickname, draftType, userId, discordId, avatar }) => {
+    socket.on('create_game', ({ nickname, draftType, userId, discordId, avatar }) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = draftType || 'gitcg';
+        
         sessions[roomId] = {
-            id: roomId, roomId: roomId, // Дублируем для удобства
+            id: roomId, roomId: roomId, 
             bluePlayer: socket.id, blueUserId: userId, 
             blueDiscordId: discordId, blueAvatar: avatar,
             redPlayer: null, redUserId: null, redDiscordId: null, redAvatar: null,
@@ -133,40 +100,38 @@ io.on('connection', (socket) => {
             bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false }
         };
         
-        await saveSession(roomId); // СОХРАНЯЕМ В БД
+        // Нет await saveSession(roomId);
 
         socket.join(roomId);
         socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    // --- ОБНОВЛЕННАЯ ЛОГИКА ВХОДА ---
-    socket.on('join_game', async ({roomId, nickname, userId, discordId, avatar}) => {
+    // --- ЛОГИКА ВХОДА БЕЗ БД ---
+    socket.on('join_game', ({roomId, nickname, userId, discordId, avatar}) => {
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Room not found');
         
         session.lastActive = Date.now();
 
-        // Если место Красного (2-го игрока) свободно -> занимаем его
+        // Если место Красного свободно
         if (!session.redPlayer) {
             session.redPlayer = socket.id; 
             session.redUserId = userId; 
             session.redName = nickname || 'Player 2';
             
-            // Сохраняем данные Discord, если они есть
             session.redDiscordId = discordId;
             session.redAvatar = avatar;
             
-            await saveSession(roomId); // СОХРАНЯЕМ В БД
+            // Нет await saveSession(roomId);
             
             socket.join(roomId); 
             socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
             io.to(roomId).emit('update_state', getPublicState(session));
         } 
-        // Если занято -> идем в зрители
+        // Если занято -> в зрители
         else {
             if (!session.spectators.includes(socket.id)) {
                 session.spectators.push(socket.id); 
-                await saveSession(roomId); // СОХРАНЯЕМ В БД
             }
             
             socket.join(roomId);
@@ -180,7 +145,6 @@ io.on('connection', (socket) => {
         
         let role = 'spectator';
         
-        // Обновляем socket.id при переподключении
         if (session.blueUserId === userId) { 
             session.bluePlayer = socket.id; 
             role = 'blue'; 
@@ -188,7 +152,6 @@ io.on('connection', (socket) => {
             session.redPlayer = socket.id; 
             role = 'red'; 
         } else if (!session.redUserId) {
-            // Если игрок был создан, но еще не зашел (редкий кейс, но на всякий случай)
             session.redUserId = userId;
             session.redPlayer = socket.id;
             session.redName = nickname || 'Player 2'; 
@@ -200,14 +163,12 @@ io.on('connection', (socket) => {
         socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    socket.on('player_ready', async (roomId) => {
+    socket.on('player_ready', (roomId) => {
         const session = sessions[roomId];
         if (!session) return;
         if (socket.id === session.bluePlayer) session.ready.blue = true;
         if (socket.id === session.redPlayer) session.ready.red = true;
         
-        await saveSession(roomId); // СОХРАНЯЕМ
-
         io.to(roomId).emit('update_state', getPublicState(session));
         
         if (session.ready.blue && session.ready.red && !session.gameStarted) {
@@ -222,14 +183,12 @@ io.on('connection', (socket) => {
             }
             startTimer(roomId); 
             
-            await saveSession(roomId); // СОХРАНЯЕМ СТАРТ
-
             io.to(roomId).emit('game_started'); 
             io.to(roomId).emit('update_state', getPublicState(session));
         }
     });
 
-    socket.on('skip_action', async (roomId) => {
+    socket.on('skip_action', (roomId) => {
         const session = sessions[roomId];
         if (!session || !session.immunityPhaseActive) return;
 
@@ -246,11 +205,10 @@ io.on('connection', (socket) => {
             session.immunityPool.push('skipped');
         }
         
-        await saveSession(roomId); // СОХРАНЯЕМ
         nextImmunityStep(roomId);
     });
 
-    socket.on('action', async ({ roomId, charId }) => {
+    socket.on('action', ({ roomId, charId }) => {
         const session = sessions[roomId];
         if (!session || !session.redPlayer || !session.gameStarted) return;
 
@@ -272,7 +230,6 @@ io.on('connection', (socket) => {
             } else if (session.currentAction === 'immunity_pick') {
                 session.immunityPool.push(charId);
             }
-            await saveSession(roomId); // СОХРАНЯЕМ
             nextImmunityStep(roomId);
             return;
         }
@@ -309,12 +266,11 @@ io.on('connection', (socket) => {
             else session.redPicks.push(charId);
         }
 
-        await saveSession(roomId); // СОХРАНЯЕМ
         nextStep(roomId);
     });
 });
 
-async function nextImmunityStep(roomId) {
+function nextImmunityStep(roomId) {
     const session = sessions[roomId];
     session.immunityStepIndex++;
     session.timer = 45; 
@@ -329,7 +285,6 @@ async function nextImmunityStep(roomId) {
         session.currentTeam = config.team;
         session.currentAction = config.type;
     }
-    await saveSession(roomId); // Сохраняем смену этапа
     io.to(roomId).emit('update_state', getPublicState(session));
 }
 
@@ -340,7 +295,7 @@ async function nextStep(roomId) {
         io.to(roomId).emit('game_over', getPublicState(s)); 
         clearInterval(s.timerInterval); 
         try {
-            // Сохраняем в историю
+            // Сохраняем ИСТОРИЮ (это работает, так как модель Match есть)
             await Match.create({
                 roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
                 blueDiscordId: s.blueDiscordId, redDiscordId: s.redDiscordId,
@@ -348,8 +303,7 @@ async function nextStep(roomId) {
                 bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks,
                 immunityPool: s.immunityPool, immunityBans: s.immunityBans
             });
-            // Удаляем активную сессию из БД, так как игра окончена
-            await GameSession.deleteOne({ roomId: s.roomId });
+            
             delete sessions[roomId]; // Удаляем из памяти
 
             const count = await Match.countDocuments();
@@ -361,7 +315,6 @@ async function nextStep(roomId) {
         return;
     }
     const c = s.draftOrder[s.stepIndex]; s.currentTeam = c.team; s.currentAction = c.type;
-    await saveSession(roomId); // Сохраняем смену хода
     io.to(roomId).emit('update_state', getPublicState(s));
 }
 
@@ -369,7 +322,7 @@ function startTimer(roomId) {
     const s = sessions[roomId];
     if (s.timerInterval) clearInterval(s.timerInterval);
     s.timerInterval = setInterval(() => {
-        if (!sessions[roomId]) return clearInterval(s.timerInterval); // Защита от краша
+        if (!sessions[roomId]) return clearInterval(s.timerInterval);
 
         if (s.timer > 0) s.timer--;
         else {
@@ -400,8 +353,8 @@ function getPublicState(session) {
 
 const PORT = process.env.PORT || 3000;
 
-// --- GARBAGE COLLECTOR (Очистка неактивных комнат) ---
-setInterval(async () => {
+// --- GARBAGE COLLECTOR (Очистка памяти) ---
+setInterval(() => {
     const now = Date.now();
     let deletedCount = 0;
     for (const roomId in sessions) {
@@ -410,7 +363,6 @@ setInterval(async () => {
         if (now - session.lastActive > 7200000) {
             if (session.timerInterval) clearInterval(session.timerInterval);
             delete sessions[roomId]; // Удаляем из памяти
-            await GameSession.deleteOne({ roomId: roomId }); // Удаляем из БД
             deletedCount++;
         }
     }
