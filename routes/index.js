@@ -16,9 +16,28 @@ router.get('/tournaments', (req, res) => res.render('pages/tournaments', { title
 
 router.get('/history', async (req, res) => {
     try {
-        const matches = await Match.find().sort({ date: -1 }).limit(6);
+        let query = {};
+
+        // Если пользователь залогинен через Discord
+        if (req.user && req.user.discordId) {
+            query = {
+                $or: [
+                    { blueDiscordId: req.user.discordId },
+                    { redDiscordId: req.user.discordId }
+                ]
+            };
+        } 
+        // Если пользователь НЕ залогинен, query остается пустым {}, 
+        // и будут показаны последние игры всех игроков (как демо-режим).
+        // Если хотите скрывать историю для гостей, раскомментируйте строчку ниже:
+        // else { query = { _id: null }; } // Ничего не найдет
+
+        // Увеличим лимит с 6 до 20, так как это личная история
+        const matches = await Match.find(query).sort({ date: -1 }).limit(20);
+        
         res.render('pages/history', { title: 'History', matches });
     } catch (e) {
+        console.error(e);
         res.render('pages/history', { title: 'History', matches: [] });
     }
 });
