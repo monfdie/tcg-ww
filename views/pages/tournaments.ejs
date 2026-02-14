@@ -1,37 +1,12 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* --- Стили страницы --- */
     .tournament-section { margin-bottom: 60px; }
-
-    /* Заголовки разделов */
-    .section-header {
-        display: flex; align-items: center; gap: 15px; margin-bottom: 25px;
-        border-bottom: 1px solid #2a3454; padding-bottom: 15px;
-    }
-    .section-title {
-        font-family: 'Cinzel', serif; font-size: 2em; color: #fff; margin: 0;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); text-transform: uppercase;
-    }
-
-    /* --- Фильтры --- */
-    .filters-container { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
-    .filter-chip {
-        background: rgba(43, 52, 82, 0.6); border: 1px solid #3c4566;
-        padding: 8px 24px; border-radius: 20px; color: #8da4c4;
-        font-family: 'Segoe UI', sans-serif; font-size: 0.95em; font-weight: 600;
-        cursor: pointer; transition: all 0.2s; user-select: none;
-    }
-    .filter-chip:hover { background: rgba(79, 172, 254, 0.2); color: #fff; border-color: #4facfe; }
-    .filter-chip.active {
-        background: #4facfe; color: #fff; border-color: #4facfe;
-        box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
-    }
-
-    /* --- Сетка турниров --- */
-    .tournament-list { display: flex; flex-direction: column; gap: 15px; min-height: 50px; }
+    .section-header { border-bottom: 1px solid #2a3454; padding-bottom: 15px; margin-bottom: 25px; }
+    .section-title { font-family: 'Cinzel', serif; font-size: 2em; color: #fff; margin: 0; text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); text-transform: uppercase; }
     
-    /* Карточка */
+    .tournament-list { display: flex; flex-direction: column; gap: 15px; }
+    
     .tour-card {
         display: flex; height: 140px; background: rgba(22, 28, 48, 0.8);
         border: 1px solid #2a3454; border-radius: 6px; overflow: hidden;
@@ -48,7 +23,6 @@
     .tour-meta { font-size: 0.9em; color: #8da4c4; margin-bottom: 12px; display: flex; gap: 15px; }
     .tour-tags { display: flex; gap: 8px; }
     
-    /* Стили бейджей (овалов) */
     .tag-badge { 
         background: rgba(255, 255, 255, 0.05); color: #aaa; 
         padding: 4px 12px; border-radius: 12px; font-size: 0.85em; 
@@ -59,215 +33,37 @@
     .tag-system { color: #4facfe; background: rgba(79, 172, 254, 0.1); border-color: rgba(79, 172, 254, 0.2); }
 
     .empty-message { text-align: center; color: #556; padding: 40px; border: 1px dashed #2a3454; border-radius: 6px; }
-
-    /* --- МОДАЛЬНОЕ ОКНО --- */
-    .modal-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
-        z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s;
-        align-items: center; justify-content: center;
-    }
-    .modal-overlay.open { display: flex; opacity: 1; }
-
-    .modal-content {
-        width: 90%; max-width: 1100px; background: #0b0d17;
-        border: 1px solid #3c4566; border-radius: 8px;
-        box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden;
-        animation: slideUp 0.3s ease-out; position: relative;
-    }
-    @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-    .banner-header {
-        background: linear-gradient(90deg, #0f1524 0%, #161d30 50%, #0f1524 100%);
-        padding: 20px 40px; display: flex; align-items: center; justify-content: space-between;
-        border-bottom: 1px solid #2a3454; position: relative; min-height: 120px;
-    }
-    
-    .banner-left { display: flex; align-items: center; gap: 25px; }
-    
-    .banner-info h1 {
-        font-family: 'Segoe UI', sans-serif; font-size: 1.8em; color: #fff; margin: 0 0 15px 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    }
-    
-    .banner-actions { display: flex; gap: 10px; align-items: center; }
-    .action-btn {
-        display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); color: #fff;
-        padding: 8px 16px; border-radius: 20px; text-decoration: none;
-        font-size: 0.9em; font-family: 'Segoe UI', sans-serif; font-weight: 500;
-        transition: 0.2s; border: 1px solid transparent;
-    }
-    .action-btn:hover { background: rgba(255,255,255,0.2); border-color: #aaa; }
-    .action-btn i { font-style: normal; }
-
-    .banner-right { text-align: right; }
-    .prize-pool { font-size: 2.5em; font-family: 'Segoe UI', sans-serif; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 10px; }
-    .prize-icon { font-size: 0.8em; color: #d4af37; }
-
-    .close-modal {
-        position: absolute; top: 15px; right: 20px; font-size: 30px; color: #555; cursor: pointer; z-index: 10;
-    }
-    .close-modal:hover { color: #fff; }
-
-    .modal-body-empty {
-        height: 300px; display: flex; align-items: center; justify-content: center;
-        color: #3c4566; font-family: 'Cinzel', serif; font-size: 1.5em;
-        background: radial-gradient(circle at center, rgba(30,30,50,0.3) 0%, transparent 70%);
-    }
-
 </style>
 
 <div class="page-container">
     
     <div class="tournament-section">
         <div class="section-header">
-            <h2 class="section-title">LIVE</h2>
+            <h2 class="section-title">LIVE TOURNAMENTS</h2>
         </div>
 
-        <div class="filters-container" id="filters-live">
-            <div class="filter-chip" onclick="toggleFilter('AS', this, 'grid-live')">AS</div>
-            <div class="filter-chip" onclick="toggleFilter('NA', this, 'grid-live')">NA</div>
-            <div class="filter-chip" onclick="toggleFilter('EU', this, 'grid-live')">EU</div>
-            <div class="filter-chip" onclick="toggleFilter('Allpick', this, 'grid-live')">Allpick</div>
-            <div class="filter-chip" onclick="toggleFilter('Draft', this, 'grid-live')">Draft</div>
-        </div>
-
-        <div class="tournament-list" id="grid-live">
-            
-            <div class="tour-card" data-tags="AS Allpick" onclick="openModal('[LUNA IV Week 5] GI Weekly Asia', 'https://battlefy.com/gitcg/[luna-iv-week-5]-genius-invokation-weekly-asia/698ac4cf51618e0029aa6ec1/info', '800 pitacoin', 'Battlefy', 'AS', 'Allpick')">
-                <div class="tour-content">
-                    <div class="tour-title">[LUNA IV Week 5] Genius Invokation Weekly Asia</div>
-                    <div class="tour-meta">
-                        <span>📅 Feb 15, 2026</span>
-                        <span>🏆 Prize: 800 pitacoin</span>
-                    </div>
-                    <div class="tour-tags">
-                        <span class="tag-badge tag-region">AS</span>
-                        <span class="tag-badge tag-system">Allpick</span>
-                        <span class="tag-badge">Battlefy</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tour-card" data-tags="AS Allpick" onclick="openModal('第２６回全力召喚杯', 'https://tonamel.com/competition/KkDrM', '3000 ¥', 'Tonamel', 'AS', 'Allpick')">
-                <div class="tour-content">
-                    <div class="tour-title">第２６回全力召喚杯</div>
-                    <div class="tour-meta">
-                        <span>📅 Feb 15, 2026</span>
-                        <span>🏆 Prize: 3000 ¥</span>
-                    </div>
-                    <div class="tour-tags">
-                        <span class="tag-badge tag-region">AS</span>
-                        <span class="tag-badge tag-system">Allpick</span>
-                        <span class="tag-badge">Tonamel</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-
-    <div class="tournament-section">
-        <div class="section-header">
-            <h2 class="section-title" style="color: #8da4c4;">Archive</h2>
-        </div>
-
-        <div class="filters-container" id="filters-archive">
-            <div class="filter-chip" onclick="toggleFilter('AS', this, 'grid-archive')">AS</div>
-            <div class="filter-chip" onclick="toggleFilter('NA', this, 'grid-archive')">NA</div>
-            <div class="filter-chip" onclick="toggleFilter('EU', this, 'grid-archive')">EU</div>
-            <div class="filter-chip" onclick="toggleFilter('Allpick', this, 'grid-archive')">Allpick</div>
-            <div class="filter-chip" onclick="toggleFilter('Draft', this, 'grid-archive')">Draft</div>
-        </div>
-
-        <div class="tournament-list" id="grid-archive">
-            <div class="empty-message">No archived tournaments yet.</div>
-        </div>
-    </div>
-
-</div>
-
-<div id="tournament-modal" class="modal-overlay" onclick="closeModal(event)">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeModal(event)">×</span>
-        
-        <div class="banner-header">
-            <div class="banner-left">
-                <div class="banner-info">
-                    <h1 id="modal-title">Tournament Name</h1>
-                    <div class="banner-actions">
-                        <a href="#" id="modal-link" target="_blank" class="action-btn">
-                            <i>🏆</i> <span id="modal-platform">Platform Page</span>
-                        </a>
-                        
-                        <div style="display: flex; gap: 8px; margin-left: 15px;">
-                            <span class="tag-badge tag-region" id="modal-region">AS</span>
-                            <span class="tag-badge tag-system" id="modal-system">Allpick</span>
+        <div class="tournament-list">
+            <% if (tournaments && tournaments.length > 0) { %>
+                <% tournaments.forEach(tour => { %>
+                    <a href="/tournament/<%= tour.slug %>" class="tour-card">
+                        <div class="tour-content">
+                            <div class="tour-title"><%= tour.title %></div>
+                            <div class="tour-meta">
+                                <span>📅 <%= tour.date %></span>
+                                <span>🏆 Prize: <%= tour.prize %></span>
+                            </div>
+                            <div class="tour-tags">
+                                <span class="tag-badge tag-region"><%= tour.region %></span>
+                                <span class="tag-badge tag-system"><%= tour.system %></span>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="banner-right">
-                <div class="prize-pool">
-                    <span class="prize-icon">🏆</span> <span id="modal-prize">0</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal-body-empty">
-            NO MATCHES AVAILABLE
+                    </a>
+                <% }); %>
+            <% } else { %>
+                <div class="empty-message">No active tournaments at the moment.</div>
+            <% } %>
         </div>
     </div>
 </div>
-
-<script>
-    // --- Логика фильтров ---
-    function toggleFilter(tag, btnElement, gridId) {
-        btnElement.classList.toggle('active');
-        applyFilters(btnElement.parentElement, gridId);
-    }
-
-    function applyFilters(filterContainer, gridId) {
-        const activeChips = filterContainer.querySelectorAll('.filter-chip.active');
-        const activeTags = Array.from(activeChips).map(chip => chip.innerText.trim());
-        const grid = document.getElementById(gridId);
-        if (!grid) return;
-        
-        const cards = grid.querySelectorAll('.tour-card');
-        if (activeTags.length === 0) {
-            cards.forEach(card => card.style.display = 'flex');
-            return;
-        }
-
-        cards.forEach(card => {
-            const cardTags = card.getAttribute('data-tags');
-            const matchesAll = activeTags.every(tag => cardTags.includes(tag));
-            if (matchesAll) card.style.display = 'flex';
-            else card.style.display = 'none';
-        });
-    }
-
-    // --- Логика Модального окна (Теперь ДИНАМИЧЕСКАЯ!) ---
-    const modal = document.getElementById('tournament-modal');
-    
-    function openModal(title, link, prize, platform, region, system) {
-        document.getElementById('modal-title').innerText = title;
-        document.getElementById('modal-link').href = link;
-        document.getElementById('modal-platform').innerText = platform + ' Page';
-        document.getElementById('modal-prize').innerText = prize;
-        document.getElementById('modal-region').innerText = region;
-        document.getElementById('modal-system').innerText = system;
-        
-        modal.classList.add('open');
-    }
-
-    function closeModal(e) {
-        if (e.target === modal || e.target.classList.contains('close-modal')) {
-            modal.classList.remove('open');
-        }
-    }
-</script>
 
 <%- include('../partials/footer') %>
