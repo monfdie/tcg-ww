@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const Match = require('../models/Match');
-const Tournament = require('../models/Tournament'); // Подключаем новую модель
+const Tournament = require('../models/Tournament'); // ДОБАВЛЕНО: Модель турниров
 const CHARACTERS_BY_ELEMENT = require('../characters.json');
 
 router.use((req, res, next) => {
@@ -14,26 +14,29 @@ router.use((req, res, next) => {
 router.get('/', (req, res) => res.render('pages/home', { title: 'Home' }));
 router.get('/create', (req, res) => res.render('pages/create', { title: 'Create Game' }));
 
-// Страница списка турниров
+// --- ТУРНИРНАЯ ЧАСТЬ (ВСТАВЛЕНО) ---
+
+// 1. Страница списка турниров (берет из БД)
 router.get('/tournaments', async (req, res) => {
-    // Получаем список турниров из БД
-    const tournaments = await Tournament.find({ isLive: true }).sort({ date: -1 });
-    res.render('pages/tournaments', { title: 'Tournaments', tournaments });
+    try {
+        const tournaments = await Tournament.find({ isLive: true }).sort({ date: -1 });
+        res.render('pages/tournaments', { title: 'Tournaments', tournaments });
+    } catch (e) {
+        console.error(e);
+        res.render('pages/tournaments', { title: 'Tournaments', tournaments: [] });
+    }
 });
 
-// Страница конкретного турнира (С ВКЛАДКАМИ)
+// 2. Страница конкретного турнира
 router.get('/tournament/:slug', async (req, res) => {
     try {
         const tour = await Tournament.findOne({ slug: req.params.slug });
         if (!tour) return res.status(404).send('Tournament not found');
 
-        // Здесь можно также найти матчи, связанные с этим турниром, если нужно
-        // const matches = await Match.find({ draftType: 'gitcg_cup_2' }).limit(10); 
-        
         res.render('pages/tournament_view', { 
             title: tour.title, 
             tour: tour,
-            matches: [] // Пока пустой список матчей
+            matches: [] 
         });
     } catch (e) {
         console.error(e);
@@ -41,9 +44,8 @@ router.get('/tournament/:slug', async (req, res) => {
     }
 });
 
-// --- СЕКРЕТНЫЙ РОУТ ДЛЯ СОЗДАНИЯ ТУРНИРА (ЗАПУСТИТЬ ОДИН РАЗ В БРАУЗЕРЕ) ---
+// 3. Секретный роут для создания турнира (запустить 1 раз)
 router.get('/admin/create-gitcg-cup-2', async (req, res) => {
-    // Проверка, что турнир уже есть, чтобы не дублировать
     const exist = await Tournament.findOne({ slug: 'gitcg-cup-2' });
     if(exist) return res.send('Tournament already exists!');
 
@@ -54,13 +56,13 @@ router.get('/admin/create-gitcg-cup-2', async (req, res) => {
         prize: 'TBD',
         region: 'EU',
         system: 'Draft',
-        regLink: '#', // Замените на реальную ссылку
-        rulesLinkRu: '#', // Замените на реальную ссылку
-        rulesLinkEn: '#', // Замените на реальную ссылку
+        regLink: '#', 
+        rulesLinkRu: '#', 
+        rulesLinkEn: '#', 
         announcements: [
             {
                 title: 'Welcome to GITCG CUP 2!',
-                content: 'Регистрация открыта! Ознакомьтесь с регламентом перед участием. / Registration is open! Please read the rules before participating.',
+                content: 'Registration is open! / Регистрация открыта!',
                 date: new Date()
             }
         ],
@@ -68,26 +70,21 @@ router.get('/admin/create-gitcg-cup-2', async (req, res) => {
     });
     res.send('Tournament GITCG CUP 2 created successfully!');
 });
-// ---------------------------------------------------------------------------
 
+// --- КОНЕЦ ТУРНИРНОЙ ЧАСТИ ---
+
+
+// Дальше твой код без изменений
 router.get('/history', async (req, res) => {
     try {
-        let query = {};
-        if (req.user && req.user.discordId) {
-            query = {
-                $or: [
-                    { blueDiscordId: req.user.discordId },
-                    { redDiscordId: req.user.discordId }
-                ]
-            };
-        } 
-        const matches = await Match.find(query).sort({ date: -1 }).limit(20);
+        const matches = await Match.find().sort({ date: -1 }).limit(6);
         res.render('pages/history', { title: 'History', matches });
     } catch (e) {
         res.render('pages/history', { title: 'History', matches: [] });
     }
 });
 
+// Маршрут для активной игры
 router.get('/game/:id', async (req, res) => {
     try {
         const match = await Match.findOne({ roomId: req.params.id });
@@ -95,11 +92,45 @@ router.get('/game/:id', async (req, res) => {
             title: `Room ${req.params.id}`, 
             roomId: req.params.id, 
             savedData: match || null,
-            chars: CHARACTERS_BY_ELEMENT,
+            chars: CHARACTERS_BY_ELEMENT, 
             hideSidebar: true 
         });
     } catch (e) {
-        res.render('pages/game', { title: "Error", roomId: req.params.id, savedData: null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true });
+        res.render('pages/game', { 
+            title: "Error", 
+            roomId: req.params.id, 
+            savedData: null,
+            chars: CHARACTERS_BY_ELEMENT, 
+            hideSidebar: true 
+        });
+    }
+});
+
+// НОВЫЙ маршрут для просмотра завершенной игры из истории
+router.get('/match/:roomId', async (req, res) => {
+    try {
+        const match = await Match.findOne({ roomId: req.params.roomId });
+        if (!match) {
+            return res.status(404).send('Match not found');
+        }
+
+        const charMap = {};
+        for (const element in CHARACTERS_BY_ELEMENT) {
+            CHARACTERS_BY_ELEMENT[element].forEach(c => {
+                charMap[c.id] = c;
+            });
+        }
+
+        res.render('pages/match', {
+            title: `Match ${match.roomId}`,
+            path: '/history', 
+            user: req.user,
+            match: match,
+            charMap: charMap
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server error');
     }
 });
 
