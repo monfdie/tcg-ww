@@ -9,21 +9,15 @@ const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const mongoose = require('mongoose');
 
-// Подключаем существующие модели
 const User = require('./models/User');
 const Match = require('./models/Match');
-// const GameSession = require('./models/GameSession'); // УБРАЛИ, так как файла нет
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Подключение к БД (нужно для User и Match, но не для активных игр теперь)
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log('✅ Connected to MongoDB!');
-        // restoreSessions(); // УБРАЛИ восстановление, так как не храним сессии в БД
-    })
+    .then(() => console.log('✅ Connected to MongoDB!'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 app.use(session({
@@ -79,17 +73,14 @@ const { DRAFT_RULES, IMMUNITY_ORDER } = require('./public/draft-rules.js');
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 
-// Глобальный объект сессий (ВСЕ игры хранятся здесь, в оперативной памяти)
 const sessions = {};
 
 io.on('connection', (socket) => {
     socket.on('create_game', ({ nickname, draftType, userId, discordId, avatar }) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = draftType || 'gitcg';
-        
         sessions[roomId] = {
-            id: roomId, roomId: roomId, 
-            bluePlayer: socket.id, blueUserId: userId, 
+            id: roomId, bluePlayer: socket.id, blueUserId: userId, 
             blueDiscordId: discordId, blueAvatar: avatar,
             redPlayer: null, redUserId: null, redDiscordId: null, redAvatar: null,
             spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
@@ -99,47 +90,24 @@ io.on('connection', (socket) => {
             timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
             bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false }
         };
-        
-        // Нет await saveSession(roomId);
-
         socket.join(roomId);
         socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    // --- ЛОГИКА ВХОДА БЕЗ БД ---
-    socket.on('join_game', ({roomId, nickname, userId, discordId, avatar}) => {
+    socket.on('join_game', ({roomId, nickname, asSpectator, userId}) => {
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Room not found');
-        
-        session.lastActive = Date.now();
-
-        // Если место Красного свободно
-        if (!session.redPlayer) {
-            session.redPlayer = socket.id; 
-            session.redUserId = userId; 
-            session.redName = nickname || 'Player 2';
-            
-            session.redDiscordId = discordId;
-            session.redAvatar = avatar;
-            
-            // Нет await saveSession(roomId);
-            
-            socket.join(roomId); 
-            socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+        if (!session.redPlayer && !asSpectator) {
+            session.redPlayer = socket.id; session.redUserId = userId; session.redName = nickname || 'Player 2';
+            socket.join(roomId); socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
             io.to(roomId).emit('update_state', getPublicState(session));
-        } 
-        // Если занято -> в зрители
-        else {
-            if (!session.spectators.includes(socket.id)) {
-                session.spectators.push(socket.id); 
-            }
-            
-            socket.join(roomId);
+        } else {
+            session.spectators.push(socket.id); socket.join(roomId);
             socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
         }
     });
 
-    socket.on('rejoin_game', ({ roomId, userId, nickname }) => { 
+    socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar }) => { 
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Session expired');
         
@@ -147,14 +115,20 @@ io.on('connection', (socket) => {
         
         if (session.blueUserId === userId) { 
             session.bluePlayer = socket.id; 
+            session.blueDiscordId = discordId || session.blueDiscordId; 
+            session.blueAvatar = avatar || session.blueAvatar; 
             role = 'blue'; 
         } else if (session.redUserId === userId) { 
             session.redPlayer = socket.id; 
+            session.redDiscordId = discordId || session.redDiscordId; 
+            session.redAvatar = avatar || session.redAvatar; 
             role = 'red'; 
         } else if (!session.redUserId) {
             session.redUserId = userId;
             session.redPlayer = socket.id;
             session.redName = nickname || 'Player 2'; 
+            session.redDiscordId = discordId; 
+            session.redAvatar = avatar; 
             role = 'red';
             io.to(roomId).emit('update_state', getPublicState(session));
         }
@@ -168,7 +142,6 @@ io.on('connection', (socket) => {
         if (!session) return;
         if (socket.id === session.bluePlayer) session.ready.blue = true;
         if (socket.id === session.redPlayer) session.ready.red = true;
-        
         io.to(roomId).emit('update_state', getPublicState(session));
         
         if (session.ready.blue && session.ready.red && !session.gameStarted) {
@@ -182,7 +155,6 @@ io.on('connection', (socket) => {
                 session.currentAction = session.draftOrder[0].type;
             }
             startTimer(roomId); 
-            
             io.to(roomId).emit('game_started'); 
             io.to(roomId).emit('update_state', getPublicState(session));
         }
@@ -219,7 +191,6 @@ io.on('connection', (socket) => {
         
         if (!isBlueTurn && !isRedTurn) return;
 
-        // --- ЛОГИКА ИММУНИТЕТА ---
         if (session.immunityPhaseActive) {
             const isImmunityBanned = session.immunityBans.includes(charId);
             const isImmunityPicked = session.immunityPool.includes(charId);
@@ -234,7 +205,6 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // --- ОБЫЧНАЯ ЛОГИКА ---
         const currentConfig = session.draftOrder[session.stepIndex];
         const isImmunityTurn = !!currentConfig.immunity;
 
@@ -290,12 +260,10 @@ function nextImmunityStep(roomId) {
 
 async function nextStep(roomId) {
     const s = sessions[roomId]; s.stepIndex++; s.timer = 45;
-    
     if (s.stepIndex >= s.draftOrder.length) {
         io.to(roomId).emit('game_over', getPublicState(s)); 
         clearInterval(s.timerInterval); 
         try {
-            // Сохраняем ИСТОРИЮ (это работает, так как модель Match есть)
             await Match.create({
                 roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
                 blueDiscordId: s.blueDiscordId, redDiscordId: s.redDiscordId,
@@ -303,9 +271,6 @@ async function nextStep(roomId) {
                 bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks,
                 immunityPool: s.immunityPool, immunityBans: s.immunityBans
             });
-            
-            delete sessions[roomId]; // Удаляем из памяти
-
             const count = await Match.countDocuments();
             if (count > 6) {
                 const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 6);
@@ -322,8 +287,6 @@ function startTimer(roomId) {
     const s = sessions[roomId];
     if (s.timerInterval) clearInterval(s.timerInterval);
     s.timerInterval = setInterval(() => {
-        if (!sessions[roomId]) return clearInterval(s.timerInterval);
-
         if (s.timer > 0) s.timer--;
         else {
             if (s.currentTeam === 'blue') s.blueReserve--;
@@ -334,7 +297,6 @@ function startTimer(roomId) {
 }
 
 function getPublicState(session) {
-    if (!session) return {};
     return {
         stepIndex: session.stepIndex + 1,
         currentTeam: session.currentTeam, currentAction: session.currentAction,
@@ -353,16 +315,15 @@ function getPublicState(session) {
 
 const PORT = process.env.PORT || 3000;
 
-// --- GARBAGE COLLECTOR (Очистка памяти) ---
+// --- GARBAGE COLLECTOR (Очистка неактивных комнат) ---
 setInterval(() => {
     const now = Date.now();
     let deletedCount = 0;
     for (const roomId in sessions) {
         const session = sessions[roomId];
-        // Если комната неактивна более 2 часов
         if (now - session.lastActive > 7200000) {
             if (session.timerInterval) clearInterval(session.timerInterval);
-            delete sessions[roomId]; // Удаляем из памяти
+            delete sessions[roomId];
             deletedCount++;
         }
     }
