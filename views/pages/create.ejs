@@ -8,6 +8,7 @@
             <input id="nickname-input" placeholder="Enter Name" maxlength="15" 
                    value="<%= locals.user ? (locals.user.global_name || locals.user.username) : '' %>">
         </div>
+        
         <div class="input-group">
             <label>DRAFT MODE</label>
             <select id="draft-type-select">
@@ -25,6 +26,7 @@
             <label>ROOM CODE</label>
             <input id="room-input" placeholder="Enter Code" style="text-transform: uppercase;">
         </div>
+        
         <button class="btn-secondary" onclick="joinGame()">Join Game</button>
     </div>
 </div>
@@ -32,10 +34,9 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io({ transports: ['websocket'] });
-    
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
-    
+    // Генерируем ID или берем из сессии
     let myUserId = myRealDiscordId || sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
 
@@ -47,21 +48,37 @@
         socket.emit('create_game', { 
             nickname: nick, draftType: type, userId: myUserId,
             discordId: myRealDiscordId, avatar: myAvatarHash 
-        }); 
+        });
     }
 
+    // --- ОБНОВЛЕННАЯ ФУНКЦИЯ JOIN ---
     function joinGame() {
+        const nick = document.getElementById('nickname-input').value;
         const room = document.getElementById('room-input').value.toUpperCase();
+        
         if(!room) return alert("Enter code!");
         
-        sessionStorage.setItem('draft_nickname', document.getElementById('nickname-input').value);
-        window.location.href = `/game/${room}`;
+        // Отправляем запрос на сервер ПЕРЕД переходом
+        // Кнопки наблюдателя нет, поэтому asSpectator не передаем (сервер решит сам)
+        socket.emit('join_game', { 
+            roomId: room, 
+            nickname: nick, 
+            userId: myUserId,
+            discordId: myRealDiscordId, 
+            avatar: myAvatarHash 
+        });
     }
 
+    // Сервер разрешил вход -> сохраняем данные и переходим
     socket.on('init_game', (data) => {
         sessionStorage.setItem('draft_room_id', data.roomId);
         sessionStorage.setItem('draft_nickname', document.getElementById('nickname-input').value);
         window.location.href = `/game/${data.roomId}`;
+    });
+
+    // Ошибка (комната не найдена и т.д.)
+    socket.on('error_msg', (msg) => {
+        alert(msg);
     });
 </script>
 
