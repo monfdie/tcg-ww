@@ -1,0 +1,232 @@
+<%- include('../partials/header') %>
+
+<style>
+    /* --- HERO SECTION --- */
+    .tour-hero {
+        background: linear-gradient(180deg, rgba(22, 28, 48, 0.6) 0%, #0b0d17 100%), 
+                    url('https://i.imgur.com/your-bg-image.jpg') no-repeat center top; /* Можно добавить фон */
+        background-size: cover;
+        padding: 60px 20px;
+        text-align: center;
+        border-bottom: 1px solid #2a3454;
+        position: relative;
+    }
+    
+    .tour-title-large {
+        font-family: 'Cinzel', serif;
+        font-size: 3em;
+        color: #fff;
+        text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        margin: 0 0 10px 0;
+    }
+
+    .tour-meta-large {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        color: #8da4c4;
+        font-size: 1.1em;
+        margin-bottom: 30px;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    .meta-item { display: flex; align-items: center; gap: 8px; }
+    .meta-icon { color: #d4af37; }
+
+    /* --- ACTION BUTTONS --- */
+    .action-row {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .btn-action {
+        padding: 12px 25px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-family: 'Segoe UI', sans-serif;
+        letter-spacing: 1px;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid transparent;
+    }
+
+    .btn-reg {
+        background: rgba(79, 172, 254, 0.1);
+        color: #4facfe;
+        border-color: #4facfe;
+    }
+    .btn-reg:hover {
+        background: #4facfe;
+        color: #0b0d17;
+        box-shadow: 0 0 20px rgba(79, 172, 254, 0.4);
+    }
+
+    .btn-rules {
+        background: rgba(212, 175, 55, 0.1);
+        color: #d4af37;
+        border-color: #d4af37;
+    }
+    .btn-rules:hover {
+        background: #d4af37;
+        color: #0b0d17;
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+    }
+
+    /* --- TABS SYSTEM --- */
+    .tabs-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .tabs-header {
+        display: flex;
+        justify-content: center;
+        border-bottom: 1px solid #2a3454;
+        margin-bottom: 30px;
+    }
+
+    .tab-btn {
+        background: transparent;
+        border: none;
+        color: #556;
+        padding: 15px 30px;
+        font-size: 1.2em;
+        font-family: 'Cinzel', serif;
+        cursor: pointer;
+        transition: 0.3s;
+        border-bottom: 3px solid transparent;
+    }
+
+    .tab-btn:hover { color: #8da4c4; }
+    
+    .tab-btn.active {
+        color: #fff;
+        border-bottom-color: #4facfe;
+        text-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+    }
+
+    .tab-content { display: none; animation: fadeIn 0.5s ease; }
+    .tab-content.active { display: block; }
+
+    /* --- ANNOUNCEMENTS STYLE --- */
+    .announce-card {
+        background: rgba(22, 28, 48, 0.8);
+        border: 1px solid #3c4566;
+        border-left: 3px solid #d4af37;
+        padding: 25px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    .announce-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .announce-title {
+        font-size: 1.4em;
+        color: #fff;
+        font-family: 'Cinzel', serif;
+        margin: 0;
+    }
+    .announce-date {
+        color: #556;
+        font-size: 0.9em;
+    }
+    .announce-body {
+        color: #a0b4d0;
+        line-height: 1.6;
+        white-space: pre-wrap; /* Сохраняет переносы строк */
+    }
+
+    /* --- GAMES LIST STYLE --- */
+    .match-placeholder {
+        text-align: center;
+        padding: 50px;
+        color: #556;
+        border: 1px dashed #3c4566;
+        border-radius: 8px;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="page-container" style="padding: 0; max-width: 100%;">
+    
+    <div class="tour-hero">
+        <h1 class="tour-title-large"><%= tour.title %></h1>
+        
+        <div class="tour-meta-large">
+            <div class="meta-item"><span class="meta-icon">📅</span> <%= tour.date %></div>
+            <div class="meta-item"><span class="meta-icon">🏆</span> <%= tour.prize %></div>
+            <div class="meta-item"><span class="meta-icon">🌍</span> <%= tour.region %></div>
+            <div class="meta-item"><span class="meta-icon">⚔️</span> <%= tour.system %></div>
+        </div>
+
+        <div class="action-row">
+            <a href="<%= tour.regLink %>" target="_blank" class="btn-action btn-reg">
+                Register Now
+            </a>
+            <a href="<%= tour.rulesLinkRu %>" target="_blank" class="btn-action btn-rules">
+                Reglament (RU)
+            </a>
+            <a href="<%= tour.rulesLinkEn %>" target="_blank" class="btn-action btn-rules">
+                Rules (EN)
+            </a>
+        </div>
+    </div>
+
+    <div class="tabs-container">
+        
+        <div class="tabs-header">
+            <button class="tab-btn active" onclick="switchTab('announcements')">Announcements</button>
+            <button class="tab-btn" onclick="switchTab('matches')">Matches</button>
+        </div>
+
+        <div id="tab-announcements" class="tab-content active">
+            <% if (tour.announcements && tour.announcements.length > 0) { %>
+                <% tour.announcements.reverse().forEach(post => { %>
+                    <div class="announce-card">
+                        <div class="announce-header">
+                            <h3 class="announce-title"><%= post.title %></h3>
+                            <span class="announce-date"><%= new Date(post.date).toLocaleDateString() %></span>
+                        </div>
+                        <div class="announce-body"><%= post.content %></div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="match-placeholder">No announcements yet.</div>
+            <% } %>
+        </div>
+
+        <div id="tab-matches" class="tab-content">
+            <div class="match-placeholder">
+                <h3 style="color: #8da4c4; margin-bottom: 10px;">Tournament Bracket</h3>
+                <p>Matches will appear here once the tournament starts.</p>
+                <a href="<%= tour.regLink %>" target="_blank" style="color: #4facfe;">Check Bracket on Platform</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function switchTab(tabName) {
+        // Убираем активность со всех кнопок и табов
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        // Активируем нужный
+        event.target.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
+    }
+</script>
+
+<%- include('../partials/footer') %>
