@@ -107,16 +107,12 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Добавьте asSpectator в аргументы
-    socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar, asSpectator }) => { 
+    socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar }) => { 
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Session expired');
         
         let role = 'spectator';
         
-        // Приводим к булевому значению на всякий случай
-        const isSpectator = asSpectator === true || asSpectator === 'true';
-
         if (session.blueUserId === userId) { 
             session.bluePlayer = socket.id; 
             session.blueDiscordId = discordId || session.blueDiscordId; 
@@ -127,7 +123,7 @@ io.on('connection', (socket) => {
             session.redDiscordId = discordId || session.redDiscordId; 
             session.redAvatar = avatar || session.redAvatar; 
             role = 'red'; 
-        } else if (!session.redUserId && !isSpectator) { // <-- Исправленная проверка
+        } else if (!session.redUserId) {
             session.redUserId = userId;
             session.redPlayer = socket.id;
             session.redName = nickname || 'Player 2'; 
