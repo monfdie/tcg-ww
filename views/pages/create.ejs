@@ -58,6 +58,11 @@
         const room = document.getElementById('room-input').value.toUpperCase();
         if(!room) return alert("Enter code!");
         
+        // --- ИЗМЕНЕНИЕ: Сохраняем состояние галочки ---
+        const isSpectator = document.getElementById('spectator-check').checked;
+        sessionStorage.setItem('draft_as_spectator', isSpectator);
+        // ----------------------------------------------
+
         sessionStorage.setItem('draft_nickname', document.getElementById('nickname-input').value);
         window.location.href = `/game/${room}`;
     }
