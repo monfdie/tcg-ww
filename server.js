@@ -114,6 +114,9 @@ io.on('connection', (socket) => {
         
         let role = 'spectator';
         
+        // Приводим к булевому значению на всякий случай
+        const isSpectator = asSpectator === true || asSpectator === 'true';
+
         if (session.blueUserId === userId) { 
             session.bluePlayer = socket.id; 
             session.blueDiscordId = discordId || session.blueDiscordId; 
@@ -124,8 +127,7 @@ io.on('connection', (socket) => {
             session.redDiscordId = discordId || session.redDiscordId; 
             session.redAvatar = avatar || session.redAvatar; 
             role = 'red'; 
-        // --- ИЗМЕНЕНИЕ: Добавляем проверку && !asSpectator ---
-        } else if (!session.redUserId && !asSpectator) {
+        } else if (!session.redUserId && !isSpectator) { // <-- Исправленная проверка
             session.redUserId = userId;
             session.redPlayer = socket.id;
             session.redName = nickname || 'Player 2'; 
