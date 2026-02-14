@@ -95,21 +95,30 @@ io.on('connection', (socket) => {
     });
 
     socket.on('join_game', ({roomId, nickname, asSpectator, userId}) => {
-        const session = sessions[roomId];
+        // [ИСПРАВЛЕНИЕ]
+        const safeRoomId = roomId ? roomId.toUpperCase() : null;
+        const session = sessions[safeRoomId];
         if (!session) return socket.emit('error_msg', 'Room not found');
+        // ... остальной код используйте safeRoomId вместо roomId при подключении сокета
         if (!session.redPlayer && !asSpectator) {
-            session.redPlayer = socket.id; session.redUserId = userId; session.redName = nickname || 'Player 2';
-            socket.join(roomId); socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
-            io.to(roomId).emit('update_state', getPublicState(session));
+            // ...
+            socket.join(safeRoomId); // Важно подключаться к safeRoomId
+            // ...
         } else {
-            session.spectators.push(socket.id); socket.join(roomId);
-            socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+            session.spectators.push(socket.id); 
+            socket.join(safeRoomId);
+            // ...
         }
     });
 
     socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar }) => { 
-        const session = sessions[roomId];
+        // [ИСПРАВЛЕНИЕ] Если roomId пришел, переводим в верхний регистр
+        const safeRoomId = roomId ? roomId.toUpperCase() : null;
+        
+        const session = sessions[safeRoomId]; // Ищем по исправленному ID
         if (!session) return socket.emit('error_msg', 'Session expired');
+        
+        // ... остальной код без изменений ...
         
         let role = 'spectator';
         
