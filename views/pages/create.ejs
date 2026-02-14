@@ -36,7 +36,6 @@
     const socket = io({ transports: ['websocket'] });
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
-    // Генерируем ID или берем из сессии
     let myUserId = myRealDiscordId || sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
 
@@ -51,15 +50,13 @@
         });
     }
 
-    // --- ОБНОВЛЕННАЯ ФУНКЦИЯ JOIN ---
     function joinGame() {
         const nick = document.getElementById('nickname-input').value;
         const room = document.getElementById('room-input').value.toUpperCase();
         
         if(!room) return alert("Enter code!");
         
-        // Отправляем запрос на сервер ПЕРЕД переходом
-        // Кнопки наблюдателя нет, поэтому asSpectator не передаем (сервер решит сам)
+        // Сначала стучимся на сервер
         socket.emit('join_game', { 
             roomId: room, 
             nickname: nick, 
@@ -69,14 +66,14 @@
         });
     }
 
-    // Сервер разрешил вход -> сохраняем данные и переходим
+    // Сервер разрешил вход -> переходим
     socket.on('init_game', (data) => {
         sessionStorage.setItem('draft_room_id', data.roomId);
         sessionStorage.setItem('draft_nickname', document.getElementById('nickname-input').value);
         window.location.href = `/game/${data.roomId}`;
     });
 
-    // Ошибка (комната не найдена и т.д.)
+    // Ошибка
     socket.on('error_msg', (msg) => {
         alert(msg);
     });
