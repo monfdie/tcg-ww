@@ -75,11 +75,29 @@ router.get('/admin/create-gitcg-cup-2', async (req, res) => {
 
 
 // Дальше твой код без изменений
+// routes/index.js
+
 router.get('/history', async (req, res) => {
     try {
-        const matches = await Match.find().sort({ date: -1 }).limit(6);
-        res.render('pages/history', { title: 'History', matches });
+        let matches = [];
+        
+        // Проверяем, авторизован ли пользователь
+        if (req.user) {
+            // Ищем матчи, где пользователь был либо синим (blue), либо красным (red) игроком
+            matches = await Match.find({
+                $or: [
+                    { blueDiscordId: req.user.discordId },
+                    { redDiscordId: req.user.discordId }
+                ]
+            }).sort({ date: -1 }); // Сортировка от новых к старым
+        }
+        
+        // Если пользователь не авторизован, matches останется пустым массивом [],
+        // и страница покажет "History is empty" (или можно вывести просьбу войти)
+
+        res.render('pages/history', { title: 'My History', matches });
     } catch (e) {
+        console.error(e);
         res.render('pages/history', { title: 'History', matches: [] });
     }
 });
