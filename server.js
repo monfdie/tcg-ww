@@ -107,7 +107,8 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar }) => { 
+    // Добавьте asSpectator в аргументы
+    socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar, asSpectator }) => { 
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Session expired');
         
@@ -123,7 +124,8 @@ io.on('connection', (socket) => {
             session.redDiscordId = discordId || session.redDiscordId; 
             session.redAvatar = avatar || session.redAvatar; 
             role = 'red'; 
-        } else if (!session.redUserId) {
+        // --- ИЗМЕНЕНИЕ: Добавляем проверку && !asSpectator ---
+        } else if (!session.redUserId && !asSpectator) {
             session.redUserId = userId;
             session.redPlayer = socket.id;
             session.redName = nickname || 'Player 2'; 
