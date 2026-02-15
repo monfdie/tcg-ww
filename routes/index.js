@@ -63,10 +63,13 @@ router.get('/tournament/:slug', async (req, res) => {
         const tour = await Tournament.findOne({ slug: req.params.slug });
         if (!tour) return res.status(404).send('Tournament not found');
 
+        // Ищем матчи, привязанные к этому турниру
+        const matches = await Match.find({ tournamentSlug: tour.slug }).sort({ date: -1 });
+
         res.render('pages/tournament_view', { 
             title: tour.title, 
             tour: tour,
-            matches: [] 
+            matches: matches // Передаем матчи в шаблон
         });
     } catch (e) {
         console.error(e);
