@@ -6,29 +6,45 @@
     <link rel="stylesheet" href="/style.css">
     <style>
         body { padding: 50px; overflow-y: auto; }
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 900px; margin: 0 auto; }
         .tour-item { 
             background: #161c30; padding: 20px; margin-bottom: 15px; 
             border: 1px solid #2a3454; display: flex; justify-content: space-between; align-items: center; 
+            border-radius: 8px;
         }
-        .btn-manage { background: #4facfe; color: #000; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .actions { display: flex; gap: 10px; }
+        .btn-manage { background: #4facfe; color: #000; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-left: 10px;}
+        .btn-delete { background: #ff4444; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-delete:hover { background: #cc0000; }
+        .type-badge { font-size: 0.7em; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 10px;}
+        .type-tour { background: rgba(79, 172, 254, 0.2); color: #4facfe; }
+        .type-news { background: rgba(212, 175, 55, 0.2); color: #d4af37; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Tournament Manager</h1>
-        <a href="/admin/secret-add" class="btn-primary" style="display:inline-block; margin-bottom: 20px;">+ Create New Tournament</a>
+        <h1 style="color: white;">Content Manager</h1>
+        <a href="/admin/secret-add" class="btn-primary" style="display:inline-block; margin-bottom: 20px;">+ Create New Post</a>
         
         <% tournaments.forEach(t => { %>
             <div class="tour-item">
-                <div>
-                    <h3 style="margin:0; color:#d4af37"><%= t.title %></h3>
-                    <span style="color:#888; font-size: 0.9em;"><%= t.slug %></span>
+                <div style="flex-grow: 1;">
+                    <div style="display: flex; align-items: center;">
+                        <h3 style="margin:0; color:#fff"><%= t.title %></h3>
+                        <span class="type-badge <%= t.type === 'announcement' ? 'type-news' : 'type-tour' %>">
+                            <%= t.type || 'tournament' %>
+                        </span>
+                    </div>
+                    <span style="color:#888; font-size: 0.9em;"><%= t.slug %> • <%= t.date || 'No Date' %></span>
                 </div>
-                <div class="actions">
-                    <a href="/tournament/<%= t.slug %>" target="_blank" style="color:#aaa; margin-right:10px;">View</a>
-                    <a href="/admin/manage/<%= t.slug %>" class="btn-manage">Manage Content</a>
+                
+                <div style="display: flex; align-items: center;">
+                    <% if (t.type !== 'announcement') { %>
+                        <a href="/admin/manage/<%= t.slug %>" class="btn-manage">Manage</a>
+                    <% } %>
+
+                    <form action="/admin/delete/<%= t._id %>" method="POST" style="margin-left: 10px;" onsubmit="return confirm('Are you sure you want to delete this?');">
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
                 </div>
             </div>
         <% }) %>
