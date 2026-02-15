@@ -15,6 +15,9 @@ const matchSchema = new mongoose.Schema({
     immunityPool: Array,
     immunityBans: Array,
     date: { type: Date, default: Date.now }
+tournamentSlug: { type: String, default: null }, // Сюда будем писать id турнира (например 'gitcg-cup-2')
+    
+    date: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('Match', matchSchema);
