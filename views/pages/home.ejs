@@ -18,41 +18,48 @@
         letter-spacing: 2px;
     }
 
-    /* --- КОНТЕЙНЕР ДЛЯ КАРТОЧЕК --- */
+    /* --- НОВАЯ СЕТКА (3 ПОСТА В РЯД) --- */
     .news-container {
-        display: flex;
-        justify-content: center;
-        gap: 40px;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* Ровно 3 колонки */
+        gap: 30px;
         padding: 0 20px;
-        max-width: 1200px;
+        max-width: 1400px; /* Увеличили ширину, чтобы вместить 3 карточки */
         margin: 0 auto;
     }
 
-    /* --- ОБЩИЙ ДИЗАЙН КАРТОЧЕК --- */
+    /* Адаптивность: на планшетах 2, на мобилках 1 */
+    @media (max-width: 1100px) {
+        .news-container { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+        .news-container { grid-template-columns: 1fr; }
+    }
+
+    /* --- ДИЗАЙН КАРТОЧЕК --- */
     .news-card {
         background: rgba(22, 28, 48, 0.85);
         border: 1px solid #2a3454;
         border-radius: 12px;
-        width: 100%;
-        max-width: 500px;
-        padding: 40px;
+        width: auto; /* Ширина теперь управляется сеткой */
+        max-width: none; /* Убираем ограничение */
+        min-height: 320px; /* Фиксированная минимальная высота для красоты */
+        padding: 40px 30px;
         position: relative;
         overflow: hidden;
         display: flex;
         flex-direction: column;
         transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        text-decoration: none; /* Убирает подчеркивание ссылок */
+        text-decoration: none;
     }
 
     .news-card:hover {
         transform: translateY(-5px);
     }
 
-    /* --- ЗОЛОТАЯ КАРТОЧКА (GITCG CUP) - ИСПРАВЛЕНО --- */
+    /* --- ЗОЛОТАЯ КАРТОЧКА (GITCG CUP) --- */
     .cup-card {
-        /* Возвращаем богатый золотой фон и рамку */
         border: 1px solid #d4af37;
         background: radial-gradient(circle at center, rgba(212, 175, 55, 0.15) 0%, rgba(22, 28, 48, 1) 80%);
         box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
@@ -61,151 +68,56 @@
         box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
         border-color: #f2d06b;
     }
-    
-    /* Вращающееся свечение */
     .cup-glow {
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
+        position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
         background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 60%);
-        animation: rotateGlow 15s linear infinite;
-        pointer-events: none;
-        z-index: 0;
+        animation: rotateGlow 15s linear infinite; pointer-events: none; z-index: 0;
     }
 
     /* --- ОБЫЧНАЯ КАРТОЧКА (СИНЯЯ) --- */
-    .live-card {
-        border-top: 4px solid #4facfe;
-    }
-    .live-card:hover {
-        border-color: #4facfe;
-        box-shadow: 0 15px 40px rgba(79, 172, 254, 0.2);
-    }
+    .live-card { border-top: 4px solid #4facfe; }
+    .live-card:hover { border-color: #4facfe; box-shadow: 0 15px 40px rgba(79, 172, 254, 0.2); }
 
     /* --- БЕЙДЖИКИ --- */
     .badge {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 0.8em;
-        font-weight: bold;
-        letter-spacing: 1px;
-        z-index: 2;
-        text-transform: uppercase;
+        position: absolute; top: 20px; right: 20px; padding: 6px 14px; border-radius: 20px;
+        font-family: 'Segoe UI', sans-serif; font-size: 0.8em; font-weight: bold; letter-spacing: 1px;
+        z-index: 2; text-transform: uppercase;
     }
-    .badge-soon {
-        background: rgba(212, 175, 55, 0.2);
-        color: #d4af37;
-        border: 1px solid rgba(212, 175, 55, 0.4);
-    }
-    .badge-live {
-        background: rgba(40, 167, 69, 0.2);
-        color: #28a745;
-        border: 1px solid rgba(40, 167, 69, 0.4);
-        animation: pulseGreen 2s infinite;
-    }
+    .badge-soon { background: rgba(212, 175, 55, 0.2); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.4); }
+    .badge-live { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.4); animation: pulseGreen 2s infinite; }
 
-    /* --- ТЕКСТЫ --- */
+    /* --- ТЕКСТЫ И КНОПКИ --- */
     .card-title {
-        font-family: 'Cinzel', serif;
-        font-size: 2.2em;
-        margin: 10px 0 20px 0;
-        color: #fff;
-        z-index: 1;
-        position: relative;
-        text-align: center;
+        font-family: 'Cinzel', serif; font-size: 2em; margin: 10px 0 20px 0; color: #fff; z-index: 1; position: relative; text-align: center;
+        /* Если название длинное, оно не должно ломать сетку */
+        word-wrap: break-word;
     }
     
-    .tour-details {
-        background: rgba(10, 12, 20, 0.5);
-        padding: 15px;
-        border-radius: 6px;
-        border: 1px solid #1e2640;
-        margin-bottom: 25px;
-        font-size: 0.95em;
-    }
+    .tour-details { background: rgba(10, 12, 20, 0.5); padding: 15px; border-radius: 6px; border: 1px solid #1e2640; margin-bottom: 25px; font-size: 0.95em; }
     .tour-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
     .tour-label { color: #889; }
     .tour-value { color: #fff; font-weight: 500; }
     .tour-prize { color: #d4af37; font-weight: bold; }
 
-    /* --- КНОПКИ (ВОССТАНОВЛЕНЫ) --- */
-    .home-action-btn {
-        display: block;
-        width: 100%;
-        padding: 16px 0;
-        border-radius: 50px;
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 1.1em;
-        font-weight: bold;
-        text-align: center;
-        text-decoration: none !important; /* Важно! */
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        transition: all 0.3s ease;
-        box-sizing: border-box;
-        border: 2px solid transparent;
-        cursor: pointer;
-        z-index: 2;
-        position: relative;
-    }
+    .home-action-btn { display: block; width: 100%; padding: 16px 0; border-radius: 50px; font-family: 'Segoe UI', sans-serif; font-size: 1.1em; font-weight: bold; text-align: center; text-decoration: none !important; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s ease; box-sizing: border-box; border: 2px solid transparent; cursor: pointer; z-index: 2; position: relative; }
+    .btn-gold { color: #0b0d17 !important; background: linear-gradient(45deg, #d4af37, #f2d06b); border: none; box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+    .btn-gold:hover { box-shadow: 0 0 30px rgba(212, 175, 55, 0.6); transform: scale(1.02); color: #000 !important; }
+    .btn-blue { color: #4facfe; border-color: #4facfe; background: rgba(79, 172, 254, 0.1); }
+    .btn-blue:hover { background: #4facfe; color: #0b0d17 !important; box-shadow: 0 0 20px rgba(79, 172, 254, 0.5); }
+    .pulse-text { display: block; text-align: center; color: #d4af37; font-weight: bold; letter-spacing: 2px; margin-top: 15px; font-size: 0.85em; animation: pulseAlpha 2s infinite; opacity: 0.8; }
 
-    /* Золотая кнопка */
-    .btn-gold {
-        color: #0b0d17 !important; /* Черный текст для контраста */
-        background: linear-gradient(45deg, #d4af37, #f2d06b);
-        border: none;
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
-    }
-    .btn-gold:hover {
-        box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
-        transform: scale(1.02);
-        color: #000 !important;
-    }
-
-    /* Синяя кнопка */
-    .btn-blue {
-        color: #4facfe;
-        border-color: #4facfe;
-        background: rgba(79, 172, 254, 0.1);
-    }
-    .btn-blue:hover {
-        background: #4facfe;
-        color: #0b0d17 !important;
-        box-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
-    }
-
-    .pulse-text {
-        display: block;
-        text-align: center;
-        color: #d4af37;
-        font-weight: bold;
-        letter-spacing: 2px;
-        margin-top: 15px;
-        font-size: 0.85em;
-        animation: pulseAlpha 2s infinite;
-        opacity: 0.8;
-    }
-
-    /* Анимации */
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    @keyframes pulseAlpha { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-    @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
-    
     /* Модальное окно */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; animation: fadeIn 0.3s; }
     .modal-box { background: #161c30; border: 1px solid #d4af37; width: 90%; max-width: 600px; padding: 30px; border-radius: 8px; position: relative; box-shadow: 0 0 50px rgba(212, 175, 55, 0.15); display: flex; flex-direction: column; gap: 15px; }
     .modal-close { position: absolute; top: 15px; right: 20px; color: #888; font-size: 24px; cursor: pointer; }
-    .modal-close:hover { color: #fff; }
     .modal-title { font-family: 'Cinzel', serif; font-size: 2em; color: #fff; margin: 0; border-bottom: 1px solid #333; padding-bottom: 10px; }
     .modal-btn { display: block; width: 100%; text-align: center; padding: 15px; background: #d4af37; color: #000; font-weight: bold; text-decoration: none; border-radius: 4px; margin-top: 10px; transition: 0.2s; }
-    .modal-btn:hover { background: #f2d06b; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes pulseAlpha { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
 </style>
 
 <div class="hero-section">
@@ -234,6 +146,8 @@
         <% news.forEach(item => { %>
             
             <% 
+               const isNews = item.type === 'announcement'; // Проверяем, новость ли это
+               
                let clickAction = '';
                let hrefAttr = '';
                let targetAttr = '_self';
@@ -257,20 +171,37 @@
                
                <% if (item.image) { %>
                    <img src="/uploads/<%= item.image %>" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; opacity: 0.6; transition: 0.3s;">
+                   
                    <div style="position: relative; z-index: 2; padding: 20px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);">
-                       <div class="badge badge-live" style="position: absolute; top: 20px; right: 20px;"><%= item.badgeText %></div>
+                       
+                       <% if (!isNews) { %>
+                           <div class="badge badge-live" style="position: absolute; top: 20px; right: 20px;"><%= item.badgeText %></div>
+                       <% } %>
+
                        <h2 class="card-title" style="font-size: 1.8em; text-shadow: 0 2px 10px black; text-align: left;"><%= item.title %></h2>
-                       <div style="color: #ccc; margin-top: 5px;"><%= item.date %></div>
+                       
+                       <% if (item.date) { %>
+                           <div style="color: #ccc; margin-top: 5px;"><%= item.date %></div>
+                       <% } %>
                    </div>
+
                <% } else { %>
-                   <div class="badge badge-live"><%= item.badgeText %></div>
+                   <% if (!isNews) { %>
+                       <div class="badge badge-live"><%= item.badgeText %></div>
+                   <% } %>
+
                    <h2 class="card-title"><%= item.title %></h2>
+                   
                    <div class="tour-details">
-                       <div class="tour-row"><span class="tour-label">Date:</span><span class="tour-value"><%= item.date %></span></div>
+                       <% if (item.date) { %>
+                           <div class="tour-row"><span class="tour-label">Date:</span><span class="tour-value"><%= item.date %></span></div>
+                       <% } %>
+
                        <% if (item.prize) { %>
                            <div class="tour-row"><span class="tour-label">Prize:</span><span class="tour-value tour-prize"><%= item.prize %></span></div>
                        <% } %>
                    </div>
+
                    <div style="margin-top: auto;">
                        <span class="home-action-btn btn-blue">Details</span>
                    </div>
