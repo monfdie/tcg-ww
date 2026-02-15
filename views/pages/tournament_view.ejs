@@ -207,12 +207,32 @@
         </div>
 
         <div id="tab-matches" class="tab-content">
-            <div class="match-placeholder">
-                <h3 style="color: #8da4c4; margin-bottom: 10px;">Tournament Bracket</h3>
-                <p>Matches will appear here once the tournament starts.</p>
-                <a href="<%= tour.regLink %>" target="_blank" style="color: #4facfe;">Check Bracket on Platform</a>
-            </div>
+    <% if (matches && matches.length > 0) { %>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <% matches.forEach(m => { %>
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #3c4566;">
+                    
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <span style="color: #4facfe; font-weight: bold;"><%= m.blueName %></span>
+                        <span style="color: #888;">VS</span>
+                        <span style="color: #ff6b6b; font-weight: bold;"><%= m.redName %></span>
+                    </div>
+
+                    <a href="/game/<%= m.roomId %>" target="_blank" style="color: #d4af37; text-decoration: none; border: 1px solid #d4af37; padding: 5px 15px; border-radius: 20px; font-size: 0.8em;">
+                        Watch Replay
+                    </a>
+
+                </div>
+            <% }); %>
         </div>
+    <% } else { %>
+        <div class="match-placeholder">
+            <h3 style="color: #8da4c4; margin-bottom: 10px;">Tournament Bracket</h3>
+            <p>Matches will appear here once linked by Admin.</p>
+            <a href="<%= tour.regLink %>" target="_blank" style="color: #4facfe;">Check External Bracket</a>
+        </div>
+    <% } %>
+</div>
 
     </div>
 </div>
