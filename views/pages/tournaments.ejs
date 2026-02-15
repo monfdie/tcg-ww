@@ -26,7 +26,33 @@
         <div class="tournament-list" id="list-active">
             <% if (tournaments && tournaments.length > 0) { %>
                 <% tournaments.forEach(tour => { %>
-                    <%- include('partials/tour_card_long', { tour: tour, isArchive: false }) %>
+                    <a href="<%= (tour.regLink && tour.regLink.startsWith('http')) ? tour.regLink : '/tournament/' + tour.slug %>" 
+                       class="tour-card-long" 
+                       target="<%= (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self' %>"
+                       data-date="<%= tour.date %>" 
+                       data-region="<%= tour.region %>">
+                        
+                        <div class="card-left-strip <%= tour.cardStyle === 'gold' ? 'strip-gold' : 'strip-blue' %>"></div>
+                        
+                        <div class="card-main-content">
+                            <div class="card-header-row">
+                                <h2 class="card-title"><%= tour.title %></h2>
+                                <div class="card-badges">
+                                    <span class="badge-region"><%= tour.region %></span>
+                                    <span class="badge-system"><%= tour.system %></span>
+                                </div>
+                            </div>
+                            
+                            <div class="card-info-row">
+                                <span class="info-item"><span class="icon">📅</span> <%= tour.date %></span>
+                                <span class="info-item prize"><span class="icon">🏆</span> <%= tour.prize %></span>
+                            </div>
+                        </div>
+
+                        <div class="card-action">
+                            <span class="btn-arrow">➜</span>
+                        </div>
+                    </a>
                 <% }); %>
             <% } else { %>
                 <div class="empty-state">No active tournaments right now.</div>
@@ -38,7 +64,33 @@
         <div class="tournament-list" id="list-archive">
             <% if (archive && archive.length > 0) { %>
                 <% archive.forEach(tour => { %>
-                    <%- include('partials/tour_card_long', { tour: tour, isArchive: true }) %>
+                    <a href="<%= (tour.regLink && tour.regLink.startsWith('http')) ? tour.regLink : '/tournament/' + tour.slug %>" 
+                       class="tour-card-long archived-card" 
+                       target="<%= (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self' %>"
+                       data-date="<%= tour.date %>" 
+                       data-region="<%= tour.region %>">
+                        
+                        <div class="card-left-strip strip-blue"></div>
+                        
+                        <div class="card-main-content">
+                            <div class="card-header-row">
+                                <h2 class="card-title"><%= tour.title %></h2>
+                                <div class="card-badges">
+                                    <span class="badge-region"><%= tour.region %></span>
+                                    <span class="badge-system"><%= tour.system %></span>
+                                </div>
+                            </div>
+                            
+                            <div class="card-info-row">
+                                <span class="info-item"><span class="icon">📅</span> <%= tour.date %></span>
+                                <span class="info-item prize"><span class="icon">🏆</span> <%= tour.prize %></span>
+                            </div>
+                        </div>
+
+                        <div class="card-action">
+                            <span class="btn-arrow">➜</span>
+                        </div>
+                    </a>
                 <% }); %>
             <% } else { %>
                 <div class="empty-state">Archive is empty.</div>
@@ -48,62 +100,24 @@
 
 </div>
 
-<% 
-    // Функция для рендера карточки (чтобы не дублировать код)
-    function renderCard(tour, isArchive) {
-        const link = (tour.regLink && tour.regLink.startsWith('http')) ? tour.regLink : '/tournament/' + tour.slug;
-        const target = (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self';
-        const opacityClass = isArchive ? 'archived-card' : '';
-%>
-    <a href="<%= link %>" class="tour-card-long <%= opacityClass %>" target="<%= target %>" 
-       data-date="<%= tour.date %>" data-region="<%= tour.region %>">
-        
-        <div class="card-left-strip <%= tour.cardStyle === 'gold' ? 'strip-gold' : 'strip-blue' %>"></div>
-        
-        <div class="card-main-content">
-            <div class="card-header-row">
-                <h2 class="card-title"><%= tour.title %></h2>
-                <div class="card-badges">
-                    <span class="badge-region"><%= tour.region %></span>
-                    <span class="badge-system"><%= tour.system %></span>
-                </div>
-            </div>
-            
-            <div class="card-info-row">
-                <span class="info-item"><i class="icon">📅</i> <%= tour.date %></span>
-                <span class="info-item prize"><i class="icon">🏆</i> <%= tour.prize %></span>
-            </div>
-        </div>
-
-        <div class="card-action">
-            <span class="btn-arrow">➜</span>
-        </div>
-    </a>
-<% } %>
-
-<script>
-    // Удаляем include и вставляем прямой рендер, так как функции в EJS работают специфично.
-    // Я перепишу блоки div выше, чтобы было проще, без функций.
-</script>
-
 <style>
-    /* --- СТИЛИ ДЛЯ "ДОЛГИХ" КАРТОЧЕК (Horizontal) --- */
+    /* Панель управления */
     .tour-header-panel { margin-bottom: 30px; border-bottom: 1px solid #2a3454; padding-bottom: 20px; }
-    .page-title { font-family: 'Cinzel', serif; color: #fff; margin: 0 0 20px 0; }
+    .page-title { font-family: 'Cinzel', serif; color: #fff; margin: 0 0 20px 0; font-size: 2em; }
     
     .controls-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
     
     .view-switcher { display: flex; gap: 0; background: #0f131f; border-radius: 4px; border: 1px solid #2a3454; overflow: hidden; }
-    .switch-btn { background: transparent; color: #8da4c4; padding: 10px 20px; border: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; transition: 0.3s; }
+    .switch-btn { background: transparent; color: #8da4c4; padding: 10px 20px; border: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; transition: 0.3s; font-size: 0.9em; }
     .switch-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
     .switch-btn.active { background: #4facfe; color: #0b0d17; font-weight: bold; }
 
-    .sort-container { display: flex; align-items: center; gap: 10px; color: #8da4c4; }
+    .sort-container { display: flex; align-items: center; gap: 10px; color: #8da4c4; font-size: 0.9em; }
     #sortSelect { background: #0f131f; border: 1px solid #2a3454; color: #fff; padding: 8px; border-radius: 4px; width: auto; cursor: pointer; }
 
     .tournament-list { display: flex; flex-direction: column; gap: 15px; }
 
-    /* ДИЗАЙН КАРТОЧКИ (LONG) */
+    /* ДИЗАЙН КАРТОЧКИ (ГОРИЗОНТАЛЬНАЯ) */
     .tour-card-long {
         display: flex;
         width: 100%;
@@ -168,112 +182,45 @@
 </style>
 
 <script>
-    // Очищаем блоки (костыль для чистого HTML ниже)
-    document.getElementById('list-active').innerHTML = '';
-    document.getElementById('list-archive').innerHTML = '';
-</script>
-
-<div class="tournament-list" id="real-list-active">
-    <% if (tournaments && tournaments.length > 0) { %>
-        <% tournaments.forEach(tour => { %>
-            <a href="<%= (tour.regLink && tour.regLink.startsWith('http')) ? tour.regLink : '/tournament/' + tour.slug %>" 
-               class="tour-card-long" target="<%= (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self' %>"
-               data-date="<%= tour.date %>" data-region="<%= tour.region %>">
-                <div class="card-left-strip <%= tour.cardStyle === 'gold' ? 'strip-gold' : 'strip-blue' %>"></div>
-                <div class="card-main-content">
-                    <div class="card-header-row">
-                        <h2 class="card-title"><%= tour.title %></h2>
-                        <div class="card-badges">
-                            <span class="badge-region"><%= tour.region %></span>
-                            <span class="badge-system"><%= tour.system %></span>
-                        </div>
-                    </div>
-                    <div class="card-info-row">
-                        <span class="info-item"><i class="icon">📅</i> <%= tour.date %></span>
-                        <span class="info-item prize"><i class="icon">🏆</i> <%= tour.prize %></span>
-                    </div>
-                </div>
-                <div class="card-action"><span class="btn-arrow">➜</span></div>
-            </a>
-        <% }); %>
-    <% } else { %>
-        <div class="empty-state">No active tournaments.</div>
-    <% } %>
-</div>
-
-<div class="tournament-list" id="real-list-archive" style="display: none;">
-    <% if (archive && archive.length > 0) { %>
-        <% archive.forEach(tour => { %>
-            <a href="<%= (tour.regLink && tour.regLink.startsWith('http')) ? tour.regLink : '/tournament/' + tour.slug %>" 
-               class="tour-card-long archived-card" target="<%= (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self' %>"
-               data-date="<%= tour.date %>" data-region="<%= tour.region %>">
-                <div class="card-left-strip strip-blue"></div>
-                <div class="card-main-content">
-                    <div class="card-header-row">
-                        <h2 class="card-title"><%= tour.title %></h2>
-                        <div class="card-badges">
-                            <span class="badge-region"><%= tour.region %></span>
-                            <span class="badge-system"><%= tour.system %></span>
-                        </div>
-                    </div>
-                    <div class="card-info-row">
-                        <span class="info-item"><i class="icon">📅</i> <%= tour.date %></span>
-                        <span class="info-item prize"><i class="icon">🏆</i> <%= tour.prize %></span>
-                    </div>
-                </div>
-                <div class="card-action"><span class="btn-arrow">➜</span></div>
-            </a>
-        <% }); %>
-    <% } else { %>
-        <div class="empty-state">Archive is empty.</div>
-    <% } %>
-</div>
-
-<script>
-    // Перенос контента в правильные места (так как мы переписали HTML структуру выше)
-    document.getElementById('section-active').innerHTML = ''; 
-    document.getElementById('section-active').appendChild(document.getElementById('real-list-active'));
-    
-    document.getElementById('section-archive').innerHTML = '';
-    document.getElementById('section-archive').appendChild(document.getElementById('real-list-archive'));
-
-    // Логика Табов
     function showSection(section, btn) {
+        // Скрываем все
         document.getElementById('section-active').style.display = 'none';
         document.getElementById('section-archive').style.display = 'none';
-        document.getElementById('real-list-active').style.display = 'none';
-        document.getElementById('real-list-archive').style.display = 'none';
         
         // Показываем нужный
         document.getElementById('section-' + section).style.display = 'block';
-        document.getElementById('real-list-' + section).style.display = 'flex';
 
-        // Кнопки
+        // Обновляем кнопки
         document.querySelectorAll('.switch-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        
+        // Сбрасываем сортировку при переключении (опционально)
+        sortTournaments(document.getElementById('sortSelect').value);
     }
 
-    // Логика Сортировки
     function sortTournaments(criteria) {
-        // Определяем какой список сейчас виден
-        const activeList = document.getElementById('real-list-active').style.display !== 'none' 
-            ? document.getElementById('real-list-active') 
-            : document.getElementById('real-list-archive');
+        // Определяем, какой список сейчас виден
+        const activeSection = document.getElementById('section-active').style.display !== 'none' 
+            ? 'list-active' 
+            : 'list-archive';
             
-        const cards = Array.from(activeList.getElementsByClassName('tour-card-long'));
+        const container = document.getElementById(activeSection);
+        const cards = Array.from(container.getElementsByClassName('tour-card-long'));
         
         cards.sort((a, b) => {
             if (criteria === 'region') {
                 return a.dataset.region.localeCompare(b.dataset.region);
             } else if (criteria === 'newest') {
-                // Простая сортировка строк, лучше бы по дате, но для примера сойдет
+                // Пытаемся сортировать по дате (строка)
                 return b.dataset.date.localeCompare(a.dataset.date);
             } else if (criteria === 'oldest') {
                 return a.dataset.date.localeCompare(b.dataset.date);
             }
         });
         
-        cards.forEach(card => activeList.appendChild(card));
+        // Переставляем элементы в DOM
+        container.innerHTML = '';
+        cards.forEach(card => container.appendChild(card));
     }
 </script>
 
