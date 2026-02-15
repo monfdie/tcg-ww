@@ -57,20 +57,32 @@ router.get('/admin/secret-add', (req, res) => {
 // ОБРАБОТЧИК ДОБАВЛЕНИЯ (Теперь с upload.single('image'))
 router.post('/admin/add', upload.single('image'), async (req, res) => {
     try {
-        const { slug, title, date, prize, region, system, regLink, cardStyle, badgeText, visibleUntil, type } = req.body;
+        // Добавили description и openInModal
+        const { slug, title, date, prize, region, system, regLink, cardStyle, badgeText, visibleUntil, type, description, openInModal } = req.body;
         
-        let imageFilename = null;
-        if (req.file) {
-            imageFilename = req.file.filename; // Сохраняем имя файла если он загружен
+        let finalSlug = slug;
+        if (!finalSlug || finalSlug.trim() === '') {
+            finalSlug = 'tour-' + Date.now();
         }
 
+        let imageFilename = null;
+        if (req.file) imageFilename = req.file.filename;
+
         await Tournament.create({
-            slug, title, date, prize, region, system, regLink,
+            slug: finalSlug,
+            title, date, prize, region, system, regLink,
             cardStyle, badgeText, type,
             image: imageFilename,
+            // Сохраняем новые поля
+            description: description,
+            openInModal: openInModal === 'on', // Чекбокс передает 'on', если включен
+            
             visibleUntil: visibleUntil ? new Date(visibleUntil) : null,
             isLive: true
         });
+        
+        res.send(` ... (ваш старый код ответа) ... `);
+// ... остальной код без изменений
         
         res.send(`
             <body style="background:#111; color:#fff; padding:50px; font-family:sans-serif;">
