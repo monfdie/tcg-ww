@@ -1,5 +1,11 @@
 <%- include('../partials/header') %>
 
+<style>
+    .page-container {
+        max-width: 1600px !important; /* Было 1200px */
+    }
+</style>
+
 <div class="page-container">
 
     <div class="filters-container">
@@ -9,7 +15,6 @@
         <button class="filter-pill" onclick="toggleFilter('EU', this)">EU</button>
         <button class="filter-pill" onclick="toggleFilter('Draft', this)">Draft</button>
         <button class="filter-pill" onclick="toggleFilter('Allpick', this)">All pick</button>
-        <button class="filter-pill reset-btn" onclick="resetFilters()">Reset</button>
     </div>
 
     <div class="section-header">
@@ -25,16 +30,14 @@
                    target="<%= (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self' %>"
                    data-tags="<%= tour.region %> <%= tour.system %>">
                     
-                    <div class="card-image-block">
-                        <img src="/logo.png" alt="Icon"> 
-                    </div>
-
                     <div class="card-center">
                         <div class="card-title"><%= tour.title %></div>
                         <div class="card-hashtags">
-                            <span>#<%= tour.slug %></span>
-                            <span>#<%= tour.region %></span>
-                            <span>#<%= tour.system %></span>
+                            <span><%= tour.slug %></span>
+                            <span class="dot-separator">•</span>
+                            <span><%= tour.region %></span>
+                            <span class="dot-separator">•</span>
+                            <span><%= tour.system %></span>
                         </div>
                     </div>
 
@@ -67,15 +70,12 @@
                    target="<%= (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self' %>"
                    data-tags="<%= tour.region %> <%= tour.system %>">
                     
-                    <div class="card-image-block grayscale">
-                        <img src="/logo.png" alt="Icon">
-                    </div>
-
                     <div class="card-center">
                         <div class="card-title"><%= tour.title %></div>
                         <div class="card-hashtags">
-                            <span>#<%= tour.slug %></span>
-                            <span>#<%= tour.date %></span>
+                            <span><%= tour.slug %></span>
+                            <span class="dot-separator">•</span>
+                            <span><%= tour.date %></span>
                         </div>
                     </div>
 
@@ -99,7 +99,7 @@
 </div>
 
 <style>
-    /* --- ФИЛЬТРЫ (ОВАЛЫ) --- */
+    /* --- ФИЛЬТРЫ --- */
     .filters-container {
         display: flex;
         align-items: center;
@@ -112,7 +112,7 @@
         border: 1px solid #3c4566;
         color: #8da4c4;
         padding: 6px 16px;
-        border-radius: 20px; /* Овальная форма */
+        border-radius: 20px;
         cursor: pointer;
         font-family: 'Segoe UI', sans-serif;
         font-size: 0.9em;
@@ -127,14 +127,6 @@
         color: #0b0d17;
         border-color: #4facfe;
         font-weight: bold;
-    }
-    .reset-btn {
-        border-color: #ff6b6b;
-        color: #ff6b6b;
-    }
-    .reset-btn:hover {
-        background: #ff6b6b;
-        color: white;
     }
 
     /* --- ЗАГОЛОВКИ РАЗДЕЛОВ --- */
@@ -160,52 +152,33 @@
         box-shadow: 0 0 10px #ff4444;
     }
 
-    /* --- КАРТОЧКА ТУРНИРА (ПРЯМОУГОЛЬНИК) --- */
+    /* --- КАРТОЧКА ТУРНИРА --- */
     .tournament-list {
         display: flex;
         flex-direction: column;
-        gap: 8px; /* Расстояние между карточками */
+        gap: 8px;
     }
 
     .tour-rect-card {
         display: flex;
         align-items: center;
-        background: #161c30; /* Темный фон как на скрине */
-        border: 1px solid #2a3454; /* Тонкая рамка */
-        border-radius: 4px; /* Слегка скругленные углы */
-        padding: 0;
+        background: #161c30;
+        border: 1px solid #2a3454;
+        border-radius: 4px;
         text-decoration: none;
         transition: 0.2s;
-        height: 80px; /* Фиксированная высота */
+        height: 80px;
         overflow: hidden;
+        padding-left: 25px; /* Отступ слева вместо картинки */
     }
     .tour-rect-card:hover {
         background: #1e2538;
         border-color: #4facfe;
     }
 
-    /* Левая часть (Картинка) */
-    .card-image-block {
-        width: 120px;
-        height: 100%;
-        background: #0b0d17;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        border-right: 1px solid #2a3454;
-    }
-    .card-image-block img {
-        width: 60%;
-        height: 60%;
-        object-fit: contain;
-    }
-    .grayscale { filter: grayscale(1); opacity: 0.5; }
-
     /* Центр (Название) */
     .card-center {
         flex-grow: 1;
-        padding: 0 20px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -221,9 +194,14 @@
     }
     .card-hashtags {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         font-size: 0.85em;
         color: #6a7b9c;
+        align-items: center;
+    }
+    .dot-separator {
+        font-size: 0.6em;
+        color: #444;
     }
 
     /* Правая часть (Инфо) */
@@ -251,9 +229,7 @@
     .prize-text { color: #fff; font-weight: bold; }
 
     /* Архивный стиль */
-    .archive-style {
-        opacity: 0.8;
-    }
+    .archive-style { opacity: 0.7; }
     .empty-state { color: #556; padding: 20px; font-style: italic; }
 </style>
 
@@ -261,24 +237,13 @@
     let activeFilters = new Set();
 
     function toggleFilter(tag, btn) {
-        // Переключаем класс active на кнопке
         if (activeFilters.has(tag)) {
             activeFilters.delete(tag);
             btn.classList.remove('active');
         } else {
-            // Если нужно, чтобы выбирался ТОЛЬКО ОДИН фильтр за раз, раскомментируйте следующие 2 строки:
-            // activeFilters.clear(); 
-            // document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
-            
             activeFilters.add(tag);
             btn.classList.add('active');
         }
-        applyFilters();
-    }
-
-    function resetFilters() {
-        activeFilters.clear();
-        document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
         applyFilters();
     }
 
@@ -287,14 +252,11 @@
         
         cards.forEach(card => {
             if (activeFilters.size === 0) {
-                // Если фильтры не выбраны, показываем всё
                 card.style.display = 'flex';
                 return;
             }
 
             const cardTags = card.getAttribute('data-tags');
-            // Проверяем, содержит ли карточка ХОТЯ БЫ ОДИН из выбранных тегов
-            // (Или можно сделать "Все теги сразу", тогда логика немного другая)
             let isVisible = false;
             activeFilters.forEach(filter => {
                 if (cardTags.includes(filter)) isVisible = true;
