@@ -178,5 +178,41 @@ router.get('/auth/discord/callback', passport.authenticate('discord', { failureR
 router.get('/logout', (req, res, next) => {
     req.logout((err) => { if (err) return next(err); res.redirect('/'); });
 });
+// --- ADMIN DASHBOARD ---
+router.get('/admin/dashboard', async (req, res) => {
+    // Тут можно добавить проверку: if(req.user.role !== 'admin') return res.redirect('/');
+    const tournaments = await Tournament.find().sort({ date: -1 });
+    res.render('pages/admin_dashboard', { tournaments });
+});
 
+// Страница управления конкретным турниром
+router.get('/admin/manage/:slug', async (req, res) => {
+    const tour = await Tournament.findOne({ slug: req.params.slug });
+    if(!tour) return res.send("Tournament not found");
+    res.render('pages/admin_manage', { tour });
+});
+
+// Логика: Добавить объявление
+router.post('/admin/announce', urlencodedParser, async (req, res) => {
+    const { slug, title, content } = req.body;
+    await Tournament.updateOne(
+        { slug },
+        { $push: { announcements: { title, content, date: new Date() } } }
+    );
+    res.redirect('/admin/manage/' + slug);
+});
+
+// Логика: Привязать матч
+router.post('/admin/link-match', urlencodedParser, async (req, res) => {
+    const { slug, roomId } = req.body;
+    const match = await Match.findOne({ roomId: roomId.toUpperCase() });
+    
+    if (match) {
+        match.tournamentSlug = slug;
+        await match.save();
+        res.redirect('/admin/manage/' + slug); // Успех
+    } else {
+        res.send(`Match ${roomId} not found! Check the ID.`);
+    }
+});
 module.exports = router;
