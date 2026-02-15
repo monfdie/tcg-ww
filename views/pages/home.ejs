@@ -1,201 +1,45 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* --- СТИЛИ ГЛАВНОЙ СТРАНИЦЫ --- */
-    .hero-section {
-        text-align: center;
-        margin-top: 40px;
-        margin-bottom: 60px;
-        animation: fadeIn 1s ease-out;
-    }
+    /* --- ВАШИ СТАРЫЕ СТИЛИ --- */
+    .hero-section { text-align: center; margin-top: 40px; margin-bottom: 60px; animation: fadeIn 1s ease-out; }
+    .main-title { font-family: 'Cinzel', serif; font-size: 3.5em; color: #fff; margin: 0; text-shadow: 0 0 20px rgba(79, 172, 254, 0.5); letter-spacing: 2px; }
+    .news-container { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; padding: 0 20px; }
     
-    .main-title {
-        font-family: 'Cinzel', serif;
-        font-size: 3.5em;
-        color: #fff;
-        margin: 0;
-        text-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
-        letter-spacing: 2px;
-    }
-
-    /* --- КОНТЕЙНЕР ДЛЯ КАРТОЧЕК --- */
-    .news-container {
-        display: flex;
-        justify-content: center;
-        gap: 40px;
-        flex-wrap: wrap;
-        padding: 0 20px;
-    }
-
-    /* --- ОБЩИЙ ДИЗАЙН КАРТОЧЕК --- */
-    .news-card {
-        background: rgba(22, 28, 48, 0.85);
-        border: 1px solid #2a3454;
-        border-radius: 8px;
-        width: 100%;
-        max-width: 450px;
-        padding: 40px 35px;
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    .news-card:hover {
-        transform: translateY(-5px);
-    }
-
-    /* --- СПЕЦИАЛЬНАЯ КАРТОЧКА: GITCG CUP 2 --- */
-    .cup-card {
-        border-top: 3px solid #d4af37;
-    }
-    .cup-card:hover {
-        border-color: #d4af37;
-        box-shadow: 0 15px 40px rgba(212, 175, 55, 0.2);
-    }
-    .cup-glow {
-        position: absolute;
-        top: -50px;
-        right: -50px;
-        width: 150px;
-        height: 150px;
-        background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-
-    /* --- СПЕЦИАЛЬНАЯ КАРТОЧКА: ТЕКУЩИЙ ТУРНИР --- */
-    .live-card {
-        border-top: 3px solid #4facfe;
-    }
-    .live-card:hover {
-        border-color: #4facfe;
-        box-shadow: 0 15px 40px rgba(79, 172, 254, 0.2);
-    }
-
-    /* --- ЭЛЕМЕНТЫ ВНУТРИ КАРТОЧКИ --- */
-    .badge {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 0.75em;
-        font-weight: bold;
-        letter-spacing: 1px;
-    }
-    .badge-soon {
-        background: rgba(212, 175, 55, 0.15);
-        color: #d4af37;
-        border: 1px solid rgba(212, 175, 55, 0.3);
-    }
-    .badge-live {
-        background: rgba(40, 167, 69, 0.15);
-        color: #28a745;
-        border: 1px solid rgba(40, 167, 69, 0.3);
-        animation: pulseGreen 2s infinite;
-    }
-
-    .card-title {
-        font-family: 'Cinzel', serif;
-        font-size: 2em;
-        margin: 0 0 15px 0;
-        color: #fff;
-    }
+    /* Стили карточек (сокращенно, они у вас есть) */
+    .news-card { background: rgba(22, 28, 48, 0.85); border: 1px solid #2a3454; border-radius: 8px; width: 100%; max-width: 450px; padding: 40px 35px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: pointer; }
+    .news-card:hover { transform: translateY(-5px); }
     
-    .card-desc {
-        color: #a0b4d0;
-        font-size: 1.05em;
-        line-height: 1.6;
-        margin-bottom: 25px;
-        flex-grow: 1;
-    }
-
-    .tour-details {
-        background: rgba(10, 12, 20, 0.5);
-        padding: 15px;
-        border-radius: 6px;
-        border: 1px solid #1e2640;
-        margin-bottom: 25px;
-        font-size: 0.95em;
-    }
-    .tour-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-    }
-    .tour-row:last-child { margin-bottom: 0; }
-    .tour-label { color: #556; }
-    .tour-value { color: #fff; font-weight: 500; }
-    .tour-prize { color: #d4af37; font-weight: bold; text-shadow: 0 0 5px rgba(212, 175, 55, 0.4); }
-
-    .card-tags { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
-    .tag-badge { background: rgba(255, 255, 255, 0.05); color: #aaa; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
-    .tag-region { color: #d4af37; background: rgba(212, 175, 55, 0.1); border-color: rgba(212, 175, 55, 0.2); }
-    .tag-system { color: #4facfe; background: rgba(79, 172, 254, 0.1); border-color: rgba(79, 172, 254, 0.2); }
-
-    /* --- НОВЫЕ КРАСИВЫЕ КНОПКИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ --- */
-    .home-action-btn {
-        display: block;
-        width: 100%;
-        padding: 15px 20px;
-        border-radius: 50px; /* Полностью закругленные края */
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 1.05em;
-        font-weight: bold;
-        text-align: center;
-        text-decoration: none;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        transition: all 0.3s ease;
-        box-sizing: border-box;
-        border: 2px solid;
-    }
-
-    /* Золотая кнопка */
-    .btn-gold {
-        color: #d4af37;
-        border-color: #d4af37;
-        background: rgba(212, 175, 55, 0.05);
-    }
-    .btn-gold:hover {
-        background: #d4af37;
-        color: #0b0d17;
-        box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
-        transform: scale(1.03);
-    }
-
-    /* Синяя кнопка */
-    .btn-blue {
-        color: #4facfe;
-        border-color: #4facfe;
-        background: rgba(79, 172, 254, 0.05);
-    }
-    .btn-blue:hover {
-        background: #4facfe;
-        color: #0b0d17;
-        box-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
-        transform: scale(1.03);
-    }
-
-    .pulse-text {
-        display: block;
-        text-align: center;
-        color: #d4af37;
-        font-weight: bold;
-        letter-spacing: 2px;
-        margin-top: 15px;
-        font-size: 0.9em;
-        animation: pulseAlpha 2s infinite;
-    }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes pulseAlpha { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-    @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+    /* ... (остальные ваши стили кнопок, бейджей и т.д. оставьте как были) ... */
     
+    /* --- СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА (POPUP) --- */
+    .modal-overlay {
+        display: none; /* Скрыто по умолчанию */
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);
+        z-index: 1000; align-items: center; justify-content: center;
+        animation: fadeIn 0.3s;
+    }
+    .modal-box {
+        background: #161c30; border: 1px solid #d4af37;
+        width: 90%; max-width: 600px; padding: 30px;
+        border-radius: 8px; position: relative;
+        box-shadow: 0 0 40px rgba(212, 175, 55, 0.2);
+        display: flex; flex-direction: column; gap: 15px;
+    }
+    .modal-close {
+        position: absolute; top: 15px; right: 20px;
+        color: #888; font-size: 24px; cursor: pointer; transition: 0.2s;
+    }
+    .modal-close:hover { color: #fff; }
+    
+    .modal-title { font-family: 'Cinzel', serif; font-size: 2em; color: #fff; margin: 0; border-bottom: 1px solid #333; padding-bottom: 10px; }
+    .modal-meta { display: flex; gap: 15px; color: #8da4c4; font-size: 0.9em; flex-wrap: wrap; }
+    .modal-desc { color: #ccc; line-height: 1.6; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 4px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+    .modal-btn { display: block; width: 100%; text-align: center; padding: 15px; background: #d4af37; color: #000; font-weight: bold; text-decoration: none; border-radius: 4px; margin-top: 10px; transition: 0.2s; }
+    .modal-btn:hover { background: #f2d06b; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 
 <div class="hero-section">
@@ -203,67 +47,127 @@
 </div>
 
 <div class="news-container">
-
-<div class="news-card cup-card">
+    
+    <div class="news-card cup-card">
         <div class="cup-glow"></div>
-        
         <div class="badge badge-soon">SOON</div>
-        
         <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; min-height: 150px;">
-            <h2 class="card-title" style="color: #d4af37; font-size: 2.5em; text-align: center; margin: 0; text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);">
-                GITCG CUP 2
-            </h2>
+            <h2 class="card-title" style="color: #d4af37; font-size: 2.5em; text-align: center; margin: 0; text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);">GITCG CUP 2</h2>
         </div>
-
         <div style="margin-top: auto;">
-            <a href="#" class="home-action-btn btn-gold" style="cursor: default;">
-                Coming Soon
-            </a>
-            <span class="pulse-text" style="display: block; text-align: center; margin-top: 10px; font-size: 0.8em; color: #d4af37;">
-                PREPARE YOUR DECKS
-            </span>
+            <a href="/create" class="home-action-btn btn-gold">Practice Draft</a>
+            <span class="pulse-text">MORE DETAILS SOON</span>
         </div>
     </div>
 
-    <% if (news && news.length > 0) { %>
+    <% if (locals.news && news.length > 0) { %>
         <% news.forEach(item => { %>
             
-            <% if (item.image) { %>
-                
-                <div class="news-card" style="padding: 0; overflow: hidden; min-height: 250px; position: relative; border-color: #d4af37;">
-                    <img src="/uploads/<%= item.image %>" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; opacity: 0.6; transition: 0.3s;">
-                    
-                    <div style="position: relative; z-index: 2; padding: 25px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);">
-                        <div class="badge badge-live" style="position: absolute; top: 20px; right: 20px;"><%= item.badgeText %></div>
-                        
-                        <h2 class="card-title" style="font-size: 2em; text-shadow: 0 2px 10px black;"><%= item.title %></h2>
-                        <div style="color: #ccc; margin-top: 5px;"><%= item.date %></div>
-                        
-                        <% if (item.regLink && item.regLink.length > 1) { %>
-                            <a href="<%= item.regLink %>" target="_blank" class="home-action-btn btn-gold" style="margin-top: 15px; align-self: flex-start;">
-                                Read More
-                            </a>
-                        <% } %>
-                    </div>
-                </div>
+            <% 
+               let clickAction = '';
+               let hrefAttr = '';
+               let targetAttr = '_self';
+               
+               if (item.openInModal) {
+                   // Если включена модалка - сохраняем данные в атрибуты
+                   clickAction = `onclick="openModal(this)"`;
+                   hrefAttr = 'javascript:void(0)'; // Чтобы ссылка не переходила
+               } else {
+                   // Обычная ссылка
+                   hrefAttr = item.regLink;
+                   if (item.regLink && item.regLink.startsWith('http')) targetAttr = '_blank';
+               }
+            %>
 
-            <% } 
-                    </div>
-                    
-                    <div style="margin-top: auto; padding-top: 15px;">
-                        <a href="<%= item.regLink %>" target="_blank" class="home-action-btn <%= item.cardStyle === 'gold' ? 'btn-gold' : 'btn-blue' %>">
-                            Check Details
-                        </a>
-                    </div>
-                </div>
-
-            <% } %>
+            <a href="<%= hrefAttr %>" target="<%= targetAttr %>" class="news-card" 
+               style="text-decoration: none;"
+               <%= clickAction %>
+               data-title="<%= item.title %>"
+               data-date="<%= item.date %>"
+               data-prize="<%= item.prize %>"
+               data-region="<%= item.region %>"
+               data-desc="<%= item.description %>"
+               data-link="<%= item.regLink %>">
+               
+               <% if (item.image) { %>
+                   <img src="/uploads/<%= item.image %>" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; opacity: 0.6; transition: 0.3s;">
+                   <div style="position: relative; z-index: 2; padding: 25px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);">
+                       <div class="badge badge-live" style="position: absolute; top: 20px; right: 20px;"><%= item.badgeText %></div>
+                       <h2 class="card-title" style="font-size: 2em; text-shadow: 0 2px 10px black;"><%= item.title %></h2>
+                       <div style="color: #ccc; margin-top: 5px;"><%= item.date %></div>
+                   </div>
+               <% } else { %>
+                   <div class="badge badge-live"><%= item.badgeText %></div>
+                   <h2 class="card-title" style="color: #fff;"><%= item.title %></h2>
+                   <div class="tour-details">
+                       <div class="tour-row"><span class="tour-label">Date:</span><span class="tour-value"><%= item.date %></span></div>
+                       <% if (item.prize) { %>
+                           <div class="tour-row"><span class="tour-label">Prize:</span><span class="tour-value tour-prize"><%= item.prize %></span></div>
+                       <% } %>
+                   </div>
+               <% } %>
+            </a>
 
         <% }); %>
-    <% } else { %>
-        <div style="color: #556; margin-top: 50px;">No active news.</div>
     <% } %>
 
 </div>
+
+<div id="infoModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-box">
+        <span class="modal-close" onclick="closeModalDirect()">×</span>
+        
+        <h2 id="m-title" class="modal-title">Tournament Title</h2>
+        
+        <div class="modal-meta">
+            <span>📅 <span id="m-date">Date</span></span>
+            <span>🏆 <span id="m-prize">Prize</span></span>
+            <span>🌍 <span id="m-region">Region</span></span>
+        </div>
+
+        <div id="m-desc" class="modal-desc">
+            Description goes here...
+        </div>
+
+        <a id="m-link" href="#" target="_blank" class="modal-btn">REGISTER NOW</a>
+    </div>
+</div>
+
+<script>
+    function openModal(element) {
+        // Достаем данные из атрибутов карточки
+        const title = element.getAttribute('data-title');
+        const date = element.getAttribute('data-date');
+        const prize = element.getAttribute('data-prize');
+        const region = element.getAttribute('data-region');
+        const desc = element.getAttribute('data-desc');
+        const link = element.getAttribute('data-link');
+
+        // Заполняем модальное окно
+        document.getElementById('m-title').innerText = title;
+        document.getElementById('m-date').innerText = date || '-';
+        document.getElementById('m-prize').innerText = prize || '-';
+        document.getElementById('m-region').innerText = region || 'Global';
+        document.getElementById('m-desc').innerText = desc || 'No additional details provided.';
+        
+        // Настраиваем кнопку
+        const btn = document.getElementById('m-link');
+        btn.href = link;
+        
+        // Показываем окно
+        document.getElementById('infoModal').style.display = 'flex';
+    }
+
+    function closeModal(event) {
+        // Закрываем, если кликнули по темному фону (overlay)
+        if (event.target.id === 'infoModal') {
+            document.getElementById('infoModal').style.display = 'none';
+        }
+    }
+    
+    function closeModalDirect() {
+        document.getElementById('infoModal').style.display = 'none';
+    }
+</script>
 
 <%- include('../partials/footer') %>
