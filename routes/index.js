@@ -38,22 +38,38 @@ router.get('/', async (req, res) => {
 router.get('/create', (req, res) => res.render('pages/create', { title: 'Create Game' }));
 
 // --- ТУРНИРЫ (СПИСОК) ---
+// routes/index.js - Обновленный роут турниров
+
 router.get('/tournaments', async (req, res) => {
     try {
         const currentDate = new Date();
-        const tournaments = await Tournament.find({ 
+        
+        // 1. Ищем АКТИВНЫЕ (Live)
+        const activeTournaments = await Tournament.find({ 
             isLive: true,
             $or: [
                 { visibleUntil: { $exists: false } },
                 { visibleUntil: { $eq: null } },
                 { visibleUntil: { $gt: currentDate } }
             ]
-        }).sort({ date: -1 }); // Сортируем по дате (новые сверху)
+        }).sort({ date: -1 }); // Сначала новые
+
+        // 2. Ищем АРХИВ (Прошедшие или скрытые)
+        const archivedTournaments = await Tournament.find({
+            $or: [
+                { isLive: false },
+                { visibleUntil: { $lte: currentDate } }
+            ]
+        }).sort({ date: -1 });
         
-        res.render('pages/tournaments', { title: 'Tournaments', tournaments });
+        res.render('pages/tournaments', { 
+            title: 'Tournaments', 
+            tournaments: activeTournaments, 
+            archive: archivedTournaments 
+        });
     } catch (e) {
         console.error(e);
-        res.render('pages/tournaments', { title: 'Tournaments', tournaments: [] });
+        res.render('pages/tournaments', { title: 'Tournaments', tournaments: [], archive: [] });
     }
 });
 
