@@ -57,29 +57,64 @@ router.get('/admin/secret-add', (req, res) => {
 // ОБРАБОТЧИК ДОБАВЛЕНИЯ (Теперь с upload.single('image'))
 router.post('/admin/add', upload.single('image'), async (req, res) => {
     try {
-        // Добавили description и openInModal
-        const { slug, title, date, prize, region, system, regLink, cardStyle, badgeText, visibleUntil, type, description, openInModal } = req.body;
+        const { 
+            slug, title, date, prize, region, system, 
+            cardStyle, badgeText, visibleUntil, type, openInModal,
+            // Получаем все варианты полей
+            regLink, newsLink, 
+            description, newsDescription 
+        } = req.body;
         
+        // ЛОГИКА АВТО-SLUG
         let finalSlug = slug;
         if (!finalSlug || finalSlug.trim() === '') {
-            finalSlug = 'tour-' + Date.now();
+            finalSlug = 'post-' + Date.now();
         }
 
         let imageFilename = null;
-        if (req.file) imageFilename = req.file.filename;
+        if (req.file) {
+            imageFilename = req.file.filename;
+        }
+
+        // ВЫБИРАЕМ ПРАВИЛЬНЫЕ ДАННЫЕ В ЗАВИСИМОСТИ ОТ ТИПА
+        // Если это новость (announcement), берем newsDescription, иначе обычный description
+        let finalDescription = (type === 'announcement') ? newsDescription : description;
+        
+        // То же самое для ссылки
+        let finalRegLink = (type === 'announcement') ? newsLink : regLink;
+
+        // Если это массив (на случай каких-то старых багов), берем последний элемент
+        if (Array.isArray(finalDescription)) finalDescription = finalDescription[finalDescription.length - 1];
+        if (Array.isArray(finalRegLink)) finalRegLink = finalRegLink[finalRegLink.length - 1];
 
         await Tournament.create({
             slug: finalSlug,
-            title, date, prize, region, system, regLink,
+            title, date, prize, region, system, 
             cardStyle, badgeText, type,
             image: imageFilename,
-            // Сохраняем новые поля
-            description: description,
-            openInModal: openInModal === 'on', // Чекбокс передает 'on', если включен
             
+            // Используем наши "умные" переменные
+            regLink: finalRegLink,
+            description: finalDescription,
+            
+            openInModal: openInModal === 'on',
             visibleUntil: visibleUntil ? new Date(visibleUntil) : null,
             isLive: true
         });
+        
+        res.send(`
+            <body style="background:#111; color:#fff; padding:50px; font-family:sans-serif;">
+                <h1 style="color:#4facfe">Success!</h1> 
+                <p>Post "${title}" added successfully.</p> 
+                <a href="/" style="color:#d4af37">Go Home</a> | 
+                <a href="/admin/dashboard" style="color:#ff6b6b">Manage All</a>
+            </body>
+        `);
+    } catch (e) {
+        console.error(e);
+        res.send(`Error: ${e.message}`);
+    }
+});
         
         res.send(` ... (ваш старый код ответа) ... `);
 // ... остальной код без изменений
