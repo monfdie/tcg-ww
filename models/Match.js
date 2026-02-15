@@ -7,16 +7,20 @@ const matchSchema = new mongoose.Schema({
     redName: String,
     blueDiscordId: String,
     redDiscordId: String,
-    blueAvatar: String, // <-- ДОБАВЛЕНО
-    redAvatar: String,  // <-- ДОБАВЛЕНО
+    blueAvatar: String,
+    redAvatar: String,
+    
+    // Игровые данные
     bans: Array,
     bluePicks: Array,
     redPicks: Array,
     immunityPool: Array,
     immunityBans: Array,
-    date: { type: Date, default: Date.now }
-tournamentSlug: { type: String, default: null }, // Сюда будем писать id турнира (например 'gitcg-cup-2')
-    
+
+    // Привязка к турниру (например: 'gitcg-cup-2')
+    // Если null — значит матч обычный (ладдерный/товарищеский)
+    tournamentSlug: { type: String, default: null },
+
     date: { type: Date, default: Date.now }
 });
 
