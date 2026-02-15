@@ -1,228 +1,287 @@
-const express = require('express');
-const router = express.Router();
-const passport = require('passport');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs'); // Добавили модуль для работы с файлами
-const Match = require('../models/Match');
-const Tournament = require('../models/Tournament');
-const CHARACTERS_BY_ELEMENT = require('../characters.json');
+<%- include('../partials/header') %>
 
-// --- ГАРАНТИРУЕМ, ЧТО ПАПКА СУЩЕСТВУЕТ ---
-const uploadDir = path.join(__dirname, '../public/uploads');
-if (!fs.existsSync(uploadDir)){
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// --- НАСТРОЙКА ЗАГРУЗКИ КАРТИНОК ---
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir); // Используем точный путь
-    },
-    filename: function(req, file, cb){
-        cb(null, 'post-' + Date.now() + path.extname(file.originalname));
+<style>
+    /* --- СТИЛИ ГЛАВНОЙ СТРАНИЦЫ --- */
+    .hero-section {
+        text-align: center;
+        margin-top: 40px;
+        margin-bottom: 60px;
+        animation: fadeIn 1s ease-out;
     }
-});
-
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 5000000 }
-});
-
-const urlencodedParser = express.urlencoded({ extended: false });
-
-router.use((req, res, next) => {
-    res.locals.user = req.user || null;
-    res.locals.path = req.path;
-    next();
-});
-
-// --- ГЛАВНАЯ СТРАНИЦА ---
-router.get('/', async (req, res) => {
-    try {
-        const today = new Date();
-        const news = await Tournament.find({
-            isLive: true,
-            $or: [
-                { visibleUntil: { $exists: false } },
-                { visibleUntil: { $eq: null } },
-                { visibleUntil: { $gt: today } }
-            ]
-        }).sort({ date: 1 });
-
-        res.render('pages/home', { title: 'Home', news });
-    } catch (e) {
-        console.error(e);
-        res.render('pages/home', { title: 'Home', news: [] });
+    
+    .main-title {
+        font-family: 'Cinzel', serif;
+        font-size: 3.5em;
+        color: #fff;
+        margin: 0;
+        text-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
+        letter-spacing: 2px;
     }
-});
 
-router.get('/create', (req, res) => res.render('pages/create', { title: 'Create Game' }));
+    /* --- СЕТКА: 2 КАРТОЧКИ В РЯД --- */
+    .news-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 2 колонки */
+        gap: 30px;
+        padding: 0 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
 
-// --- ТУРНИРЫ ---
-router.get('/tournaments', async (req, res) => {
-    try {
-        const currentDate = new Date();
-        const activeTournaments = await Tournament.find({ 
-            type: 'tournament',
-            isLive: true,
-            $or: [
-                { visibleUntil: { $exists: false } },
-                { visibleUntil: { $eq: null } },
-                { visibleUntil: { $gt: currentDate } }
-            ]
-        }).sort({ date: -1 });
+    @media (max-width: 900px) {
+        .news-container { grid-template-columns: 1fr; }
+    }
 
-        const archivedTournaments = await Tournament.find({
-            type: 'tournament',
-            $or: [ { isLive: false }, { visibleUntil: { $lte: currentDate } } ]
-        }).sort({ date: -1 });
+    /* --- КАРТОЧКА --- */
+    .news-card {
+        background: rgba(22, 28, 48, 0.85);
+        border: 1px solid #2a3454;
+        border-radius: 10px;
+        min-height: 280px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        text-decoration: none;
+    }
+
+    .news-card:hover {
+        transform: translateY(-5px);
+        border-color: #4facfe;
+    }
+
+    /* Внутренний контейнер */
+    .card-content-wrapper {
+        padding: 30px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* ЗОЛОТАЯ КАРТОЧКА */
+    .cup-card {
+        border: 1px solid #d4af37;
+        background: radial-gradient(circle at center, rgba(212, 175, 55, 0.15) 0%, rgba(22, 28, 48, 1) 80%);
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
+    }
+    .cup-card:hover {
+        box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
+        border-color: #f2d06b;
+    }
+    .cup-glow {
+        position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 60%);
+        animation: rotateGlow 15s linear infinite; pointer-events: none; z-index: 0;
+    }
+
+    /* СИНЯЯ КАРТОЧКА */
+    .live-card { border-top: 4px solid #4facfe; }
+    .live-card:hover { box-shadow: 0 15px 40px rgba(79, 172, 254, 0.2); }
+
+    /* БЕЙДЖИ */
+    .badge {
+        position: absolute; top: 20px; right: 20px; padding: 6px 14px; border-radius: 20px;
+        font-family: 'Segoe UI', sans-serif; font-size: 0.8em; font-weight: bold; letter-spacing: 1px;
+        z-index: 5; text-transform: uppercase;
+    }
+    .badge-soon { background: rgba(212, 175, 55, 0.2); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.4); }
+    .badge-live { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.4); animation: pulseGreen 2s infinite; }
+
+    /* ТЕКСТЫ */
+    .card-title {
+        font-family: 'Cinzel', serif; font-size: 1.8em; margin: 10px 0 15px 0; color: #fff;
+        text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+    }
+    
+    /* ОПИСАНИЕ НОВОСТИ */
+    .news-description {
+        color: #ccc;
+        font-size: 0.95em;
+        line-height: 1.5;
+        margin-bottom: 20px;
+        /* Обрезаем текст если больше 4 строк */
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex-grow: 1;
+    }
+
+    .tour-details { background: rgba(10, 12, 20, 0.6); padding: 15px; border-radius: 6px; border: 1px solid #1e2640; margin-bottom: 20px; font-size: 0.95em; backdrop-filter: blur(2px); }
+    .tour-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .tour-label { color: #889; }
+    .tour-value { color: #fff; font-weight: 500; }
+    .tour-prize { color: #d4af37; font-weight: bold; }
+
+    .home-action-btn { display: block; width: 100%; padding: 14px 0; border-radius: 50px; font-family: 'Segoe UI', sans-serif; font-size: 1.1em; font-weight: bold; text-align: center; text-decoration: none !important; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s ease; box-sizing: border-box; border: 2px solid transparent; cursor: pointer; margin-top: auto; }
+    
+    .btn-gold { color: #0b0d17 !important; background: linear-gradient(45deg, #d4af37, #f2d06b); border: none; box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+    .btn-gold:hover { box-shadow: 0 0 30px rgba(212, 175, 55, 0.6); transform: scale(1.02); }
+    
+    .btn-blue { color: #4facfe; border-color: #4facfe; background: rgba(79, 172, 254, 0.15); backdrop-filter: blur(4px); }
+    .btn-blue:hover { background: #4facfe; color: #0b0d17 !important; box-shadow: 0 0 20px rgba(79, 172, 254, 0.5); }
+
+    .pulse-text { display: block; text-align: center; color: #d4af37; font-weight: bold; letter-spacing: 2px; margin-top: 15px; font-size: 0.85em; animation: pulseAlpha 2s infinite; opacity: 0.8; }
+
+    /* Модалка */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; animation: fadeIn 0.3s; }
+    .modal-box { background: #161c30; border: 1px solid #d4af37; width: 90%; max-width: 600px; padding: 30px; border-radius: 8px; position: relative; box-shadow: 0 0 50px rgba(212, 175, 55, 0.15); display: flex; flex-direction: column; gap: 15px; }
+    .modal-close { position: absolute; top: 15px; right: 20px; color: #888; font-size: 24px; cursor: pointer; }
+    .modal-title { font-family: 'Cinzel', serif; font-size: 2em; color: #fff; margin: 0; border-bottom: 1px solid #333; padding-bottom: 10px; }
+    .modal-btn { display: block; width: 100%; text-align: center; padding: 15px; background: #d4af37; color: #000; font-weight: bold; text-decoration: none; border-radius: 4px; margin-top: 10px; transition: 0.2s; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes pulseAlpha { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+</style>
+
+<div class="hero-section">
+    <h1 class="main-title">Genshin Impact TCG</h1>
+</div>
+
+<div class="news-container">
+    
+    <div class="news-card cup-card">
+        <div class="cup-glow"></div>
+        <div class="badge badge-soon">SOON</div>
         
-        res.render('pages/tournaments', { title: 'Tournaments', tournaments: activeTournaments, archive: archivedTournaments });
-    } catch (e) {
-        console.error(e);
-        res.render('pages/tournaments', { title: 'Tournaments', tournaments: [], archive: [] });
-    }
-});
+        <div class="card-content-wrapper" style="align-items: center; justify-content: center;">
+            <div style="flex-grow: 1; display: flex; align-items: center;">
+                <h2 class="card-title" style="color: #d4af37; font-size: 2.8em; text-shadow: 0 0 20px rgba(212, 175, 55, 0.5); margin: 0;">
+                    GITCG CUP 2
+                </h2>
+            </div>
+            
+            <div style="width: 100%; margin-top: 20px;">
+                <a href="/create" class="home-action-btn btn-gold">Practice Draft</a>
+                <span class="pulse-text">PREPARE YOUR DECKS</span>
+            </div>
+        </div>
+    </div>
 
-// --- ПРОСМОТР ТУРНИРА ---
-router.get('/tournament/:slug', async (req, res) => {
-    try {
-        const tour = await Tournament.findOne({ slug: req.params.slug });
-        if (!tour) return res.status(404).send('Tournament not found');
+    <% if (locals.news && news.length > 0) { %>
+        <% news.forEach(item => { %>
+            
+            <% 
+               const isNews = item.type === 'announcement';
+               
+               let clickAction = '';
+               let hrefAttr = '';
+               let targetAttr = '_self';
+               if (item.openInModal) {
+                   clickAction = `onclick="openModal(this)"`;
+                   hrefAttr = 'javascript:void(0)';
+               } else {
+                   hrefAttr = item.regLink || '#';
+                   if (item.regLink && item.regLink.startsWith('http')) targetAttr = '_blank';
+               }
+            %>
 
-        const matches = await Match.find({ tournamentSlug: tour.slug }).sort({ date: -1 });
+            <a href="<%= hrefAttr %>" target="<%= targetAttr %>" class="news-card live-card" 
+               <%= clickAction %>
+               data-title="<%= item.title %>"
+               data-date="<%= item.date %>"
+               data-prize="<%= item.prize %>"
+               data-region="<%= item.region %>"
+               data-desc="<%= item.description %>"
+               data-link="<%= item.regLink %>">
+               
+               <% if (item.image) { %>
+                   <img src="/uploads/<%= item.image %>" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; opacity: 0.5; transition: 0.3s; z-index: 1;">
+                   <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to top, #161c30 10%, rgba(22, 28, 48, 0.3) 100%); z-index: 1;"></div>
+               <% } %>
 
-        res.render('pages/tournament_view', { title: tour.title, tour, matches });
-    } catch (e) {
-        res.redirect('/tournaments');
-    }
-});
+               <div class="card-content-wrapper">
+                   
+                   <% if (!isNews && item.badgeText) { %>
+                       <div class="badge badge-live"><%= item.badgeText %></div>
+                   <% } %>
 
-// --- ИСТОРИЯ ---
-router.get('/history', async (req, res) => {
-    try {
-        let matches = [];
-        if (req.user) {
-            matches = await Match.find({
-                $or: [ { blueDiscordId: req.user.discordId }, { redDiscordId: req.user.discordId } ]
-            }).sort({ date: -1 });
-        }
-        res.render('pages/history', { title: 'My History', matches });
-    } catch (e) {
-        res.render('pages/history', { title: 'History', matches: [] });
-    }
-});
+                   <h2 class="card-title" style="<%= isNews ? 'text-align: left; margin-top: 0;' : '' %>"><%= item.title %></h2>
+                   
+                   <% if (isNews && item.description) { %>
+                       <div class="news-description">
+                           <%= item.description %>
+                       </div>
+                   <% } %>
 
-// ==========================================
-//           АДМИН-ПАНЕЛЬ
-// ==========================================
+                   <% if (!isNews) { %>
+                       <div class="tour-details">
+                           <% if (item.date) { %>
+                               <div class="tour-row"><span class="tour-label">Date:</span><span class="tour-value"><%= item.date %></span></div>
+                           <% } %>
+                           <% if (item.prize) { %>
+                               <div class="tour-row"><span class="tour-label">Prize:</span><span class="tour-value tour-prize"><%= item.prize %></span></div>
+                           <% } %>
+                       </div>
+                   <% } else { %>
+                        <% if (item.date) { %>
+                            <div style="color: #8da4c4; font-size: 0.85em; margin-top: auto; margin-bottom: 10px;">📅 <%= item.date %></div>
+                        <% } else { %>
+                            <div style="margin-top: auto;"></div>
+                        <% } %>
+                   <% } %>
 
-router.get('/admin/secret-add', (req, res) => {
-    res.render('pages/admin_add', { title: 'Admin Add' });
-});
+                   <% if (!isNews || item.regLink) { %>
+                       <span class="home-action-btn btn-blue" style="margin-top: 10px;">
+                           <%= isNews ? 'Read More' : 'Details' %>
+                       </span>
+                   <% } %>
 
-router.post('/admin/add', upload.single('image'), async (req, res) => {
-    try {
-        const { 
-            slug, title, date, prize, region, system, 
-            cardStyle, badgeText, visibleUntil, type, openInModal,
-            regLink, newsLink, 
-            description, newsDescription 
-        } = req.body;
+               </div>
+            </a>
+
+        <% }); %>
+    <% } %>
+
+</div>
+
+<div id="infoModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-box">
+        <span class="modal-close" onclick="closeModalDirect()">×</span>
+        <h2 id="m-title" class="modal-title">Title</h2>
+        <div style="display: flex; gap: 15px; color: #8da4c4; font-size: 0.9em; margin-bottom: 10px;">
+            <span id="date-block">📅 <span id="m-date">-</span></span>
+            <span id="prize-block">🏆 <span id="m-prize">-</span></span>
+            <span id="region-block">🌍 <span id="m-region">-</span></span>
+        </div>
+        <div id="m-desc" style="color: #ccc; line-height: 1.6; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 4px; max-height: 300px; overflow-y: auto; white-space: pre-wrap;"></div>
+        <a id="m-link" href="#" target="_blank" class="modal-btn">GO TO LINK</a>
+    </div>
+</div>
+
+<script>
+    function openModal(element) {
+        document.getElementById('m-title').innerText = element.getAttribute('data-title');
         
-        let finalSlug = slug;
-        if (!finalSlug || finalSlug.trim() === '') {
-            finalSlug = 'post-' + Date.now();
+        const date = element.getAttribute('data-date');
+        if(date) { 
+            document.getElementById('m-date').innerText = date; 
+            document.getElementById('date-block').style.display = 'inline';
+        } else {
+            document.getElementById('date-block').style.display = 'none';
         }
 
-        let imageFilename = null;
-        if (req.file) {
-            imageFilename = req.file.filename;
+        const prize = element.getAttribute('data-prize');
+        if(prize) {
+            document.getElementById('m-prize').innerText = prize;
+            document.getElementById('prize-block').style.display = 'inline';
+        } else {
+            document.getElementById('prize-block').style.display = 'none';
         }
-
-        // Выбор данных в зависимости от типа (News vs Tournament)
-        let finalDescription = (type === 'announcement') ? newsDescription : description;
-        let finalRegLink = (type === 'announcement') ? newsLink : regLink;
-
-        if (Array.isArray(finalDescription)) finalDescription = finalDescription.filter(s => s && s.trim() !== '').pop() || '';
-        if (Array.isArray(finalRegLink)) finalRegLink = finalRegLink.filter(s => s && s.trim() !== '').pop() || '';
-
-        await Tournament.create({
-            slug: finalSlug,
-            title, date, prize, region, system, 
-            cardStyle, badgeText, type,
-            image: imageFilename,
-            regLink: finalRegLink,
-            description: finalDescription,
-            openInModal: openInModal === 'on',
-            visibleUntil: visibleUntil ? new Date(visibleUntil) : null,
-            isLive: true
-        });
         
-        res.send(`
-            <body style="background:#111; color:#fff; font-family:sans-serif; padding:50px;">
-                <h1 style="color:#4facfe">Success!</h1> 
-                <p>Added: ${title}</p>
-                <a href="/" style="color:#d4af37">Go Home</a> | 
-                <a href="/admin/dashboard" style="color:#ff6b6b">Manage All</a>
-            </body>
-        `);
-    } catch (e) {
-        console.error(e);
-        res.send(`Error: ${e.message}`);
+        document.getElementById('m-region').innerText = element.getAttribute('data-region') || 'Global';
+        document.getElementById('m-desc').innerText = element.getAttribute('data-desc') || 'No description.';
+        document.getElementById('m-link').href = element.getAttribute('data-link') || '#';
+        document.getElementById('infoModal').style.display = 'flex';
     }
-});
+    function closeModal(event) { if (event.target.id === 'infoModal') closeModalDirect(); }
+    function closeModalDirect() { document.getElementById('infoModal').style.display = 'none'; }
+</script>
 
-router.get('/admin/dashboard', async (req, res) => {
-    const tournaments = await Tournament.find().sort({ date: -1 });
-    res.render('pages/admin_dashboard', { tournaments });
-});
-
-router.post('/admin/delete/:id', async (req, res) => {
-    try {
-        await Tournament.findByIdAndDelete(req.params.id);
-        res.redirect('/admin/dashboard');
-    } catch (e) { res.send("Error: " + e.message); }
-});
-
-router.get('/admin/manage/:slug', async (req, res) => {
-    const tour = await Tournament.findOne({ slug: req.params.slug });
-    if(!tour) return res.send("Tournament not found");
-    res.render('pages/admin_manage', { tour });
-});
-
-router.post('/admin/announce', urlencodedParser, async (req, res) => {
-    await Tournament.updateOne(
-        { slug: req.body.slug },
-        { $push: { announcements: { title: req.body.title, content: req.body.content, date: new Date() } } }
-    );
-    res.redirect('/admin/manage/' + req.body.slug);
-});
-
-router.post('/admin/link-match', urlencodedParser, async (req, res) => {
-    const match = await Match.findOne({ roomId: req.body.roomId.toUpperCase() });
-    if (match) { 
-        match.tournamentSlug = req.body.slug; 
-        await match.save(); 
-        res.redirect('/admin/manage/' + req.body.slug); 
-    } else { res.send(`Match not found!`); }
-});
-
-router.get('/game/:id', async (req, res) => {
-    try {
-        const match = await Match.findOne({ roomId: req.params.id });
-        res.render('pages/game', { 
-            title: `Room ${req.params.id}`, roomId: req.params.id, 
-            savedData: match || null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true 
-        });
-    } catch (e) {
-        res.render('pages/game', { title: "Error", roomId: req.params.id, savedData: null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true });
-    }
-});
-
-router.get('/auth/discord', passport.authenticate('discord'));
-router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => res.redirect('/'));
-router.get('/logout', (req, res, next) => { req.logout((err) => { if (err) return next(err); res.redirect('/'); }); });
-
-module.exports = router;
+<%- include('../partials/footer') %>
