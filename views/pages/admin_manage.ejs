@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage <%= tour.title %></title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        body { padding: 40px; overflow-y: auto; }
+        .panel { background: #161c30; padding: 25px; margin-bottom: 30px; border: 1px solid #2a3454; border-radius: 8px; }
+        h2 { border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; }
+        input, textarea { width: 100%; margin-bottom: 10px; background: #0b0d17; border: 1px solid #444; color: white; padding: 10px; }
+    </style>
+</head>
+<body>
+    <a href="/admin/dashboard" style="color: #888;">&larr; Back to Dashboard</a>
+    <h1>Manage: <span style="color:#d4af37"><%= tour.title %></span></h1>
+
+    <div class="panel">
+        <h2>📢 Post Announcement</h2>
+        <form action="/admin/announce" method="POST">
+            <input type="hidden" name="slug" value="<%= tour.slug %>">
+            <label>Title</label>
+            <input name="title" required placeholder="e.g. Stage 1 Started">
+            <label>Content (Text/HTML)</label>
+            <textarea name="content" rows="4" required placeholder="Details..."></textarea>
+            <button class="btn-primary">Post Announcement</button>
+        </form>
+    </div>
+
+    <div class="panel">
+        <h2>⚔️ Link a Match (Game)</h2>
+        <p style="color:#888; font-size:0.9em;">Enter the 4-letter Room ID of a finished game to show it in this tournament.</p>
+        <form action="/admin/link-match" method="POST">
+            <input type="hidden" name="slug" value="<%= tour.slug %>">
+            <label>Room ID</label>
+            <input name="roomId" required placeholder="e.g. ABCD" style="text-transform:uppercase; width: 150px;">
+            <button class="btn-primary" style="background: #d4af37; border-color:#d4af37; color:#000;">Link Match</button>
+        </form>
+    </div>
+</body>
+</html>
