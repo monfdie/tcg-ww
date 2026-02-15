@@ -1,21 +1,128 @@
-const mongoose = require('mongoose');
+<%- include('../partials/header') %>
 
-const tournamentSchema = new mongoose.Schema({
-    slug: { type: String, unique: true, required: true },
-    title: String,
-    date: String,
-    prize: String,
-    region: String,
-    system: String,
-    regLink: String,
-    
-    // Новые поля для Главной страницы
-    cardStyle: { type: String, default: 'blue' }, // 'gold' или 'blue'
-    badgeText: { type: String, default: 'OPEN' }, // Текст в углу (SOON, LIVE, OPEN)
-    
-    // Авто-скрытие (как мы обсуждали ранее)
-    visibleUntil: { type: Date },
-    isLive: { type: Boolean, default: true }
-});
+<div class="page-container">
+    <div class="page-title" style="border-bottom: 1px solid #2a3454; margin-bottom: 30px; padding-bottom: 10px;">
+        <h1 style="font-family: 'Cinzel', serif; color: #fff; margin: 0;">Active Tournaments</h1>
+    </div>
 
-module.exports = mongoose.model('Tournament', tournamentSchema);
+    <div class="tournament-list">
+        
+        <% if (tournaments && tournaments.length > 0) { %>
+            <% tournaments.forEach(tour => { %>
+                
+                <a href="<%= tour.regLink && tour.regLink.startsWith('http') ? tour.regLink : '/tournament/' + tour.slug %>" 
+                   class="tour-card" 
+                   target="<%= tour.regLink && tour.regLink.startsWith('http') ? '_blank' : '_self' %>">
+                    
+                    <div class="tour-content">
+                        <div class="tour-title"><%= tour.title %></div>
+                        
+                        <div class="tour-meta">
+                            <div class="meta-row">
+                                <span class="icon">📅</span> 
+                                <span><%= tour.date %></span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="icon">🏆</span> 
+                                <span style="color: #d4af37; font-weight: bold;"><%= tour.prize %></span>
+                            </div>
+                        </div>
+
+                        <div class="tour-tags">
+                            <span class="tag-badge tag-region"><%= tour.region %></span>
+                            <span class="tag-badge tag-system"><%= tour.system %></span>
+                        </div>
+                    </div>
+                </a>
+
+            <% }); %>
+        <% } else { %>
+            <div style="text-align: center; padding: 50px; color: #8da4c4; width: 100%;">
+                <h3>No active tournaments at the moment.</h3>
+                <p>Check back later or join our Discord!</p>
+            </div>
+        <% } %>
+
+    </div>
+</div>
+
+<style>
+    .tournament-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+    }
+
+    .tour-card {
+        background: rgba(22, 28, 48, 0.7);
+        border: 1px solid #2a3454;
+        border-radius: 8px;
+        padding: 25px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Эффект при наведении */
+    .tour-card:hover {
+        background: rgba(22, 28, 48, 1);
+        border-color: #4facfe;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    }
+    .tour-card:hover .tour-title {
+        color: #4facfe;
+        text-shadow: 0 0 10px rgba(79, 172, 254, 0.4);
+    }
+
+    .tour-title {
+        font-family: 'Cinzel', serif;
+        font-size: 1.6em;
+        color: #fff;
+        margin-bottom: 15px;
+        transition: color 0.3s;
+    }
+
+    .tour-meta {
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .meta-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #a0b4d0;
+        font-size: 0.95em;
+    }
+    .icon { filter: grayscale(0.5); font-size: 1.1em; }
+
+    .tour-tags {
+        margin-top: auto;
+        display: flex;
+        gap: 10px;
+    }
+    .tag-badge {
+        font-size: 0.8em;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+    }
+    .tag-region { 
+        color: #d4af37; 
+        background: rgba(212, 175, 55, 0.1); 
+        border: 1px solid rgba(212, 175, 55, 0.2); 
+    }
+    .tag-system { 
+        color: #4facfe; 
+        background: rgba(79, 172, 254, 0.1); 
+        border: 1px solid rgba(79, 172, 254, 0.2); 
+    }
+</style>
+
+<%- include('../partials/footer') %>
