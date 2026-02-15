@@ -2,36 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin: Add Tournament</title>
+    <title>Admin: Add Post</title>
     <link rel="stylesheet" href="/style.css">
     <style>
         body { overflow-y: auto; padding: 50px; }
-        .form-container { max-width: 600px; margin: 0 auto; background: #161c30; padding: 30px; border-radius: 8px; }
-        label { display: block; margin-top: 15px; color: #8da4c4; }
-        input, select { margin-top: 5px; }
+        .form-container { max-width: 600px; margin: 0 auto; background: #161c30; padding: 30px; border-radius: 8px; border: 1px solid #2a3454; }
+        label { display: block; margin-top: 15px; color: #8da4c4; font-weight: bold; }
+        input, select, textarea { margin-top: 5px; width: 100%; padding: 8px; background: #0b0d17; border: 1px solid #3c4566; color: white; border-radius: 4px; box-sizing: border-box; }
+        .section-title { border-bottom: 1px solid #3c4566; padding-bottom: 5px; margin-top: 20px; margin-bottom: 10px; color: #fff; }
     </style>
 </head>
 <body>
     <div class="form-container">
-        <h1 style="color: #fff;">Add New Tournament</h1>
-        <form action="/admin/add" method="POST">
+        <h1 style="color: #fff; margin-top: 0;">Create New Post</h1>
+        
+        <form action="/admin/add" method="POST" enctype="multipart/form-data">
             
-            <label>Slug (URL name, unique):</label>
-            <input name="slug" required placeholder="e.g. gitcg-cup-3">
+            <label>Post Type:</label>
+            <select name="type">
+                <option value="tournament">🏆 Tournament</option>
+                <option value="announcement">📢 Simple Announcement (News)</option>
+            </select>
+
+            <label>Slug (Unique ID):</label>
+            <input name="slug" required placeholder="e.g. gitcg-cup-3 or news-update-1">
 
             <label>Title:</label>
-            <input name="title" required placeholder="Tournament Name">
+            <input name="title" required placeholder="Header Text">
 
-            <label>Date Text:</label>
-            <input name="date" required placeholder="Feb 25, 2026">
+            <label>Image (Optional):</label>
+            <input type="file" name="image" accept="image/*">
 
-            <label>Prize:</label>
-            <input name="prize" required placeholder="100 $">
+            <div class="section-title">For Tournaments Only (Optional for News)</div>
+            
+            <div style="display: flex; gap: 10px;">
+                <div style="flex:1"><label>Date Text:</label><input name="date" placeholder="Feb 25, 2026"></div>
+                <div style="flex:1"><label>Prize:</label><input name="prize" placeholder="100 $"></div>
+            </div>
 
             <div style="display: flex; gap: 10px;">
                 <div style="flex:1">
                     <label>Region:</label>
                     <select name="region">
+                        <option value="Global">Global</option>
                         <option value="AS">AS</option>
                         <option value="EU">EU</option>
                         <option value="NA">NA</option>
@@ -42,26 +55,29 @@
                     <select name="system">
                         <option value="Draft">Draft</option>
                         <option value="Allpick">Allpick</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
             </div>
 
-            <label>Registration Link:</label>
-            <input name="regLink" required placeholder="https://...">
+            <label>Link (Registration or More Info):</label>
+            <input name="regLink" placeholder="https://... or #">
+
+            <div class="section-title">Appearance</div>
 
             <label>Card Style:</label>
             <select name="cardStyle">
                 <option value="blue">Blue (Standard)</option>
-                <option value="gold">Gold (Featured/Cup)</option>
+                <option value="gold">Gold (Featured)</option>
             </select>
 
             <label>Badge Text:</label>
             <input name="badgeText" value="OPEN">
 
-            <label>Auto-Hide Date (Optional):</label>
+            <label>Auto-Hide Date:</label>
             <input type="date" name="visibleUntil">
 
-            <button type="submit" class="btn-primary" style="margin-top: 20px; width: 100%;">Post Tournament</button>
+            <button type="submit" class="btn-primary" style="margin-top: 25px; width: 100%; padding: 12px; font-size: 1.1em;">🚀 Publish</button>
         </form>
     </div>
 </body>
