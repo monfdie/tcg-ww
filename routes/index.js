@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const Match = require('../models/Match');
-const Tournament = require('../models/Tournament'); // ДОБАВЛЕНО: Модель турниров
+const Tournament = require('../models/Tournament');
 const CHARACTERS_BY_ELEMENT = require('../characters.json');
+
+// Middleware для обработки данных формы (для админки)
+const urlencodedParser = express.urlencoded({ extended: false });
 
 router.use((req, res, next) => {
     res.locals.user = req.user || null;
@@ -11,15 +14,42 @@ router.use((req, res, next) => {
     next();
 });
 
-router.get('/', (req, res) => res.render('pages/home', { title: 'Home' }));
+// --- ГЛАВНАЯ СТРАНИЦА (ДИНАМИЧЕСКАЯ) ---
+router.get('/', async (req, res) => {
+    try {
+        const today = new Date();
+        // Ищем турниры/новости, у которых дата скрытия еще не наступила или не задана
+        const news = await Tournament.find({
+            isLive: true,
+            $or: [
+                { visibleUntil: { $exists: false } },
+                { visibleUntil: { $eq: null } },
+                { visibleUntil: { $gt: today } }
+            ]
+        }).sort({ date: 1 }); // Сортируем: сначала ближайшие (или используйте _id: -1 для "сначала новые")
+
+        res.render('pages/home', { title: 'Home', news });
+    } catch (e) {
+        console.error(e);
+        res.render('pages/home', { title: 'Home', news: [] });
+    }
+});
+
 router.get('/create', (req, res) => res.render('pages/create', { title: 'Create Game' }));
 
-// --- ТУРНИРНАЯ ЧАСТЬ (ВСТАВЛЕНО) ---
-
-// 1. Страница списка турниров (берет из БД)
+// --- ТУРНИРЫ (СПИСОК) ---
 router.get('/tournaments', async (req, res) => {
     try {
-        const tournaments = await Tournament.find({ isLive: true }).sort({ date: -1 });
+        const currentDate = new Date();
+        const tournaments = await Tournament.find({ 
+            isLive: true,
+            $or: [
+                { visibleUntil: { $exists: false } },
+                { visibleUntil: { $eq: null } },
+                { visibleUntil: { $gt: currentDate } }
+            ]
+        }).sort({ date: -1 }); // Сортируем по дате (новые сверху)
+        
         res.render('pages/tournaments', { title: 'Tournaments', tournaments });
     } catch (e) {
         console.error(e);
@@ -27,7 +57,7 @@ router.get('/tournaments', async (req, res) => {
     }
 });
 
-// 2. Страница конкретного турнира
+// --- СТРАНИЦА КОНКРЕТНОГО ТУРНИРА ---
 router.get('/tournament/:slug', async (req, res) => {
     try {
         const tour = await Tournament.findOne({ slug: req.params.slug });
@@ -44,57 +74,51 @@ router.get('/tournament/:slug', async (req, res) => {
     }
 });
 
-// 3. Секретный роут для создания турнира (запустить 1 раз)
-router.get('/admin/create-gitcg-cup-2', async (req, res) => {
-    const exist = await Tournament.findOne({ slug: 'gitcg-cup-2' });
-    if(exist) return res.send('Tournament already exists!');
-
-    await Tournament.create({
-        slug: 'gitcg-cup-2',
-        title: 'GITCG CUP 2',
-        date: 'Feb 25, 2026',
-        prize: 'TBD',
-        region: 'EU',
-        system: 'Draft',
-        regLink: '#', 
-        rulesLinkRu: '#', 
-        rulesLinkEn: '#', 
-        announcements: [
-            {
-                title: 'Welcome to GITCG CUP 2!',
-                content: 'Registration is open! / Регистрация открыта!',
-                date: new Date()
-            }
-        ],
-        isLive: true
-    });
-    res.send('Tournament GITCG CUP 2 created successfully!');
+// --- АДМИНКА: ДОБАВЛЕНИЕ НОВОСТЕЙ/ТУРНИРОВ ---
+router.get('/admin/secret-add', (req, res) => {
+    // Здесь можно добавить проверку прав администратора, если нужно
+    res.render('pages/admin_add', { title: 'Admin Add' });
 });
 
-// --- КОНЕЦ ТУРНИРНОЙ ЧАСТИ ---
+router.post('/admin/add', urlencodedParser, async (req, res) => {
+    try {
+        const { slug, title, date, prize, region, system, regLink, cardStyle, badgeText, visibleUntil } = req.body;
+        
+        await Tournament.create({
+            slug, title, date, prize, region, system, regLink,
+            cardStyle, badgeText,
+            visibleUntil: visibleUntil ? new Date(visibleUntil) : null,
+            isLive: true
+        });
+        
+        res.send(`
+            <body style="background:#111; color:#fff; font-family:sans-serif; padding:50px;">
+                <h1 style="color:#4facfe">Success!</h1> 
+                <p>Tournament "<strong>${title}</strong>" added.</p> 
+                <a href="/" style="color:#d4af37">Go Home</a> <br><br>
+                <a href="/admin/secret-add" style="color:#888">Add Another</a>
+            </body>
+        `);
+    } catch (e) {
+        res.send(`Error: ${e.message}`);
+    }
+});
 
-
-// Дальше твой код без изменений
-// routes/index.js
-
+// --- ИСТОРИЯ (ТОЛЬКО СВОИ МАТЧИ) ---
 router.get('/history', async (req, res) => {
     try {
         let matches = [];
         
-        // Проверяем, авторизован ли пользователь
+        // Показываем историю только если пользователь вошел в систему
         if (req.user) {
-            // Ищем матчи, где пользователь был либо синим (blue), либо красным (red) игроком
             matches = await Match.find({
                 $or: [
                     { blueDiscordId: req.user.discordId },
                     { redDiscordId: req.user.discordId }
                 ]
-            }).sort({ date: -1 }); // Сортировка от новых к старым
+            }).sort({ date: -1 });
         }
         
-        // Если пользователь не авторизован, matches останется пустым массивом [],
-        // и страница покажет "History is empty" (или можно вывести просьбу войти)
-
         res.render('pages/history', { title: 'My History', matches });
     } catch (e) {
         console.error(e);
@@ -102,7 +126,7 @@ router.get('/history', async (req, res) => {
     }
 });
 
-// Маршрут для активной игры
+// --- ИГРОВОЙ ПРОЦЕСС ---
 router.get('/game/:id', async (req, res) => {
     try {
         const match = await Match.findOne({ roomId: req.params.id });
@@ -124,7 +148,7 @@ router.get('/game/:id', async (req, res) => {
     }
 });
 
-// НОВЫЙ маршрут для просмотра завершенной игры из истории
+// Просмотр завершенной игры из истории
 router.get('/match/:roomId', async (req, res) => {
     try {
         const match = await Match.findOne({ roomId: req.params.roomId });
@@ -139,19 +163,16 @@ router.get('/match/:roomId', async (req, res) => {
             });
         }
 
-        res.render('pages/match', {
-            title: `Match ${match.roomId}`,
-            path: '/history', 
-            user: req.user,
-            match: match,
-            charMap: charMap
-        });
+        // Рендерим страницу (можно использовать тот же game.ejs в режиме наблюдателя или отдельный шаблон)
+        // Для простоты здесь перенаправляем на /game/:id, так как там есть логика savedData
+        res.redirect(`/game/${match.roomId}`);
     } catch (err) {
         console.error(err);
         res.status(500).send('Server error');
     }
 });
 
+// --- АВТОРИЗАЦИЯ ---
 router.get('/auth/discord', passport.authenticate('discord'));
 router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => res.redirect('/'));
 router.get('/logout', (req, res, next) => {
