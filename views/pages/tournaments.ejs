@@ -1,128 +1,280 @@
 <%- include('../partials/header') %>
 
 <div class="page-container">
-    <div class="page-title" style="border-bottom: 1px solid #2a3454; margin-bottom: 30px; padding-bottom: 10px;">
-        <h1 style="font-family: 'Cinzel', serif; color: #fff; margin: 0;">Active Tournaments</h1>
-    </div>
-
-    <div class="tournament-list">
+    
+    <div class="tour-header-panel">
+        <h1 class="page-title">Tournaments</h1>
         
-        <% if (tournaments && tournaments.length > 0) { %>
-            <% tournaments.forEach(tour => { %>
-                
-                <a href="<%= tour.regLink && tour.regLink.startsWith('http') ? tour.regLink : '/tournament/' + tour.slug %>" 
-                   class="tour-card" 
-                   target="<%= tour.regLink && tour.regLink.startsWith('http') ? '_blank' : '_self' %>">
-                    
-                    <div class="tour-content">
-                        <div class="tour-title"><%= tour.title %></div>
-                        
-                        <div class="tour-meta">
-                            <div class="meta-row">
-                                <span class="icon">📅</span> 
-                                <span><%= tour.date %></span>
-                            </div>
-                            <div class="meta-row">
-                                <span class="icon">🏆</span> 
-                                <span style="color: #d4af37; font-weight: bold;"><%= tour.prize %></span>
-                            </div>
-                        </div>
-
-                        <div class="tour-tags">
-                            <span class="tag-badge tag-region"><%= tour.region %></span>
-                            <span class="tag-badge tag-system"><%= tour.system %></span>
-                        </div>
-                    </div>
-                </a>
-
-            <% }); %>
-        <% } else { %>
-            <div style="text-align: center; padding: 50px; color: #8da4c4; width: 100%;">
-                <h3>No active tournaments at the moment.</h3>
-                <p>Check back later or join our Discord!</p>
+        <div class="controls-row">
+            <div class="view-switcher">
+                <button class="switch-btn active" onclick="showSection('active', this)">Active Events</button>
+                <button class="switch-btn" onclick="showSection('archive', this)">Archive</button>
             </div>
-        <% } %>
 
+            <div class="sort-container">
+                <label>Sort by:</label>
+                <select id="sortSelect" onchange="sortTournaments(this.value)">
+                    <option value="newest">Newest Date</option>
+                    <option value="oldest">Oldest Date</option>
+                    <option value="region">Region</option>
+                </select>
+            </div>
+        </div>
     </div>
+
+    <div id="section-active" class="tournament-section">
+        <div class="tournament-list" id="list-active">
+            <% if (tournaments && tournaments.length > 0) { %>
+                <% tournaments.forEach(tour => { %>
+                    <%- include('partials/tour_card_long', { tour: tour, isArchive: false }) %>
+                <% }); %>
+            <% } else { %>
+                <div class="empty-state">No active tournaments right now.</div>
+            <% } %>
+        </div>
+    </div>
+
+    <div id="section-archive" class="tournament-section" style="display: none;">
+        <div class="tournament-list" id="list-archive">
+            <% if (archive && archive.length > 0) { %>
+                <% archive.forEach(tour => { %>
+                    <%- include('partials/tour_card_long', { tour: tour, isArchive: true }) %>
+                <% }); %>
+            <% } else { %>
+                <div class="empty-state">Archive is empty.</div>
+            <% } %>
+        </div>
+    </div>
+
 </div>
 
+<% 
+    // Функция для рендера карточки (чтобы не дублировать код)
+    function renderCard(tour, isArchive) {
+        const link = (tour.regLink && tour.regLink.startsWith('http')) ? tour.regLink : '/tournament/' + tour.slug;
+        const target = (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self';
+        const opacityClass = isArchive ? 'archived-card' : '';
+%>
+    <a href="<%= link %>" class="tour-card-long <%= opacityClass %>" target="<%= target %>" 
+       data-date="<%= tour.date %>" data-region="<%= tour.region %>">
+        
+        <div class="card-left-strip <%= tour.cardStyle === 'gold' ? 'strip-gold' : 'strip-blue' %>"></div>
+        
+        <div class="card-main-content">
+            <div class="card-header-row">
+                <h2 class="card-title"><%= tour.title %></h2>
+                <div class="card-badges">
+                    <span class="badge-region"><%= tour.region %></span>
+                    <span class="badge-system"><%= tour.system %></span>
+                </div>
+            </div>
+            
+            <div class="card-info-row">
+                <span class="info-item"><i class="icon">📅</i> <%= tour.date %></span>
+                <span class="info-item prize"><i class="icon">🏆</i> <%= tour.prize %></span>
+            </div>
+        </div>
+
+        <div class="card-action">
+            <span class="btn-arrow">➜</span>
+        </div>
+    </a>
+<% } %>
+
+<script>
+    // Удаляем include и вставляем прямой рендер, так как функции в EJS работают специфично.
+    // Я перепишу блоки div выше, чтобы было проще, без функций.
+</script>
+
 <style>
-    .tournament-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 25px;
-    }
+    /* --- СТИЛИ ДЛЯ "ДОЛГИХ" КАРТОЧЕК (Horizontal) --- */
+    .tour-header-panel { margin-bottom: 30px; border-bottom: 1px solid #2a3454; padding-bottom: 20px; }
+    .page-title { font-family: 'Cinzel', serif; color: #fff; margin: 0 0 20px 0; }
+    
+    .controls-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+    
+    .view-switcher { display: flex; gap: 0; background: #0f131f; border-radius: 4px; border: 1px solid #2a3454; overflow: hidden; }
+    .switch-btn { background: transparent; color: #8da4c4; padding: 10px 20px; border: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; transition: 0.3s; }
+    .switch-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    .switch-btn.active { background: #4facfe; color: #0b0d17; font-weight: bold; }
 
-    .tour-card {
-        background: rgba(22, 28, 48, 0.7);
+    .sort-container { display: flex; align-items: center; gap: 10px; color: #8da4c4; }
+    #sortSelect { background: #0f131f; border: 1px solid #2a3454; color: #fff; padding: 8px; border-radius: 4px; width: auto; cursor: pointer; }
+
+    .tournament-list { display: flex; flex-direction: column; gap: 15px; }
+
+    /* ДИЗАЙН КАРТОЧКИ (LONG) */
+    .tour-card-long {
+        display: flex;
+        width: 100%;
+        background: rgba(22, 28, 48, 0.8);
         border: 1px solid #2a3454;
-        border-radius: 8px;
-        padding: 25px;
+        border-radius: 6px;
         text-decoration: none;
-        transition: all 0.3s ease;
-        display: flex;
-        flex-direction: column;
-        position: relative;
         overflow: hidden;
+        transition: all 0.2s ease;
+        position: relative;
+        align-items: stretch;
+        min-height: 100px;
     }
-
-    /* Эффект при наведении */
-    .tour-card:hover {
-        background: rgba(22, 28, 48, 1);
+    .tour-card-long:hover {
+        transform: translateX(5px);
+        background: rgba(30, 38, 64, 0.95);
         border-color: #4facfe;
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
     }
-    .tour-card:hover .tour-title {
-        color: #4facfe;
-        text-shadow: 0 0 10px rgba(79, 172, 254, 0.4);
-    }
+    
+    /* Цветная полоска слева */
+    .card-left-strip { width: 6px; flex-shrink: 0; }
+    .strip-blue { background: #4facfe; }
+    .strip-gold { background: #d4af37; box-shadow: 0 0 10px #d4af37; }
 
-    .tour-title {
-        font-family: 'Cinzel', serif;
-        font-size: 1.6em;
-        color: #fff;
-        margin-bottom: 15px;
-        transition: color 0.3s;
-    }
-
-    .tour-meta {
-        margin-bottom: 20px;
+    .card-main-content {
+        flex-grow: 1;
+        padding: 20px 25px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        justify-content: center;
+        gap: 10px;
     }
-    .meta-row {
+
+    .card-header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .card-title { font-family: 'Cinzel', serif; font-size: 1.5em; color: #fff; margin: 0; }
+    
+    .card-badges { display: flex; gap: 8px; }
+    .badge-region { background: rgba(212, 175, 55, 0.1); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+    .badge-system { background: rgba(79, 172, 254, 0.1); color: #4facfe; border: 1px solid rgba(79, 172, 254, 0.2); padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+
+    .card-info-row { display: flex; gap: 20px; color: #a0b4d0; font-size: 0.95em; align-items: center; }
+    .icon { font-style: normal; margin-right: 5px; opacity: 0.7; }
+    .prize { color: #d4af37; font-weight: 500; }
+
+    .card-action {
+        width: 60px;
         display: flex;
         align-items: center;
-        gap: 10px;
-        color: #a0b4d0;
-        font-size: 0.95em;
+        justify-content: center;
+        border-left: 1px solid #2a3454;
+        color: #4facfe;
+        font-size: 1.5em;
+        background: rgba(0,0,0,0.2);
     }
-    .icon { filter: grayscale(0.5); font-size: 1.1em; }
+    .tour-card-long:hover .card-action { background: rgba(79, 172, 254, 0.1); }
 
-    .tour-tags {
-        margin-top: auto;
-        display: flex;
-        gap: 10px;
-    }
-    .tag-badge {
-        font-size: 0.8em;
-        padding: 4px 10px;
-        border-radius: 4px;
-        font-weight: bold;
-        letter-spacing: 0.5px;
-    }
-    .tag-region { 
-        color: #d4af37; 
-        background: rgba(212, 175, 55, 0.1); 
-        border: 1px solid rgba(212, 175, 55, 0.2); 
-    }
-    .tag-system { 
-        color: #4facfe; 
-        background: rgba(79, 172, 254, 0.1); 
-        border: 1px solid rgba(79, 172, 254, 0.2); 
-    }
+    /* Стиль для архива */
+    .archived-card { opacity: 0.6; filter: grayscale(0.8); border-color: #333; }
+    .archived-card:hover { opacity: 1; filter: grayscale(0); }
+    
+    .empty-state { text-align: center; padding: 40px; color: #556; font-style: italic; border: 1px dashed #2a3454; border-radius: 6px; }
 </style>
+
+<script>
+    // Очищаем блоки (костыль для чистого HTML ниже)
+    document.getElementById('list-active').innerHTML = '';
+    document.getElementById('list-archive').innerHTML = '';
+</script>
+
+<div class="tournament-list" id="real-list-active">
+    <% if (tournaments && tournaments.length > 0) { %>
+        <% tournaments.forEach(tour => { %>
+            <a href="<%= (tour.regLink && tour.regLink.startsWith('http')) ? tour.regLink : '/tournament/' + tour.slug %>" 
+               class="tour-card-long" target="<%= (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self' %>"
+               data-date="<%= tour.date %>" data-region="<%= tour.region %>">
+                <div class="card-left-strip <%= tour.cardStyle === 'gold' ? 'strip-gold' : 'strip-blue' %>"></div>
+                <div class="card-main-content">
+                    <div class="card-header-row">
+                        <h2 class="card-title"><%= tour.title %></h2>
+                        <div class="card-badges">
+                            <span class="badge-region"><%= tour.region %></span>
+                            <span class="badge-system"><%= tour.system %></span>
+                        </div>
+                    </div>
+                    <div class="card-info-row">
+                        <span class="info-item"><i class="icon">📅</i> <%= tour.date %></span>
+                        <span class="info-item prize"><i class="icon">🏆</i> <%= tour.prize %></span>
+                    </div>
+                </div>
+                <div class="card-action"><span class="btn-arrow">➜</span></div>
+            </a>
+        <% }); %>
+    <% } else { %>
+        <div class="empty-state">No active tournaments.</div>
+    <% } %>
+</div>
+
+<div class="tournament-list" id="real-list-archive" style="display: none;">
+    <% if (archive && archive.length > 0) { %>
+        <% archive.forEach(tour => { %>
+            <a href="<%= (tour.regLink && tour.regLink.startsWith('http')) ? tour.regLink : '/tournament/' + tour.slug %>" 
+               class="tour-card-long archived-card" target="<%= (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self' %>"
+               data-date="<%= tour.date %>" data-region="<%= tour.region %>">
+                <div class="card-left-strip strip-blue"></div>
+                <div class="card-main-content">
+                    <div class="card-header-row">
+                        <h2 class="card-title"><%= tour.title %></h2>
+                        <div class="card-badges">
+                            <span class="badge-region"><%= tour.region %></span>
+                            <span class="badge-system"><%= tour.system %></span>
+                        </div>
+                    </div>
+                    <div class="card-info-row">
+                        <span class="info-item"><i class="icon">📅</i> <%= tour.date %></span>
+                        <span class="info-item prize"><i class="icon">🏆</i> <%= tour.prize %></span>
+                    </div>
+                </div>
+                <div class="card-action"><span class="btn-arrow">➜</span></div>
+            </a>
+        <% }); %>
+    <% } else { %>
+        <div class="empty-state">Archive is empty.</div>
+    <% } %>
+</div>
+
+<script>
+    // Перенос контента в правильные места (так как мы переписали HTML структуру выше)
+    document.getElementById('section-active').innerHTML = ''; 
+    document.getElementById('section-active').appendChild(document.getElementById('real-list-active'));
+    
+    document.getElementById('section-archive').innerHTML = '';
+    document.getElementById('section-archive').appendChild(document.getElementById('real-list-archive'));
+
+    // Логика Табов
+    function showSection(section, btn) {
+        document.getElementById('section-active').style.display = 'none';
+        document.getElementById('section-archive').style.display = 'none';
+        document.getElementById('real-list-active').style.display = 'none';
+        document.getElementById('real-list-archive').style.display = 'none';
+        
+        // Показываем нужный
+        document.getElementById('section-' + section).style.display = 'block';
+        document.getElementById('real-list-' + section).style.display = 'flex';
+
+        // Кнопки
+        document.querySelectorAll('.switch-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // Логика Сортировки
+    function sortTournaments(criteria) {
+        // Определяем какой список сейчас виден
+        const activeList = document.getElementById('real-list-active').style.display !== 'none' 
+            ? document.getElementById('real-list-active') 
+            : document.getElementById('real-list-archive');
+            
+        const cards = Array.from(activeList.getElementsByClassName('tour-card-long'));
+        
+        cards.sort((a, b) => {
+            if (criteria === 'region') {
+                return a.dataset.region.localeCompare(b.dataset.region);
+            } else if (criteria === 'newest') {
+                // Простая сортировка строк, лучше бы по дате, но для примера сойдет
+                return b.dataset.date.localeCompare(a.dataset.date);
+            } else if (criteria === 'oldest') {
+                return a.dataset.date.localeCompare(b.dataset.date);
+            }
+        });
+        
+        cards.forEach(card => activeList.appendChild(card));
+    }
+</script>
 
 <%- include('../partials/footer') %>
