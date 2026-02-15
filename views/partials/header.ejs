@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= locals.title || 'GITCG' %></title>
-    <link rel="icon" type="image/png" href="/logo.png">
+    
+    <link rel="icon" type="image/png" href="/favicon.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <meta name="referrer" content="no-referrer">
@@ -22,6 +24,12 @@
             <a href="/create" class="<%= locals.path === '/create' ? 'active' : '' %>">Create Game</a>
             <a href="/tournaments" class="<%= locals.path === '/tournaments' ? 'active' : '' %>">Tournaments</a>
             <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">History</a>
+            
+            <% if (locals.user && locals.user.role === 'admin') { %>
+                <a href="/admin/secret-add" class="<%= locals.path === '/admin/secret-add' ? 'active' : '' %>" style="color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3);">
+                    ADMIN PANEL
+                </a>
+            <% } %>
         </div>
         
         <div class="sidebar-user">
