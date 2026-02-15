@@ -2,91 +2,201 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin: Add Post</title>
+    <title>Admin Panel: Create</title>
     <link rel="stylesheet" href="/style.css">
     <style>
-        body { overflow-y: auto; padding: 50px; }
-        .form-container { max-width: 600px; margin: 0 auto; background: #161c30; padding: 30px; border-radius: 8px; border: 1px solid #2a3454; }
-        label { display: block; margin-top: 15px; color: #8da4c4; font-weight: bold; }
-        input, select, textarea { margin-top: 5px; width: 100%; padding: 8px; background: #0b0d17; border: 1px solid #3c4566; color: white; border-radius: 4px; box-sizing: border-box; }
-        .section-title { border-bottom: 1px solid #3c4566; padding-bottom: 5px; margin-top: 20px; margin-bottom: 10px; color: #fff; }
+        body { overflow-y: auto; padding: 40px; background: #0b0d17; }
+        .form-container { 
+            max-width: 700px; margin: 0 auto; background: #161c30; 
+            padding: 40px; border-radius: 12px; border: 1px solid #2a3454; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        /* Стили переключателя типов */
+        .type-switcher {
+            display: flex; gap: 15px; margin-bottom: 30px; border-bottom: 1px solid #2a3454; padding-bottom: 20px;
+        }
+        .type-btn {
+            flex: 1; padding: 15px; background: transparent; border: 1px solid #3c4566;
+            color: #8da4c4; font-family: 'Segoe UI', sans-serif; font-weight: bold;
+            font-size: 1.1em; cursor: pointer; border-radius: 6px; transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .type-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        
+        .type-btn.active {
+            background: #4facfe; color: #0b0d17; border-color: #4facfe;
+            box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
+        }
+        /* Стиль для активной кнопки новостей (желтый) */
+        .type-btn.active-news {
+            background: #d4af37; color: #0b0d17; border-color: #d4af37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+        }
+
+        label { display: block; margin-top: 18px; color: #a0b4d0; font-size: 0.9em; margin-bottom: 5px; }
+        input, select, textarea { 
+            width: 100%; padding: 12px; background: #0f131f; border: 1px solid #3c4566; 
+            color: white; border-radius: 6px; box-sizing: border-box; font-family: 'Segoe UI', sans-serif;
+        }
+        input:focus, select:focus, textarea:focus { border-color: #4facfe; outline: none; }
+
+        .section-header { 
+            margin-top: 25px; margin-bottom: 10px; color: #fff; 
+            font-family: 'Cinzel', serif; font-size: 1.2em; border-bottom: 1px solid #333; padding-bottom: 5px;
+        }
+        
+        /* Скрытые блоки */
+        .hidden { display: none; }
+        
+        .submit-btn {
+            margin-top: 30px; width: 100%; padding: 15px; font-size: 1.2em; font-weight: bold;
+            border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: 0.2s;
+        }
+        .btn-tour { background: #4facfe; color: #000; }
+        .btn-tour:hover { box-shadow: 0 0 20px rgba(79, 172, 254, 0.5); }
+        
+        .btn-news { background: #d4af37; color: #000; }
+        .btn-news:hover { box-shadow: 0 0 20px rgba(212, 175, 55, 0.5); }
     </style>
 </head>
 <body>
     <div class="form-container">
-        <h1 style="color: #fff; margin-top: 0;">Create New Post</h1>
+        <h1 style="color: #fff; margin-top: 0; text-align: center; margin-bottom: 30px;">Content Creator</h1>
         
+        <div class="type-switcher">
+            <button type="button" class="type-btn active" onclick="setMode('tournament')" id="btn-tour">🏆 Create Tournament</button>
+            <button type="button" class="type-btn" onclick="setMode('announcement')" id="btn-news">📢 Create News Post</button>
+        </div>
+
         <form action="/admin/add" method="POST" enctype="multipart/form-data">
             
-            <label>Post Type:</label>
-            <select name="type">
-                <option value="tournament">🏆 Tournament</option>
-                <option value="announcement">📢 Simple Announcement (News)</option>
-            </select>
+            <input type="hidden" name="type" id="typeInput" value="tournament">
 
-            <label>Slug (Unique ID):</label>
-            <input name="slug" required placeholder="e.g. gitcg-cup-3 or news-update-1">
+            <label>Title (Headline):</label>
+            <input name="title" required placeholder="Ex: Abyss Cup Winter or New Patch Notes">
 
-            <label>Title:</label>
-            <input name="title" required placeholder="Header Text">
+            <label>Slug (Optional ID):</label>
+            <input name="slug" placeholder="Leave empty to auto-generate">
 
-            <label>Image (Optional):</label>
-            <input type="file" name="image" accept="image/*">
-
-            <div class="section-title">For Tournaments Only (Optional for News)</div>
-            
-            <div style="display: flex; gap: 10px;">
-                <div style="flex:1"><label>Date Text:</label><input name="date" placeholder="Feb 25, 2026"></div>
-                <div style="flex:1"><label>Prize:</label><input name="prize" placeholder="100 $"></div>
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-                <div style="flex:1">
-                    <label>Region:</label>
-                    <select name="region">
-                        <option value="Global">Global</option>
-                        <option value="AS">AS</option>
-                        <option value="EU">EU</option>
-                        <option value="NA">NA</option>
-                    </select>
+            <div id="tournament-fields">
+                <div class="section-header">Tournament Details</div>
+                
+                <div style="display: flex; gap: 15px;">
+                    <div style="flex:1">
+                        <label>Date Display:</label>
+                        <input name="date" placeholder="Feb 25, 2026">
+                    </div>
+                    <div style="flex:1">
+                        <label>Prize Pool:</label>
+                        <input name="prize" placeholder="100 $">
+                    </div>
                 </div>
-                <div style="flex:1">
-                    <label>System:</label>
-                    <select name="system">
-                        <option value="Draft">Draft</option>
-                        <option value="Allpick">Allpick</option>
-                        <option value="Other">Other</option>
-                    </select>
+
+                <div style="display: flex; gap: 15px;">
+                    <div style="flex:1">
+                        <label>Region:</label>
+                        <select name="region">
+                            <option value="Global">Global</option>
+                            <option value="AS">AS</option>
+                            <option value="EU">EU</option>
+                            <option value="NA">NA</option>
+                        </select>
+                    </div>
+                    <div style="flex:1">
+                        <label>System:</label>
+                        <select name="system">
+                            <option value="Draft">Draft</option>
+                            <option value="Allpick">Allpick</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label>Registration Link / Info Link:</label>
+                <input name="regLink" placeholder="https://...">
+
+                <div class="section-header">Style & Behavior</div>
+                
+                <div style="display: flex; gap: 15px;">
+                    <div style="flex:1">
+                        <label>Card Style:</label>
+                        <select name="cardStyle">
+                            <option value="blue">Blue (Standard)</option>
+                            <option value="gold">Gold (Featured)</option>
+                        </select>
+                    </div>
+                    <div style="flex:1">
+                        <label>Badge Text:</label>
+                        <input name="badgeText" value="OPEN">
+                    </div>
+                </div>
+
+                <label>Modal Description (Quick View Info):</label>
+                <textarea name="description" rows="3" placeholder="Rules, format, requirements..."></textarea>
+
+                <div style="margin-top: 15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; display: flex; align-items: center;">
+                    <input type="checkbox" name="openInModal" style="width: 20px; margin: 0 10px 0 0;">
+                    <span style="color: #fff; font-size: 0.9em;">Open info in Popup instead of Link?</span>
                 </div>
             </div>
 
-            <label>Link (Registration or More Info):</label>
-            <input name="regLink" placeholder="https://... or #">
+            <div id="news-fields" class="hidden">
+                <div class="section-header">Post Content</div>
+                
+                <label style="color: #d4af37;">Upload Image (Required for News):</label>
+                <div style="border: 2px dashed #3c4566; padding: 20px; text-align: center; border-radius: 6px;">
+                    <input type="file" name="image" accept="image/*" style="border: none; background: transparent;">
+                </div>
 
-<label>Modal Description (Info inside popup):</label>
-            <textarea name="description" rows="4" placeholder="Rules, details, requirements..."></textarea>
-
-            <div style="margin-top: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; border: 1px solid #3c4566;">
-                <input type="checkbox" name="openInModal" id="modalCheck" style="width: auto; margin-right: 10px;">
-                <label for="modalCheck" style="display: inline; cursor: pointer; color: #fff;">Open in "Quick View" Popup?</label>
+                <label>Post Text / Description:</label>
+                <textarea name="description" rows="6" placeholder="Write your news content here..."></textarea>
+                
+                <label>External Link (Optional):</label>
+                <input name="regLink" placeholder="https://youtube.com/...">
             </div>
 
-            <div class="section-title">Appearance</div>
-
-            <label>Card Style:</label>
-            <select name="cardStyle">
-                <option value="blue">Blue (Standard)</option>
-                <option value="gold">Gold (Featured)</option>
-            </select>
-
-            <label>Badge Text:</label>
-            <input name="badgeText" value="OPEN">
-
-            <label>Auto-Hide Date:</label>
+            <label style="margin-top: 25px;">Auto-Delete Date (Optional):</label>
             <input type="date" name="visibleUntil">
 
-            <button type="submit" class="btn-primary" style="margin-top: 25px; width: 100%; padding: 12px; font-size: 1.1em;">🚀 Publish</button>
+            <button type="submit" class="submit-btn btn-tour" id="submit-btn">Create Tournament</button>
         </form>
     </div>
+
+    <script>
+        function setMode(mode) {
+            const tourFields = document.getElementById('tournament-fields');
+            const newsFields = document.getElementById('news-fields');
+            const typeInput = document.getElementById('typeInput');
+            const btnTour = document.getElementById('btn-tour');
+            const btnNews = document.getElementById('btn-news');
+            const submitBtn = document.getElementById('submit-btn');
+
+            if (mode === 'tournament') {
+                // Показываем Турнир
+                tourFields.classList.remove('hidden');
+                newsFields.classList.add('hidden');
+                typeInput.value = 'tournament';
+                
+                // Стили кнопок
+                btnTour.classList.add('active');
+                btnNews.classList.remove('active', 'active-news');
+                submitBtn.innerText = 'CREATE TOURNAMENT';
+                submitBtn.className = 'submit-btn btn-tour';
+
+            } else {
+                // Показываем Новости
+                tourFields.classList.add('hidden');
+                newsFields.classList.remove('hidden');
+                typeInput.value = 'announcement';
+                
+                // Стили кнопок
+                btnTour.classList.remove('active');
+                btnNews.classList.add('active', 'active-news');
+                submitBtn.innerText = 'PUBLISH NEWS';
+                submitBtn.className = 'submit-btn btn-news';
+            }
+        }
+    </script>
 </body>
 </html>
