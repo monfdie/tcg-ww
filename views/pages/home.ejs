@@ -247,21 +247,7 @@
                     </div>
                 </div>
 
-            <% } else { %>
-                
-                <div class="news-card <%= item.cardStyle === 'gold' ? 'cup-card' : 'live-card' %>">
-                    <% if (item.cardStyle === 'gold') { %> <div class="cup-glow"></div> <% } %>
-                    <div class="badge <%= item.badgeText === 'SOON' ? 'badge-soon' : 'badge-live' %>"><%= item.badgeText %></div>
-                    
-                    <h2 class="card-title" style="<%= item.cardStyle === 'gold' ? 'color: #d4af37; font-size: 2.5em; text-align: center;' : '' %>">
-                        <%= item.title %>
-                    </h2>
-
-                    <div class="tour-details">
-                        <div class="tour-row"><span class="tour-label">Date:</span><span class="tour-value"><%= item.date %></span></div>
-                        <% if (item.prize) { %>
-                            <div class="tour-row"><span class="tour-label">Prize:</span><span class="tour-value tour-prize"><%= item.prize %></span></div>
-                        <% } %>
+            <% } 
                     </div>
                     
                     <div style="margin-top: auto; padding-top: 15px;">
