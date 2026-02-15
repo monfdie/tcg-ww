@@ -18,27 +18,26 @@
         letter-spacing: 2px;
     }
 
-    /* --- СЕТКА: 2 КАРТОЧКИ В РЯД (ПРЯМОУГОЛЬНИКИ) --- */
+    /* --- СЕТКА: 2 КАРТОЧКИ В РЯД --- */
     .news-container {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* Ровно 2 колонки */
+        grid-template-columns: 1fr 1fr; /* 2 колонки */
         gap: 30px;
         padding: 0 20px;
         max-width: 1400px;
         margin: 0 auto;
     }
 
-    /* Адаптивность: на мобилках 1 колонка */
     @media (max-width: 900px) {
         .news-container { grid-template-columns: 1fr; }
     }
 
-    /* --- ДИЗАЙН КАРТОЧЕК --- */
+    /* --- КАРТОЧКА --- */
     .news-card {
         background: rgba(22, 28, 48, 0.85);
         border: 1px solid #2a3454;
         border-radius: 10px;
-        min-height: 280px; /* Фиксированная минимальная высота */
+        min-height: 280px;
         position: relative;
         overflow: hidden;
         display: flex;
@@ -53,17 +52,17 @@
         border-color: #4facfe;
     }
 
-    /* Внутренний отступ для контента */
+    /* Внутренний контейнер */
     .card-content-wrapper {
         padding: 30px;
         height: 100%;
         display: flex;
         flex-direction: column;
         position: relative;
-        z-index: 2; /* Поверх картинки */
+        z-index: 2;
     }
 
-    /* --- ЗОЛОТАЯ КАРТОЧКА (GITCG CUP) --- */
+    /* ЗОЛОТАЯ КАРТОЧКА */
     .cup-card {
         border: 1px solid #d4af37;
         background: radial-gradient(circle at center, rgba(212, 175, 55, 0.15) 0%, rgba(22, 28, 48, 1) 80%);
@@ -79,11 +78,11 @@
         animation: rotateGlow 15s linear infinite; pointer-events: none; z-index: 0;
     }
 
-    /* --- ОБЫЧНАЯ КАРТОЧКА --- */
+    /* СИНЯЯ КАРТОЧКА */
     .live-card { border-top: 4px solid #4facfe; }
     .live-card:hover { box-shadow: 0 15px 40px rgba(79, 172, 254, 0.2); }
 
-    /* --- БЕЙДЖИКИ --- */
+    /* БЕЙДЖИ */
     .badge {
         position: absolute; top: 20px; right: 20px; padding: 6px 14px; border-radius: 20px;
         font-family: 'Segoe UI', sans-serif; font-size: 0.8em; font-weight: bold; letter-spacing: 1px;
@@ -92,12 +91,26 @@
     .badge-soon { background: rgba(212, 175, 55, 0.2); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.4); }
     .badge-live { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.4); animation: pulseGreen 2s infinite; }
 
-    /* --- ТЕКСТЫ И КНОПКИ --- */
+    /* ТЕКСТЫ */
     .card-title {
         font-family: 'Cinzel', serif; font-size: 1.8em; margin: 10px 0 15px 0; color: #fff;
         text-shadow: 0 2px 5px rgba(0,0,0,0.8);
     }
     
+    /* ОПИСАНИЕ НОВОСТИ */
+    .news-description {
+        color: #ccc;
+        font-size: 0.95em;
+        line-height: 1.5;
+        margin-bottom: 20px;
+        /* Обрезаем текст если больше 4 строк */
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex-grow: 1;
+    }
+
     .tour-details { background: rgba(10, 12, 20, 0.6); padding: 15px; border-radius: 6px; border: 1px solid #1e2640; margin-bottom: 20px; font-size: 0.95em; backdrop-filter: blur(2px); }
     .tour-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
     .tour-label { color: #889; }
@@ -114,7 +127,7 @@
 
     .pulse-text { display: block; text-align: center; color: #d4af37; font-weight: bold; letter-spacing: 2px; margin-top: 15px; font-size: 0.85em; animation: pulseAlpha 2s infinite; opacity: 0.8; }
 
-    /* Анимации и Модалка */
+    /* Модалка */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; animation: fadeIn 0.3s; }
     .modal-box { background: #161c30; border: 1px solid #d4af37; width: 90%; max-width: 600px; padding: 30px; border-radius: 8px; position: relative; box-shadow: 0 0 50px rgba(212, 175, 55, 0.15); display: flex; flex-direction: column; gap: 15px; }
     .modal-close { position: absolute; top: 15px; right: 20px; color: #888; font-size: 24px; cursor: pointer; }
@@ -155,7 +168,7 @@
         <% news.forEach(item => { %>
             
             <% 
-               const isNews = item.type === 'announcement'; 
+               const isNews = item.type === 'announcement';
                
                let clickAction = '';
                let hrefAttr = '';
@@ -189,8 +202,14 @@
                        <div class="badge badge-live"><%= item.badgeText %></div>
                    <% } %>
 
-                   <h2 class="card-title" style="<%= isNews ? 'text-align: left; margin-top:auto;' : '' %>"><%= item.title %></h2>
+                   <h2 class="card-title" style="<%= isNews ? 'text-align: left; margin-top: 0;' : '' %>"><%= item.title %></h2>
                    
+                   <% if (isNews && item.description) { %>
+                       <div class="news-description">
+                           <%= item.description %>
+                       </div>
+                   <% } %>
+
                    <% if (!isNews) { %>
                        <div class="tour-details">
                            <% if (item.date) { %>
@@ -202,12 +221,14 @@
                        </div>
                    <% } else { %>
                         <% if (item.date) { %>
-                            <div style="color: #aaa; font-size: 0.9em; margin-bottom: 10px;"><%= item.date %></div>
+                            <div style="color: #8da4c4; font-size: 0.85em; margin-top: auto; margin-bottom: 10px;">📅 <%= item.date %></div>
+                        <% } else { %>
+                            <div style="margin-top: auto;"></div>
                         <% } %>
                    <% } %>
 
                    <% if (!isNews || item.regLink) { %>
-                       <span class="home-action-btn btn-blue" style="margin-top: auto;">
+                       <span class="home-action-btn btn-blue" style="margin-top: 10px;">
                            <%= isNews ? 'Read More' : 'Details' %>
                        </span>
                    <% } %>
