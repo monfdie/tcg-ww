@@ -10,17 +10,25 @@ const matchSchema = new mongoose.Schema({
     blueAvatar: String,
     redAvatar: String,
     
-    // Игровые данные
+    // Драфт
     bans: Array,
     bluePicks: Array,
     redPicks: Array,
-    
-    // НОВОЕ: Расстановка по декам (массивы из 9 слотов)
-    blueDecks: { type: Array, default: [] }, 
-    redDecks: { type: Array, default: [] },
-
     immunityPool: Array,
     immunityBans: Array,
+
+    // НОВОЕ: Деки и Результаты
+    blueDecks: { type: Array, default: [] }, 
+    redDecks: { type: Array, default: [] },
+    
+    // Массив победителей по играм: ['blue', 'red', 'blue']
+    gameResults: { type: Array, default: [null, null, null] },
+    
+    // Итоговый счет
+    score: { 
+        blue: { type: Number, default: 0 }, 
+        red: { type: Number, default: 0 } 
+    },
 
     tournamentSlug: { type: String, default: null },
     date: { type: Date, default: Date.now }
