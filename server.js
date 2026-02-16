@@ -259,11 +259,19 @@ function nextImmunityStep(roomId) {
 }
 
 async function nextStep(roomId) {
-    const s = sessions[roomId]; s.stepIndex++; s.timer = 45;
+    const s = sessions[roomId]; 
+    s.stepIndex++; 
+    s.timer = 45;
+
+    // Если шаги закончились (драфт завершен)
     if (s.stepIndex >= s.draftOrder.length) {
+        
+        // 1. Отправляем инфо клиентам
         io.to(roomId).emit('game_over', getPublicState(s)); 
         clearInterval(s.timerInterval); 
+
         try {
+            // 2. Сохраняем матч в историю
             await Match.create({
                 roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
                 blueDiscordId: s.blueDiscordId, redDiscordId: s.redDiscordId,
@@ -271,15 +279,37 @@ async function nextStep(roomId) {
                 bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks,
                 immunityPool: s.immunityPool, immunityBans: s.immunityBans
             });
+
+            // --- НОВОЕ: ОБНОВЛЕНИЕ СТАТИСТИКИ ЮЗЕРОВ (+1 игра) ---
+            if (s.blueDiscordId) {
+                await User.updateOne(
+                    { discordId: s.blueDiscordId }, 
+                    { $inc: { gamesPlayed: 1 } }
+                );
+            }
+            if (s.redDiscordId) {
+                await User.updateOne(
+                    { discordId: s.redDiscordId }, 
+                    { $inc: { gamesPlayed: 1 } }
+                );
+            }
+            // -----------------------------------------------------
+
+            // 3. Очистка старых матчей (оставляем только последние 6 для главной, если нужно)
             const count = await Match.countDocuments();
-            if (count > 6) {
-                const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 6);
+            if (count > 50) { // Увеличил лимит, чтобы история жила дольше
+                const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 50);
                 await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Error saving match/stats:", e); }
+        
         return;
     }
-    const c = s.draftOrder[s.stepIndex]; s.currentTeam = c.team; s.currentAction = c.type;
+
+    // Если игра продолжается - идем дальше
+    const c = s.draftOrder[s.stepIndex]; 
+    s.currentTeam = c.team; 
+    s.currentAction = c.type;
     io.to(roomId).emit('update_state', getPublicState(s));
 }
 
