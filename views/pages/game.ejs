@@ -19,13 +19,33 @@
     }
 
     .builder-header {
-        display: flex; justify-content: space-between; width: 100%; max-width: 1000px;
-        margin-bottom: 20px; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px;
+        display: flex; 
+        justify-content: center; /* Центрируем счет */
+        position: relative; /* Чтобы кнопка Finish была сбоку */
+        width: 100%; max-width: 1000px;
+        margin-bottom: 20px; 
+        align-items: center; 
+        border-bottom: 1px solid #333; 
+        padding-bottom: 15px;
+        min-height: 50px;
     }
     
     .match-score {
-        font-family: 'Cinzel', serif; font-size: 2em; color: #fff; text-shadow: 0 0 10px #d4af37;
+        font-family: 'Cinzel', serif; 
+        font-size: 2.5em; 
+        color: #fff; 
+        text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+        letter-spacing: 5px;
     }
+
+    /* Кнопка Finish в правом углу хедера */
+    .save-match-btn {
+        position: absolute; right: 0; top: 5px;
+        background: #d4af37; color: #000; font-weight: bold; border: none; padding: 12px 30px;
+        border-radius: 4px; font-family: 'Cinzel', serif; cursor: pointer; 
+        transition: 0.2s;
+    }
+    .save-match-btn:hover { box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); transform: scale(1.05); }
 
     .games-grid {
         display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 1100px;
@@ -34,7 +54,10 @@
     .game-row {
         display: flex; align-items: center; justify-content: center; gap: 30px;
         background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid #2a3454;
+        animation: fadeIn 0.5s ease;
     }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     .deck-slots-group {
         display: flex; gap: 10px;
@@ -73,11 +96,6 @@
     .select-char-item:hover { border-color: #fff; transform: scale(1.1); }
     .select-char-item img { width: 100%; height: 100%; object-fit: cover; }
 
-    .save-match-btn {
-        background: #d4af37; color: #000; font-weight: bold; border: none; padding: 10px 30px;
-        border-radius: 4px; font-family: 'Cinzel', serif; cursor: pointer; margin-left: auto;
-    }
-    .save-match-btn:hover { box-shadow: 0 0 15px #d4af37; }
 </style>
 
 <div id="game-screen">
@@ -142,17 +160,9 @@
      <div class="deck-builder-panel" id="deck-builder-panel">
          
          <div class="builder-header">
-             <div style="font-size: 1.2em; color: #4facfe;">BLUE DECKS</div>
+             <div id="score-display" class="match-score">0 - 0</div>
              
-             <div style="display:flex; align-items:center; gap:20px;">
-                 <span style="color:#888;">MATCH SCORE:</span>
-                 <span id="score-display" class="match-score">0 - 0</span>
-             </div>
-
-             <div style="display:flex; align-items:center; gap:20px;">
-                 <div style="font-size: 1.2em; color: #ff6b6b;">RED DECKS</div>
-                 <button class="save-match-btn" onclick="finishMatch()">FINISH</button>
-             </div>
+             <button class="save-match-btn" id="finish-btn" onclick="finishMatch()">FINISH</button>
          </div>
 
          <div class="games-grid" id="games-grid">
@@ -240,13 +250,18 @@
     
     // --- UI UPDATE ---
     function updateUI(state) {
-        // Если драфт закончен (только для GITCG) - меняем пулл на билдер
+        // Если драфт закончен
         if (state.draftFinished) {
             document.getElementById('char-pool-container').style.display = 'none';
             document.getElementById('deck-builder-panel').style.display = 'flex';
             document.getElementById('confirm-btn').style.display = 'none';
             document.getElementById('skip-btn').style.display = 'none';
             document.getElementById('status').innerText = "SETUP PHASE";
+            
+            // Если матч сохранен, прячем кнопку финиш навсегда
+            if (state.matchSaved) {
+                document.getElementById('finish-btn').style.display = 'none';
+            }
             
             renderDeckBuilder(state);
         } else {
@@ -287,7 +302,6 @@
 
         renderSlots(state);
         
-        // Блокировка выбранных
         document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
         state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
         [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
@@ -300,7 +314,7 @@
 
     // --- ЛОГИКА DECK BUILDER ---
     function renderDeckBuilder(state) {
-        // Подсчет счета
+        // 1. Подсчет счета
         let blueScore = 0;
         let redScore = 0;
         state.gameResults.forEach(r => {
@@ -315,7 +329,18 @@
         const grid = document.getElementById('games-grid');
         grid.innerHTML = '';
 
+        // 2. Логика отображения рядов (2 или 3)
+        // Показываем 3-й ряд ТОЛЬКО если счет 1-1 (есть победитель в 1 и 2, и они разные)
+        let showThirdGame = false;
+        if (state.gameResults[0] && state.gameResults[1] && state.gameResults[0] !== state.gameResults[1]) {
+            showThirdGame = true;
+        }
+
+        // Цикл на 3 игры
         for (let i = 0; i < 3; i++) {
+            // Если это 3-я игра, и условия для неё нет -> пропускаем
+            if (i === 2 && !showThirdGame) continue;
+
             const row = document.createElement('div');
             row.className = 'game-row';
 
@@ -331,7 +356,6 @@
             const controls = document.createElement('div');
             controls.className = 'winner-controls';
             
-            // Кнопка Blue Win
             const btnBlue = document.createElement('button');
             btnBlue.className = `win-btn ${state.gameResults[i] === 'blue' ? 'active-blue' : ''}`;
             btnBlue.innerText = 'W';
@@ -341,7 +365,6 @@
             vsText.className = 'vs-text';
             vsText.innerText = 'VS';
 
-            // Кнопка Red Win
             const btnRed = document.createElement('button');
             btnRed.className = `win-btn ${state.gameResults[i] === 'red' ? 'active-red' : ''}`;
             btnRed.innerText = 'W';
@@ -374,7 +397,6 @@
             const c = all.find(x => x.id === charId);
             if (c) slot.innerHTML = `<img src="${c.img}">`;
         }
-        // Клик только если это моя команда и игра не сохранена
         if (!savedData && myRole === team) {
             slot.onclick = () => openCharSelector(index);
         }
@@ -392,7 +414,6 @@
         let all = []; Object.values(charsData).forEach(a => all.push(...a));
         const myChars = all.filter(c => myPicksList.includes(c.id));
 
-        // Clear option
         const clr = document.createElement('div'); clr.className = 'select-char-item';
         clr.style.border = '1px dashed #555';
         clr.innerHTML = '<span style="color:#aaa; position:absolute; top:35%; left:15%;">CLEAR</span>';
@@ -414,7 +435,14 @@
     }
     
     function closeSelectModal(e) { if(e.target.id === 'char-select-modal') document.getElementById('char-select-modal').style.display = 'none'; }
-    function finishMatch() { if(confirm("Save results and finish match?")) socket.emit('finish_match_setup', { roomId: currentRoom }); }
+    
+    function finishMatch() { 
+        if(confirm("Save results and finish match?")) {
+            // Сразу прячем кнопку чтобы не нажать 2 раза
+            document.getElementById('finish-btn').style.display = 'none';
+            socket.emit('finish_match_setup', { roomId: currentRoom }); 
+        }
+    }
 
     // --- OLD RENDER LOGIC ---
     function renderRows() {
