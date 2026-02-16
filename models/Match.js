@@ -14,13 +14,15 @@ const matchSchema = new mongoose.Schema({
     bans: Array,
     bluePicks: Array,
     redPicks: Array,
+    
+    // НОВОЕ: Расстановка по декам (массивы из 9 слотов)
+    blueDecks: { type: Array, default: [] }, 
+    redDecks: { type: Array, default: [] },
+
     immunityPool: Array,
     immunityBans: Array,
 
-    // Привязка к турниру (например: 'gitcg-cup-2')
-    // Если null — значит матч обычный (ладдерный/товарищеский)
     tournamentSlug: { type: String, default: null },
-
     date: { type: Date, default: Date.now }
 });
 
