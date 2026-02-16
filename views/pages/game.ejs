@@ -6,60 +6,78 @@
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
     .player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
     
-    /* --- СТИЛИ ДЛЯ DECK BUILDER (ПОСТ-ИГРА) --- */
-    #deck-builder-layer {
-        display: none; /* Скрыто до конца драфта */
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: radial-gradient(circle at center, #1a233a 0%, #0b0d17 100%);
-        z-index: 100;
-        flex-direction: column; align-items: center; justify-content: center;
+    /* --- СТИЛИ ДЛЯ DECK BUILDER (ВНИЗУ) --- */
+    .deck-builder-panel {
+        display: none; /* Скрыто по умолчанию */
+        flex-grow: 1;
+        background: rgba(10, 12, 20, 0.95);
+        border-top: 2px solid #3c4566;
+        padding: 20px;
+        flex-direction: column;
+        align-items: center;
+        overflow-y: auto;
     }
 
-    .builder-container {
-        display: flex; gap: 50px; width: 90%; max-width: 1200px; justify-content: center;
+    .builder-header {
+        display: flex; justify-content: space-between; width: 100%; max-width: 1000px;
+        margin-bottom: 20px; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px;
+    }
+    
+    .match-score {
+        font-family: 'Cinzel', serif; font-size: 2em; color: #fff; text-shadow: 0 0 10px #d4af37;
     }
 
-    .builder-side {
-        display: flex; flex-direction: column; gap: 20px; align-items: center;
-        background: rgba(0,0,0,0.3); padding: 30px; border-radius: 10px; border: 1px solid #3c4566;
+    .games-grid {
+        display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 1100px;
     }
 
-    .deck-row {
-        display: flex; gap: 15px; align-items: center;
+    .game-row {
+        display: flex; align-items: center; justify-content: center; gap: 30px;
+        background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid #2a3454;
+    }
+
+    .deck-slots-group {
+        display: flex; gap: 10px;
     }
 
     .deck-slot {
-        width: 70px; height: 70px; border-radius: 50%;
-        border: 2px solid #555; background: rgba(0,0,0,0.5);
+        width: 60px; height: 60px; border-radius: 50%;
+        border: 2px solid #444; background: rgba(0,0,0,0.5);
         display: flex; align-items: center; justify-content: center;
         cursor: pointer; transition: 0.2s; position: relative;
     }
     .deck-slot:hover { border-color: #fff; transform: scale(1.05); }
     .deck-slot img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
     
-    /* Модалка выбора персонажа */
-    #char-select-modal {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8); z-index: 200;
-        align-items: center; justify-content: center;
+    /* Кнопки победителя (W) */
+    .winner-controls {
+        display: flex; align-items: center; gap: 15px; min-width: 150px; justify-content: center;
     }
-    .select-box {
-        background: #161c30; border: 1px solid #4facfe; padding: 20px; border-radius: 8px;
-        width: 600px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    .win-btn {
+        width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555;
+        background: transparent; color: #555; font-weight: bold; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif;
+        transition: 0.2s; font-size: 1.2em;
     }
-    .select-char-item {
-        width: 80px; height: 80px; border-radius: 4px; cursor: pointer; border: 2px solid transparent;
-        background: #000; position: relative;
-    }
-    .select-char-item:hover { border-color: #fff; }
-    .select-char-item img { width: 100%; height: 100%; object-fit: cover; }
+    .win-btn:hover { border-color: #aaa; color: #aaa; }
     
-    .finish-btn {
-        margin-top: 30px; padding: 15px 40px; font-size: 1.2em; font-weight: bold;
-        background: #d4af37; color: #000; border: none; border-radius: 4px; cursor: pointer;
-        font-family: 'Cinzel', serif; letter-spacing: 2px;
+    .win-btn.active-blue { background: #4facfe; border-color: #4facfe; color: #000; box-shadow: 0 0 15px #4facfe; }
+    .win-btn.active-red { background: #ff6b6b; border-color: #ff6b6b; color: #000; box-shadow: 0 0 15px #ff6b6b; }
+
+    .vs-text { font-family: 'Cinzel', serif; color: #666; font-size: 1.2em; }
+
+    /* Модалка */
+    #char-select-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
+    .select-box { background: #161c30; border: 1px solid #4facfe; padding: 20px; border-radius: 8px; width: 600px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .select-char-item { width: 70px; height: 70px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; background: #000; position: relative; overflow: hidden; }
+    .select-char-item:hover { border-color: #fff; transform: scale(1.1); }
+    .select-char-item img { width: 100%; height: 100%; object-fit: cover; }
+
+    .save-match-btn {
+        background: #d4af37; color: #000; font-weight: bold; border: none; padding: 10px 30px;
+        border-radius: 4px; font-family: 'Cinzel', serif; cursor: pointer; margin-left: auto;
     }
-    .finish-btn:hover { box-shadow: 0 0 20px rgba(212, 175, 55, 0.5); }
+    .save-match-btn:hover { box-shadow: 0 0 15px #d4af37; }
 </style>
 
 <div id="game-screen">
@@ -118,32 +136,33 @@
          <button id="skip-btn" class="round-btn" onclick="skipTurn()">SKIP</button>
          <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled>SELECT</button>
      </div>
+
      <div class="char-pool" id="char-pool-container"></div>
-</div>
 
-<div id="deck-builder-layer">
-    <h1 style="color: #fff; font-family: 'Cinzel', serif; margin-bottom: 30px;">Assemble Your Decks</h1>
-    
-    <div class="builder-container">
-        <div class="builder-side">
-            <h2 id="bd-blue-name" style="color: #4facfe;">Player 1</h2>
-            <div id="blue-deck-grid" style="display: flex; flex-direction: column; gap: 15px;"></div>
-        </div>
+     <div class="deck-builder-panel" id="deck-builder-panel">
+         
+         <div class="builder-header">
+             <div style="font-size: 1.2em; color: #4facfe;">BLUE DECKS</div>
+             
+             <div style="display:flex; align-items:center; gap:20px;">
+                 <span style="color:#888;">MATCH SCORE:</span>
+                 <span id="score-display" class="match-score">0 - 0</span>
+             </div>
 
-        <div style="display: flex; align-items: center; color: #fff; font-size: 2em; font-family: 'Cinzel', serif;">VS</div>
+             <div style="display:flex; align-items:center; gap:20px;">
+                 <div style="font-size: 1.2em; color: #ff6b6b;">RED DECKS</div>
+                 <button class="save-match-btn" onclick="finishMatch()">FINISH</button>
+             </div>
+         </div>
 
-        <div class="builder-side">
-            <h2 id="bd-red-name" style="color: #ff6b6b;">Player 2</h2>
-            <div id="red-deck-grid" style="display: flex; flex-direction: column; gap: 15px;"></div>
-        </div>
-    </div>
+         <div class="games-grid" id="games-grid">
+             </div>
 
-    <button class="finish-btn" onclick="finishMatch()">SAVE & FINISH</button>
+     </div>
 </div>
 
 <div id="char-select-modal" onclick="closeSelectModal(event)">
-    <div class="select-box" id="select-box-content">
-        </div>
+    <div class="select-box" id="select-box-content"></div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -156,22 +175,19 @@
     sessionStorage.setItem('draft_user_id', myUserId);
     
     let myRole = '', currentDraftType = 'gitcg';
-    let charsData = {}, selectedCharId = null, isGameStarted = false, activeTeam = 'blue';
+    let charsData = {}, selectedCharId = null, isGameStarted = false;
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
 
-    // Переменные для Deck Builder
+    // Для Билдера
     let currentSlotIndex = null;
-    let myPicksList = []; // Мои доступные чары
+    let myPicksList = [];
 
-    // Инициализация (как раньше)
     if (savedData) {
-        // ... (код просмотра реплея - оставляем как было, можно упростить для краткости)
+        // РЕПЛЕЙ
         socket.disconnect(); charsData = serverChars;
-        // Если это реплей, можно показать сразу DeckBuilder с заполненными деками, но пока оставим старый вид
-        // или переделаем под новый стиль, если захотите.
         renderRows(); 
         const mockState = {
             gameStarted: true, currentTeam: 'none', currentAction: 'none',
@@ -182,10 +198,16 @@
             draftType: savedData.draftType, immunityPhaseActive: false,
             immunityPool: savedData.immunityPool||[], immunityBans: savedData.immunityBans||[],
             stepIndex: 999, ready: { blue: true, red: true },
-            draftFinished: false // В реплее не показываем билдер
+            
+            draftFinished: true, // Показываем билдер в реплее
+            blueDecks: savedData.blueDecks || [],
+            redDecks: savedData.redDecks || [],
+            gameResults: savedData.gameResults || [null,null,null],
+            matchSaved: true
         };
         updateUI(mockState);
     } else {
+        // LIVE ИГРА
         socket.on('connect', () => {
             if (currentRoom && myUserId) socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId, discordId: myRealDiscordId, avatar: myAvatarHash });
         });
@@ -196,7 +218,7 @@
         });
         socket.on('update_state', updateUI);
         socket.on('game_started', () => { isGameStarted = true; });
-        socket.on('game_over', (state) => { updateUI(state); }); // Драфт кончился
+        socket.on('game_over', (state) => { updateUI(state); });
         socket.on('timer_tick', (data) => {
             const t = typeof data === 'object' ? data.main : data;
             document.getElementById('blue-timer').innerText=t; document.getElementById('red-timer').innerText=t;
@@ -206,7 +228,7 @@
             }
         });
         socket.on('match_saved_success', () => {
-            alert("Match Saved Successfully!");
+            alert("Match Saved!");
             window.location.href = '/';
         });
     }
@@ -216,7 +238,185 @@
     function copyRoomCode() { navigator.clipboard.writeText(currentRoom); }
     function skipTurn() { if(currentRoom && !savedData) socket.emit('skip_action', currentRoom); }
     
-    // --- РЕНДЕР ПУЛА И СЛОТОВ (ОСТАВЛЯЕМ КАК БЫЛО) ---
+    // --- UI UPDATE ---
+    function updateUI(state) {
+        // Если драфт закончен (только для GITCG) - меняем пулл на билдер
+        if (state.draftFinished) {
+            document.getElementById('char-pool-container').style.display = 'none';
+            document.getElementById('deck-builder-panel').style.display = 'flex';
+            document.getElementById('confirm-btn').style.display = 'none';
+            document.getElementById('skip-btn').style.display = 'none';
+            document.getElementById('status').innerText = "SETUP PHASE";
+            
+            renderDeckBuilder(state);
+        } else {
+            document.getElementById('char-pool-container').style.display = 'flex';
+            document.getElementById('deck-builder-panel').style.display = 'none';
+        }
+
+        // Стандартная логика
+        isGameStarted = state.gameStarted; 
+        document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
+        document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
+        if(!state.gameStarted) {
+             state.ready.blue ? document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
+             state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
+        }
+        document.getElementById('blue-name-display').innerText = state.blueName;
+        document.getElementById('red-name-display').innerText = state.redName;
+        const blueAv = document.getElementById('blue-avatar');
+        if (state.blueAvatar && state.blueDiscordId) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block'; }
+        const redAv = document.getElementById('red-avatar');
+        if (state.redAvatar && state.redDiscordId) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; }
+        
+        let txt = "WAITING...";
+        if(state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
+        else if(state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
+        if (state.draftFinished) txt = "MATCH SETUP / PLAYING";
+        if (state.matchSaved) txt = "MATCH FINISHED";
+        document.getElementById('status').innerText = txt.toUpperCase();
+
+        updateImmunityTop(state);
+        
+        const skipBtn = document.getElementById('skip-btn');
+        const isMyTurn = (myRole === state.currentTeam);
+        if (state.immunityPhaseActive && isMyTurn && !savedData) {
+             skipBtn.style.display = 'block';
+             if (state.currentTeam === 'blue') skipBtn.classList.add('skip-left'); else skipBtn.classList.add('skip-right');
+        } else skipBtn.style.display = 'none';
+
+        renderSlots(state);
+        
+        // Блокировка выбранных
+        document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
+        state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
+        [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
+        if(state.immunityPhaseActive) {
+             [...state.immunityBans, ...state.immunityPool].forEach(id => {
+                 if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
+             });
+        }
+    }
+
+    // --- ЛОГИКА DECK BUILDER ---
+    function renderDeckBuilder(state) {
+        // Подсчет счета
+        let blueScore = 0;
+        let redScore = 0;
+        state.gameResults.forEach(r => {
+            if(r === 'blue') blueScore++;
+            if(r === 'red') redScore++;
+        });
+        document.getElementById('score-display').innerText = `${blueScore} - ${redScore}`;
+
+        if (myRole === 'blue') myPicksList = state.bluePicks;
+        if (myRole === 'red') myPicksList = state.redPicks;
+
+        const grid = document.getElementById('games-grid');
+        grid.innerHTML = '';
+
+        for (let i = 0; i < 3; i++) {
+            const row = document.createElement('div');
+            row.className = 'game-row';
+
+            // BLUE DECK (3 slots)
+            const blueGroup = document.createElement('div');
+            blueGroup.className = 'deck-slots-group';
+            for (let j=0; j<3; j++) {
+                const idx = i*3 + j;
+                blueGroup.appendChild(createDeckSlot(state.blueDecks[idx], idx, 'blue'));
+            }
+
+            // WINNER CONTROLS
+            const controls = document.createElement('div');
+            controls.className = 'winner-controls';
+            
+            // Кнопка Blue Win
+            const btnBlue = document.createElement('button');
+            btnBlue.className = `win-btn ${state.gameResults[i] === 'blue' ? 'active-blue' : ''}`;
+            btnBlue.innerText = 'W';
+            btnBlue.onclick = () => setWinner(i, 'blue');
+
+            const vsText = document.createElement('span');
+            vsText.className = 'vs-text';
+            vsText.innerText = 'VS';
+
+            // Кнопка Red Win
+            const btnRed = document.createElement('button');
+            btnRed.className = `win-btn ${state.gameResults[i] === 'red' ? 'active-red' : ''}`;
+            btnRed.innerText = 'W';
+            btnRed.onclick = () => setWinner(i, 'red');
+
+            controls.appendChild(btnBlue);
+            controls.appendChild(vsText);
+            controls.appendChild(btnRed);
+
+            // RED DECK (3 slots)
+            const redGroup = document.createElement('div');
+            redGroup.className = 'deck-slots-group';
+            for (let j=0; j<3; j++) {
+                const idx = i*3 + j;
+                redGroup.appendChild(createDeckSlot(state.redDecks[idx], idx, 'red'));
+            }
+
+            row.appendChild(blueGroup);
+            row.appendChild(controls);
+            row.appendChild(redGroup);
+            grid.appendChild(row);
+        }
+    }
+
+    function createDeckSlot(charId, index, team) {
+        const slot = document.createElement('div');
+        slot.className = 'deck-slot';
+        if (charId) {
+            let all = []; Object.values(charsData).forEach(a => all.push(...a));
+            const c = all.find(x => x.id === charId);
+            if (c) slot.innerHTML = `<img src="${c.img}">`;
+        }
+        // Клик только если это моя команда и игра не сохранена
+        if (!savedData && myRole === team) {
+            slot.onclick = () => openCharSelector(index);
+        }
+        return slot;
+    }
+
+    function setWinner(gameIdx, winner) {
+        if (!savedData) socket.emit('update_game_winner', { roomId: currentRoom, gameIndex: gameIdx, winner: winner });
+    }
+
+    function openCharSelector(idx) {
+        currentSlotIndex = idx;
+        const box = document.getElementById('select-box-content');
+        box.innerHTML = '';
+        let all = []; Object.values(charsData).forEach(a => all.push(...a));
+        const myChars = all.filter(c => myPicksList.includes(c.id));
+
+        // Clear option
+        const clr = document.createElement('div'); clr.className = 'select-char-item';
+        clr.style.border = '1px dashed #555';
+        clr.innerHTML = '<span style="color:#aaa; position:absolute; top:35%; left:15%;">CLEAR</span>';
+        clr.onclick = () => selectDeckChar(null);
+        box.appendChild(clr);
+
+        myChars.forEach(c => {
+            const d = document.createElement('div'); d.className = 'select-char-item';
+            d.innerHTML = `<img src="${c.img}">`;
+            d.onclick = () => selectDeckChar(c.id);
+            box.appendChild(d);
+        });
+        document.getElementById('char-select-modal').style.display = 'flex';
+    }
+
+    function selectDeckChar(charId) {
+        socket.emit('update_deck_slot', { roomId: currentRoom, slotIndex: currentSlotIndex, charId: charId });
+        document.getElementById('char-select-modal').style.display = 'none';
+    }
+    
+    function closeSelectModal(e) { if(e.target.id === 'char-select-modal') document.getElementById('char-select-modal').style.display = 'none'; }
+    function finishMatch() { if(confirm("Save results and finish match?")) socket.emit('finish_match_setup', { roomId: currentRoom }); }
+
+    // --- OLD RENDER LOGIC ---
     function renderRows() {
         const container = document.getElementById('char-pool-container'); container.innerHTML = '';
         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
@@ -246,7 +446,6 @@
             container.appendChild(row);
         });
     }
-
     function createChar(char) {
         const el = document.createElement('div'); el.className = 'char-option'; el.id = `char-${char.id}`;
         el.innerHTML = `<img src="${char.img}">`;
@@ -258,7 +457,6 @@
         };
         return el;
     }
-
     function confirmSelection() {
         if(selectedCharId && currentRoom && !savedData) {
             socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
@@ -266,153 +464,6 @@
             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
         }
     }
-
-    // --- ОБНОВЛЕНИЕ UI ---
-    function updateUI(state) {
-        // Если драфт закончился, включаем DECK BUILDER
-        if (state.draftFinished) {
-            document.getElementById('game-screen').style.display = 'none';
-            document.getElementById('deck-builder-layer').style.display = 'flex';
-            renderDeckBuilder(state);
-            return;
-        }
-
-        // Обычная логика драфта
-        isGameStarted = state.gameStarted; activeTeam = state.currentTeam;
-        document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
-        document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
-        if(!state.gameStarted) {
-             state.ready.blue ? document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
-             state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
-        }
-        document.getElementById('blue-name-display').innerText = state.blueName;
-        document.getElementById('red-name-display').innerText = state.redName;
-        // Аватарки
-        const blueAv = document.getElementById('blue-avatar');
-        if (state.blueAvatar && state.blueDiscordId) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block'; }
-        const redAv = document.getElementById('red-avatar');
-        if (state.redAvatar && state.redDiscordId) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; }
-        
-        let txt = "WAITING...";
-        if(state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
-        else if(state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
-        document.getElementById('status').innerText = txt.toUpperCase();
-
-        updateImmunityTop(state);
-        // Кнопка пропуска, рендер слотов, блокировка чаров (оставляем старый код для краткости)
-        const skipBtn = document.getElementById('skip-btn');
-        const isMyTurn = (myRole === state.currentTeam);
-        if (state.immunityPhaseActive && isMyTurn && !savedData) {
-             skipBtn.style.display = 'block';
-             if (state.currentTeam === 'blue') skipBtn.classList.add('skip-left'); else skipBtn.classList.add('skip-right');
-        } else skipBtn.style.display = 'none';
-
-        renderSlots(state);
-        // ... (остальной код disabled классов для чаров) ...
-        document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
-        state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
-        [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
-        // ... (здесь ваш код логики иммунитета) ...
-    }
-
-    // --- ФУНКЦИИ ДЛЯ DECK BUILDER ---
-    let decksRendered = false;
-
-    function renderDeckBuilder(state) {
-        document.getElementById('bd-blue-name').innerText = state.blueName;
-        document.getElementById('bd-red-name').innerText = state.redName;
-
-        // Рендерим сетки только один раз (или перерисовываем данные)
-        renderDeckGrid('blue-deck-grid', state.blueDecks, state.bluePicks, 'blue');
-        renderDeckGrid('red-deck-grid', state.redDecks, state.redPicks, 'red');
-        
-        // Сохраняем наши пики для модалки
-        if (myRole === 'blue') myPicksList = state.bluePicks;
-        if (myRole === 'red') myPicksList = state.redPicks;
-    }
-
-    function renderDeckGrid(containerId, deckData, picks, team) {
-        const container = document.getElementById(containerId);
-        container.innerHTML = '';
-
-        // 3 ряда (Deck 1, 2, 3)
-        for (let i = 0; i < 3; i++) {
-            const rowDiv = document.createElement('div');
-            rowDiv.className = 'deck-row';
-            
-            // В каждом ряду 3 слота
-            for (let j = 0; j < 3; j++) {
-                const slotIndex = i * 3 + j;
-                const charId = deckData[slotIndex];
-
-                const slot = document.createElement('div');
-                slot.className = 'deck-slot';
-                
-                if (charId) {
-                    // Найти картинку
-                    let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
-                    const char = allFlat.find(c => c.id === charId);
-                    if (char) slot.innerHTML = `<img src="${char.img}">`;
-                }
-
-                // Клик только если это моя команда
-                if (myRole === team) {
-                    slot.onclick = () => openCharSelector(slotIndex);
-                }
-
-                rowDiv.appendChild(slot);
-            }
-            container.appendChild(rowDiv);
-        }
-    }
-
-    function openCharSelector(slotIdx) {
-        currentSlotIndex = slotIdx;
-        const box = document.getElementById('select-box-content');
-        box.innerHTML = '';
-        
-        let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
-
-        // Фильтруем: показываем только тех, кого я пикнул
-        const myChars = allFlat.filter(c => myPicksList.includes(c.id));
-
-        // Добавляем опцию "Пусто" (чтобы очистить слот)
-        const emptyOption = document.createElement('div');
-        emptyOption.className = 'select-char-item';
-        emptyOption.style.border = '1px dashed #555';
-        emptyOption.innerHTML = '<span style="color:#aaa; position:absolute; top:30%; left:25%;">CLEAR</span>';
-        emptyOption.onclick = () => selectDeckChar(null);
-        box.appendChild(emptyOption);
-
-        myChars.forEach(char => {
-            const div = document.createElement('div');
-            div.className = 'select-char-item';
-            div.innerHTML = `<img src="${char.img}">`;
-            div.onclick = () => selectDeckChar(char.id);
-            box.appendChild(div);
-        });
-
-        document.getElementById('char-select-modal').style.display = 'flex';
-    }
-
-    function closeSelectModal(e) {
-        if (e.target.id === 'char-select-modal') {
-            document.getElementById('char-select-modal').style.display = 'none';
-        }
-    }
-
-    function selectDeckChar(charId) {
-        socket.emit('update_deck_slot', { roomId: currentRoom, slotIndex: currentSlotIndex, charId: charId });
-        document.getElementById('char-select-modal').style.display = 'none';
-    }
-
-    function finishMatch() {
-        if (confirm("Are you sure you want to save and finish?")) {
-            socket.emit('finish_match_setup', { roomId: currentRoom });
-        }
-    }
-
-    // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ИЗ СТАРОГО КОДА ---
     function updateImmunityTop(state) {
          const topDisp = document.getElementById('immunity-top-display');
          if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
@@ -431,15 +482,9 @@
              row.appendChild(div);
          });
     }
-
-    function getStepsFor(schema, team, type) {
-         if (!schema) return [];
-         return schema.map((step, index) => ({ ...step, globalIndex: index + 1 })).filter(step => step.team === team && step.type === type).map(step => ({ num: step.globalIndex, immunity: step.immunity }));
-    }
-
     function renderSlots(state) {
-         const currentSchema = DRAFT_RULES[currentDraftType];
-         if (!currentSchema) return;
+         const currentSchema = DRAFT_RULES[currentDraftType]; if (!currentSchema) return;
+         const getStepsFor = (schema, team, type) => schema.map((step, index) => ({ ...step, globalIndex: index + 1 })).filter(step => step.team === team && step.type === type).map(step => ({ num: step.globalIndex, immunity: step.immunity }));
          const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban'); const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
          const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick'); const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
          const fill = (containerId, items, stepData, isBan) => {
