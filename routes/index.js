@@ -142,8 +142,7 @@ router.post('/admin/delete/:id', async (req, res) => {
     } catch (e) { res.send("Error: " + e.message); }
 });
 
-// СОЗДАНИЕ ТУРНИРА / НОВОСТИ
-// СОЗДАНИЕ НОВОСТИ (УПРОЩЕНО)
+// СОЗДАНИЕ НОВОСТИ (УПРОЩЕНО - ТОЛЬКО ОБЪЯВЛЕНИЯ)
 router.post('/admin/add', upload.single('image'), async (req, res) => {
     try {
         const { title, description, slug, regLink } = req.body;
@@ -189,13 +188,6 @@ router.post('/admin/add', upload.single('image'), async (req, res) => {
         res.send(`Error: ${e.message}`);
     }
 });
-        
-        res.send(`SUCCESS! <a href="/admin/dashboard">Back</a>`);
-    } catch (e) {
-        console.error(e);
-        res.send(`Error: ${e.message}`);
-    }
-});
 
 // --- УПРАВЛЕНИЕ ТУРНИРОМ (НОВЫЕ РОУТЫ) ---
 
@@ -221,7 +213,7 @@ router.post('/admin/update-links', urlencodedParser, async (req, res) => {
     } catch(e) { res.send(e.message); }
 });
 
-// Публикация новости (Telegram style)
+// Публикация новости (Telegram style) в турнир
 router.post('/admin/announce', upload.single('image'), async (req, res) => {
     try {
         let filename = null;
