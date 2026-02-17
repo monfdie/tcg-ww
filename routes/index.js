@@ -143,42 +143,52 @@ router.post('/admin/delete/:id', async (req, res) => {
 });
 
 // СОЗДАНИЕ ТУРНИРА / НОВОСТИ
+// СОЗДАНИЕ НОВОСТИ (УПРОЩЕНО)
 router.post('/admin/add', upload.single('image'), async (req, res) => {
     try {
-        const { 
-            slug, title, date, prize, region, system, 
-            cardStyle, badgeText, visibleUntil, type, openInModal,
-            regLink, newsLink, 
-            description, newsDescription 
-        } = req.body;
+        const { title, description, slug, regLink } = req.body;
         
+        // 1. Генерация Slug
         let finalSlug = slug;
         if (!finalSlug || finalSlug.trim() === '') {
-            finalSlug = 'post-' + Date.now();
+            finalSlug = 'news-' + Date.now();
         }
 
+        // 2. Картинка (если есть)
         let imageFilename = null;
         if (req.file) {
             imageFilename = req.file.filename;
         }
 
-        let finalDescription = (type === 'announcement') ? newsDescription : description;
-        let finalRegLink = (type === 'announcement') ? newsLink : regLink;
-
-        if (Array.isArray(finalDescription)) finalDescription = finalDescription.filter(s => s && s.trim() !== '').pop() || '';
-        if (Array.isArray(finalRegLink)) finalRegLink = finalRegLink.filter(s => s && s.trim() !== '').pop() || '';
-
+        // 3. Создаем запись (всегда announcement)
         await Tournament.create({
             slug: finalSlug,
-            title, date, prize, region, system, 
-            cardStyle, badgeText, type,
+            title: title,
+            type: 'announcement', // ВСЕГДА НОВОСТЬ
             image: imageFilename,
-            regLink: finalRegLink,
-            description: finalDescription,
-            openInModal: openInModal === 'on',
-            visibleUntil: visibleUntil ? new Date(visibleUntil) : null,
-            isLive: true
+            description: description, // Текст поста
+            regLink: regLink,         // Ссылка (если есть)
+            
+            // Остальные поля оставляем пустыми или дефолтными для совместимости
+            isLive: true,
+            date: new Date().toLocaleDateString() // Дата создания
         });
+        
+        res.send(`
+            <body style="background:#111; color:#fff; font-family:sans-serif; padding:50px; text-align:center;">
+                <h1 style="color:#d4af37">Post Published!</h1> 
+                <p>"${title}" is now live.</p>
+                <br>
+                <a href="/admin/secret-add" style="color:#fff; border:1px solid #555; padding:10px 20px; text-decoration:none; border-radius:5px;">Create Another</a>
+                <br><br>
+                <a href="/" style="color:#4facfe">Go to Home</a>
+            </body>
+        `);
+    } catch (e) {
+        console.error(e);
+        res.send(`Error: ${e.message}`);
+    }
+});
         
         res.send(`SUCCESS! <a href="/admin/dashboard">Back</a>`);
     } catch (e) {
