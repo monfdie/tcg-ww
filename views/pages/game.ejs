@@ -38,7 +38,23 @@
         letter-spacing: 5px;
     }
 
-    /* Кнопка Finish в правом углу хедера */
+    /* Кнопки победителя (W) */
+    .winner-controls {
+        display: flex; align-items: center; gap: 15px; min-width: 150px; justify-content: center;
+    }
+    .win-btn {
+        width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555;
+        background: transparent; color: #555; font-weight: bold; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif;
+        transition: 0.2s; font-size: 1.2em;
+    }
+    .win-btn:hover { border-color: #aaa; color: #aaa; }
+    
+    .win-btn.active-blue { background: #4facfe; border-color: #4facfe; color: #000; box-shadow: 0 0 15px #4facfe; }
+    .win-btn.active-red { background: #ff6b6b; border-color: #ff6b6b; color: #000; box-shadow: 0 0 15px #ff6b6b; }
+
+    .vs-text { font-family: 'Cinzel', serif; color: #666; font-size: 1.2em; }
+
     .save-match-btn {
         position: absolute; right: 0; top: 5px;
         background: #d4af37; color: #000; font-weight: bold; border: none; padding: 12px 30px;
@@ -63,37 +79,33 @@
         display: flex; gap: 10px;
     }
 
+    /* --- ИЗМЕНЕННЫЙ СТИЛЬ СЛОТА --- */
     .deck-slot {
         width: 60px; height: 60px; border-radius: 50%;
-        border: 2px solid #444; background: rgba(0,0,0,0.5);
+        /* Был #444, стал темно-синий #3c4566 */
+        border: 2px solid #3c4566; 
+        background: rgba(0,0,0,0.5);
         display: flex; align-items: center; justify-content: center;
         cursor: pointer; transition: 0.2s; position: relative;
     }
-    .deck-slot:hover { border-color: #fff; transform: scale(1.05); }
+    /* При наведении ярче */
+    .deck-slot:hover { border-color: #4facfe; transform: scale(1.05); }
     .deck-slot img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
     
-    /* Кнопки победителя (W) */
-    .winner-controls {
-        display: flex; align-items: center; gap: 15px; min-width: 150px; justify-content: center;
-    }
-    .win-btn {
-        width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555;
-        background: transparent; color: #555; font-weight: bold; cursor: pointer;
-        display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif;
-        transition: 0.2s; font-size: 1.2em;
-    }
-    .win-btn:hover { border-color: #aaa; color: #aaa; }
-    
-    .win-btn.active-blue { background: #4facfe; border-color: #4facfe; color: #000; box-shadow: 0 0 15px #4facfe; }
-    .win-btn.active-red { background: #ff6b6b; border-color: #ff6b6b; color: #000; box-shadow: 0 0 15px #ff6b6b; }
-
-    .vs-text { font-family: 'Cinzel', serif; color: #666; font-size: 1.2em; }
 
     /* Модалка */
     #char-select-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
     .select-box { background: #161c30; border: 1px solid #4facfe; padding: 20px; border-radius: 8px; width: 600px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-    .select-char-item { width: 70px; height: 70px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; background: #000; position: relative; overflow: hidden; }
-    .select-char-item:hover { border-color: #fff; transform: scale(1.1); }
+    
+    /* --- ИЗМЕНЕННЫЙ СТИЛЬ ЭЛЕМЕНТА ВЫБОРА --- */
+    .select-char-item { 
+        width: 70px; height: 70px; border-radius: 50%; cursor: pointer; 
+        border: 2px solid transparent; 
+        /* Фон теперь темно-синий, а не черный */
+        background: rgba(20, 25, 40, 0.8); 
+        position: relative; overflow: hidden; 
+    }
+    .select-char-item:hover { border-color: #4facfe; transform: scale(1.1); }
     .select-char-item img { width: 100%; height: 100%; object-fit: cover; }
 
 </style>
@@ -330,21 +342,18 @@
         grid.innerHTML = '';
 
         // 2. Логика отображения рядов (2 или 3)
-        // Показываем 3-й ряд ТОЛЬКО если счет 1-1 (есть победитель в 1 и 2, и они разные)
         let showThirdGame = false;
         if (state.gameResults[0] && state.gameResults[1] && state.gameResults[0] !== state.gameResults[1]) {
             showThirdGame = true;
         }
 
-        // Цикл на 3 игры
         for (let i = 0; i < 3; i++) {
-            // Если это 3-я игра, и условия для неё нет -> пропускаем
             if (i === 2 && !showThirdGame) continue;
 
             const row = document.createElement('div');
             row.className = 'game-row';
 
-            // BLUE DECK (3 slots)
+            // BLUE DECK
             const blueGroup = document.createElement('div');
             blueGroup.className = 'deck-slots-group';
             for (let j=0; j<3; j++) {
@@ -374,7 +383,7 @@
             controls.appendChild(vsText);
             controls.appendChild(btnRed);
 
-            // RED DECK (3 slots)
+            // RED DECK
             const redGroup = document.createElement('div');
             redGroup.className = 'deck-slots-group';
             for (let j=0; j<3; j++) {
@@ -415,7 +424,8 @@
         const myChars = all.filter(c => myPicksList.includes(c.id));
 
         const clr = document.createElement('div'); clr.className = 'select-char-item';
-        clr.style.border = '1px dashed #555';
+        // Изменил цвет обводки для CLEAR на темно-синий
+        clr.style.border = '1px dashed #3c4566';
         clr.innerHTML = '<span style="color:#aaa; position:absolute; top:35%; left:15%;">CLEAR</span>';
         clr.onclick = () => selectDeckChar(null);
         box.appendChild(clr);
@@ -438,7 +448,6 @@
     
     function finishMatch() { 
         if(confirm("Save results and finish match?")) {
-            // Сразу прячем кнопку чтобы не нажать 2 раза
             document.getElementById('finish-btn').style.display = 'none';
             socket.emit('finish_match_setup', { roomId: currentRoom }); 
         }
