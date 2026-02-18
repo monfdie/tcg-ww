@@ -6,110 +6,40 @@
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
     .player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
     
-    /* --- СТИЛИ ДЛЯ DECK BUILDER (ВНИЗУ) --- */
+    /* DECK BUILDER */
     .deck-builder-panel {
-        display: none; /* Скрыто по умолчанию */
-        flex-grow: 1;
-        background: rgba(10, 12, 20, 0.95);
-        border-top: 2px solid #3c4566;
-        padding: 20px;
-        flex-direction: column;
-        align-items: center;
-        overflow-y: auto;
+        display: none; flex-grow: 1; background: rgba(10, 12, 20, 0.95);
+        border-top: 2px solid #3c4566; padding: 20px; flex-direction: column; align-items: center; overflow-y: auto;
     }
-
     .builder-header {
-        display: flex; 
-        justify-content: center; /* Центрируем счет */
-        position: relative; /* Чтобы кнопка Finish была сбоку */
-        width: 100%; max-width: 1000px;
-        margin-bottom: 20px; 
-        align-items: center; 
-        border-bottom: 1px solid #333; 
-        padding-bottom: 15px;
-        min-height: 50px;
+        display: flex; justify-content: center; position: relative; width: 100%; max-width: 1000px;
+        margin-bottom: 20px; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; min-height: 50px;
     }
-    
-    .match-score {
-        font-family: 'Cinzel', serif; 
-        font-size: 2.5em; 
-        color: #fff; 
-        text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
-        letter-spacing: 5px;
-    }
-
-    /* Кнопки победителя (W) */
-    .winner-controls {
-        display: flex; align-items: center; gap: 15px; min-width: 150px; justify-content: center;
-    }
-    .win-btn {
-        width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555;
-        background: transparent; color: #555; font-weight: bold; cursor: pointer;
-        display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif;
-        transition: 0.2s; font-size: 1.2em;
-    }
+    .match-score { font-family: 'Cinzel', serif; font-size: 2.5em; color: #fff; text-shadow: 0 0 15px rgba(212, 175, 55, 0.6); letter-spacing: 5px; }
+    .winner-controls { display: flex; align-items: center; gap: 15px; min-width: 150px; justify-content: center; }
+    .win-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555; background: transparent; color: #555; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; transition: 0.2s; font-size: 1.2em; }
     .win-btn:hover { border-color: #aaa; color: #aaa; }
-    
     .win-btn.active-blue { background: #4facfe; border-color: #4facfe; color: #000; box-shadow: 0 0 15px #4facfe; }
     .win-btn.active-red { background: #ff6b6b; border-color: #ff6b6b; color: #000; box-shadow: 0 0 15px #ff6b6b; }
-
     .vs-text { font-family: 'Cinzel', serif; color: #666; font-size: 1.2em; }
-
-    .save-match-btn {
-        position: absolute; right: 0; top: 5px;
-        background: #d4af37; color: #000; font-weight: bold; border: none; padding: 12px 30px;
-        border-radius: 4px; font-family: 'Cinzel', serif; cursor: pointer; 
-        transition: 0.2s;
-    }
+    .save-match-btn { position: absolute; right: 0; top: 5px; background: #d4af37; color: #000; font-weight: bold; border: none; padding: 12px 30px; border-radius: 4px; font-family: 'Cinzel', serif; cursor: pointer; transition: 0.2s; }
     .save-match-btn:hover { box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); transform: scale(1.05); }
-
-    .games-grid {
-        display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 1100px;
-    }
-
-    .game-row {
-        display: flex; align-items: center; justify-content: center; gap: 30px;
-        background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid #2a3454;
-        animation: fadeIn 0.5s ease;
-    }
-    
+    .games-grid { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 1100px; }
+    .game-row { display: flex; align-items: center; justify-content: center; gap: 30px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid #2a3454; animation: fadeIn 0.5s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .deck-slots-group {
-        display: flex; gap: 10px;
-    }
-
-    /* --- ИЗМЕНЕННЫЙ СТИЛЬ СЛОТА --- */
-    .deck-slot {
-        width: 60px; height: 60px; border-radius: 50%;
-        border: 2px solid #3c4566; 
-        background: rgba(0,0,0,0.5);
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer; transition: 0.2s; position: relative;
-    }
+    .deck-slots-group { display: flex; gap: 10px; }
+    .deck-slot { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #3c4566; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; }
     .deck-slot:hover { border-color: #4facfe; transform: scale(1.05); }
     .deck-slot img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
     
-    /* Модалка */
     #char-select-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
     .select-box { background: #161c30; border: 1px solid #4facfe; padding: 20px; border-radius: 8px; width: 600px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-    
-    /* --- ИЗМЕНЕННЫЙ СТИЛЬ ЭЛЕМЕНТА ВЫБОРА --- */
-    .select-char-item { 
-        width: 70px; height: 70px; border-radius: 50%; cursor: pointer; 
-        border: 2px solid transparent; 
-        background: rgba(20, 25, 40, 0.8); 
-        position: relative; overflow: hidden; 
-    }
+    .select-char-item { width: 70px; height: 70px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; background: rgba(20, 25, 40, 0.8); position: relative; overflow: hidden; }
     .select-char-item:hover { border-color: #4facfe; transform: scale(1.1); }
     .select-char-item img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* Подсветка иммунных (золотая обводка) */
-    .immunity-highlight {
-        border: 2px solid #d4af37 !important;
-        box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-    }
-
+    /* Подсветка иммунных */
+    .immunity-highlight { border: 2px solid #d4af37 !important; box-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
 </style>
 
 <div id="game-screen">
@@ -172,15 +102,11 @@
      <div class="char-pool" id="char-pool-container"></div>
 
      <div class="deck-builder-panel" id="deck-builder-panel">
-         
          <div class="builder-header">
              <div id="score-display" class="match-score">0 - 0</div>
              <button class="save-match-btn" id="finish-btn" onclick="finishMatch()">FINISH</button>
          </div>
-
-         <div class="games-grid" id="games-grid">
-             </div>
-
+         <div class="games-grid" id="games-grid"></div>
      </div>
 </div>
 
@@ -203,13 +129,10 @@
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
-
-    // Для Билдера
     let currentSlotIndex = null;
     let myPicksList = [];
 
     if (savedData) {
-        // РЕПЛЕЙ
         socket.disconnect(); charsData = serverChars;
         renderRows(); 
         const mockState = {
@@ -221,16 +144,11 @@
             draftType: savedData.draftType, immunityPhaseActive: false,
             immunityPool: savedData.immunityPool||[], immunityBans: savedData.immunityBans||[],
             stepIndex: 999, ready: { blue: true, red: true },
-            
-            draftFinished: true, // Показываем билдер в реплее
-            blueDecks: savedData.blueDecks || [],
-            redDecks: savedData.redDecks || [],
-            gameResults: savedData.gameResults || [null,null,null],
-            matchSaved: true
+            draftFinished: true, blueDecks: savedData.blueDecks || [], redDecks: savedData.redDecks || [],
+            gameResults: savedData.gameResults || [null,null,null], matchSaved: true
         };
         updateUI(mockState);
     } else {
-        // LIVE ИГРА
         socket.on('connect', () => {
             if (currentRoom && myUserId) socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId, discordId: myRealDiscordId, avatar: myAvatarHash });
         });
@@ -250,10 +168,7 @@
                  document.getElementById('red-res').innerText = formatTime(data.redReserve);
             }
         });
-        socket.on('match_saved_success', () => {
-            alert("Match Saved!");
-            window.location.href = '/';
-        });
+        socket.on('match_saved_success', () => { alert("Match Saved!"); window.location.href = '/'; });
     }
 
     function formatTime(s) { if (s < 0) s = 0; const m=Math.floor(s/60), sec=s%60; return `${m}:${sec<10?'0':''}${sec}`; }
@@ -261,27 +176,20 @@
     function copyRoomCode() { navigator.clipboard.writeText(currentRoom); }
     function skipTurn() { if(currentRoom && !savedData) socket.emit('skip_action', currentRoom); }
     
-    // --- UI UPDATE ---
     function updateUI(state) {
-        // Если драфт закончен
         if (state.draftFinished) {
             document.getElementById('char-pool-container').style.display = 'none';
             document.getElementById('deck-builder-panel').style.display = 'flex';
             document.getElementById('confirm-btn').style.display = 'none';
             document.getElementById('skip-btn').style.display = 'none';
             document.getElementById('status').innerText = "SETUP PHASE";
-            
-            if (state.matchSaved) {
-                document.getElementById('finish-btn').style.display = 'none';
-            }
-            
+            if (state.matchSaved) document.getElementById('finish-btn').style.display = 'none';
             renderDeckBuilder(state);
         } else {
             document.getElementById('char-pool-container').style.display = 'flex';
             document.getElementById('deck-builder-panel').style.display = 'none';
         }
 
-        // Стандартная логика
         isGameStarted = state.gameStarted; 
         document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
         document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
@@ -314,56 +222,37 @@
 
         renderSlots(state);
         
-        // --- ЛОГИКА БЛОКИРОВКИ (ИСПРАВЛЕНО ДЛЯ ИММУНИТЕТА) ---
-        
-        // Сброс классов
         document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
-        
-        // 1. Глобальные баны (всегда недоступны)
         state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
 
-        // 2. Фаза иммунитета (баним все пикнутое и забаненное)
         if(state.immunityPhaseActive) {
              [...state.immunityBans, ...state.immunityPool].forEach(id => {
                  if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
              });
-        } 
-        // 3. Основной драфт
-        else if (state.gameStarted && !state.draftFinished) {
+        } else if (state.gameStarted && !state.draftFinished) {
             const immuneChars = state.immunityPool || [];
 
-            // Проверяем Синих
             state.bluePicks.forEach(id => {
-                // Если я синий, я не могу взять то, что уже взял
                 if (myRole === 'blue') document.getElementById(`char-${id}`)?.classList.add('disabled');
-                // Если я красный, я не могу взять то, что взял синий... КРОМЕ СЛУЧАЯ ИММУНИТЕТА
                 else if (myRole === 'red' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
-                // Зритель видит занятым, если не в иммуне
                 else if (myRole === 'spectator' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
             });
 
-            // Проверяем Красных
             state.redPicks.forEach(id => {
                 if (myRole === 'red') document.getElementById(`char-${id}`)?.classList.add('disabled');
                 else if (myRole === 'blue' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
                 else if (myRole === 'spectator' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
             });
 
-            // Подсвечиваем иммунных (для красоты)
             immuneChars.forEach(id => {
                  if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('immunity-highlight');
             });
         }
     }
 
-    // --- ЛОГИКА DECK BUILDER ---
     function renderDeckBuilder(state) {
-        let blueScore = 0;
-        let redScore = 0;
-        state.gameResults.forEach(r => {
-            if(r === 'blue') blueScore++;
-            if(r === 'red') redScore++;
-        });
+        let blueScore = 0, redScore = 0;
+        state.gameResults.forEach(r => { if(r === 'blue') blueScore++; if(r === 'red') redScore++; });
         document.getElementById('score-display').innerText = `${blueScore} - ${redScore}`;
 
         if (myRole === 'blue') myPicksList = state.bluePicks;
@@ -373,117 +262,66 @@
         grid.innerHTML = '';
 
         let showThirdGame = false;
-        if (state.gameResults[0] && state.gameResults[1] && state.gameResults[0] !== state.gameResults[1]) {
-            showThirdGame = true;
-        }
+        if (state.gameResults[0] && state.gameResults[1] && state.gameResults[0] !== state.gameResults[1]) showThirdGame = true;
 
         for (let i = 0; i < 3; i++) {
             if (i === 2 && !showThirdGame) continue;
+            const row = document.createElement('div'); row.className = 'game-row';
 
-            const row = document.createElement('div');
-            row.className = 'game-row';
+            const blueGroup = document.createElement('div'); blueGroup.className = 'deck-slots-group';
+            for (let j=0; j<3; j++) { blueGroup.appendChild(createDeckSlot(state.blueDecks[i*3 + j], i*3 + j, 'blue')); }
 
-            // BLUE DECK
-            const blueGroup = document.createElement('div');
-            blueGroup.className = 'deck-slots-group';
-            for (let j=0; j<3; j++) {
-                const idx = i*3 + j;
-                blueGroup.appendChild(createDeckSlot(state.blueDecks[idx], idx, 'blue'));
-            }
-
-            // WINNER CONTROLS
-            const controls = document.createElement('div');
-            controls.className = 'winner-controls';
+            const controls = document.createElement('div'); controls.className = 'winner-controls';
             
-            const btnBlue = document.createElement('button');
-            btnBlue.className = `win-btn ${state.gameResults[i] === 'blue' ? 'active-blue' : ''}`;
-            btnBlue.innerText = 'W';
-            btnBlue.onclick = () => setWinner(i, 'blue');
+            const btnBlue = document.createElement('button'); btnBlue.className = `win-btn ${state.gameResults[i] === 'blue' ? 'active-blue' : ''}`;
+            btnBlue.innerText = 'W'; btnBlue.onclick = () => setWinner(i, 'blue');
 
-            const vsText = document.createElement('span');
-            vsText.className = 'vs-text';
-            vsText.innerText = 'VS';
+            const vsText = document.createElement('span'); vsText.className = 'vs-text'; vsText.innerText = 'VS';
 
-            const btnRed = document.createElement('button');
-            btnRed.className = `win-btn ${state.gameResults[i] === 'red' ? 'active-red' : ''}`;
-            btnRed.innerText = 'W';
-            btnRed.onclick = () => setWinner(i, 'red');
+            const btnRed = document.createElement('button'); btnRed.className = `win-btn ${state.gameResults[i] === 'red' ? 'active-red' : ''}`;
+            btnRed.innerText = 'W'; btnRed.onclick = () => setWinner(i, 'red');
 
-            controls.appendChild(btnBlue);
-            controls.appendChild(vsText);
-            controls.appendChild(btnRed);
+            controls.appendChild(btnBlue); controls.appendChild(vsText); controls.appendChild(btnRed);
 
-            // RED DECK
-            const redGroup = document.createElement('div');
-            redGroup.className = 'deck-slots-group';
-            for (let j=0; j<3; j++) {
-                const idx = i*3 + j;
-                redGroup.appendChild(createDeckSlot(state.redDecks[idx], idx, 'red'));
-            }
+            const redGroup = document.createElement('div'); redGroup.className = 'deck-slots-group';
+            for (let j=0; j<3; j++) { redGroup.appendChild(createDeckSlot(state.redDecks[i*3 + j], i*3 + j, 'red')); }
 
-            row.appendChild(blueGroup);
-            row.appendChild(controls);
-            row.appendChild(redGroup);
-            grid.appendChild(row);
+            row.appendChild(blueGroup); row.appendChild(controls); row.appendChild(redGroup); grid.appendChild(row);
         }
     }
 
     function createDeckSlot(charId, index, team) {
-        const slot = document.createElement('div');
-        slot.className = 'deck-slot';
+        const slot = document.createElement('div'); slot.className = 'deck-slot';
         if (charId) {
             let all = []; Object.values(charsData).forEach(a => all.push(...a));
             const c = all.find(x => x.id === charId);
             if (c) slot.innerHTML = `<img src="${c.img}">`;
         }
-        if (!savedData && myRole === team) {
-            slot.onclick = () => openCharSelector(index);
-        }
+        if (!savedData && myRole === team) slot.onclick = () => openCharSelector(index);
         return slot;
     }
 
-    function setWinner(gameIdx, winner) {
-        if (!savedData) socket.emit('update_game_winner', { roomId: currentRoom, gameIndex: gameIdx, winner: winner });
-    }
+    function setWinner(gameIdx, winner) { if (!savedData) socket.emit('update_game_winner', { roomId: currentRoom, gameIndex: gameIdx, winner: winner }); }
 
     function openCharSelector(idx) {
         currentSlotIndex = idx;
-        const box = document.getElementById('select-box-content');
-        box.innerHTML = '';
+        const box = document.getElementById('select-box-content'); box.innerHTML = '';
         let all = []; Object.values(charsData).forEach(a => all.push(...a));
         const myChars = all.filter(c => myPicksList.includes(c.id));
-
         const clr = document.createElement('div'); clr.className = 'select-char-item';
-        // Цвет обводки CLEAR = темно-синий
-        clr.style.border = '1px dashed #3c4566';
-        clr.innerHTML = '<span style="color:#aaa; position:absolute; top:35%; left:15%;">CLEAR</span>';
-        clr.onclick = () => selectDeckChar(null);
-        box.appendChild(clr);
-
+        clr.style.border = '1px dashed #3c4566'; clr.innerHTML = '<span style="color:#aaa; position:absolute; top:35%; left:15%;">CLEAR</span>';
+        clr.onclick = () => selectDeckChar(null); box.appendChild(clr);
         myChars.forEach(c => {
-            const d = document.createElement('div'); d.className = 'select-char-item';
-            d.innerHTML = `<img src="${c.img}">`;
-            d.onclick = () => selectDeckChar(c.id);
-            box.appendChild(d);
+            const d = document.createElement('div'); d.className = 'select-char-item'; d.innerHTML = `<img src="${c.img}">`;
+            d.onclick = () => selectDeckChar(c.id); box.appendChild(d);
         });
         document.getElementById('char-select-modal').style.display = 'flex';
     }
 
-    function selectDeckChar(charId) {
-        socket.emit('update_deck_slot', { roomId: currentRoom, slotIndex: currentSlotIndex, charId: charId });
-        document.getElementById('char-select-modal').style.display = 'none';
-    }
-    
+    function selectDeckChar(charId) { socket.emit('update_deck_slot', { roomId: currentRoom, slotIndex: currentSlotIndex, charId: charId }); document.getElementById('char-select-modal').style.display = 'none'; }
     function closeSelectModal(e) { if(e.target.id === 'char-select-modal') document.getElementById('char-select-modal').style.display = 'none'; }
-    
-    function finishMatch() { 
-        if(confirm("Save results and finish match?")) {
-            document.getElementById('finish-btn').style.display = 'none';
-            socket.emit('finish_match_setup', { roomId: currentRoom }); 
-        }
-    }
+    function finishMatch() { if(confirm("Save results and finish match?")) { document.getElementById('finish-btn').style.display = 'none'; socket.emit('finish_match_setup', { roomId: currentRoom }); } }
 
-    // --- OLD RENDER LOGIC ---
     function renderRows() {
         const container = document.getElementById('char-pool-container'); container.innerHTML = '';
         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
