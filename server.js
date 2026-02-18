@@ -246,37 +246,57 @@ io.on('connection', (socket) => {
         const session = sessions[roomId];
         if (!session || !session.redPlayer || !session.gameStarted || session.draftFinished) return;
 
-        // ... (вся ваша старая логика action) ...
-        // Я сокращу этот блок, так как он не менялся, но он должен быть тут полностью
         session.lastActive = Date.now();
+        
+        // Проверка хода
         const isBlue = session.currentTeam === 'blue';
         if ((isBlue && socket.id !== session.bluePlayer) || (!isBlue && socket.id !== session.redPlayer)) return;
 
+        // --- ФАЗА ИММУНИТЕТА ---
         if (session.immunityPhaseActive) {
             if (session.immunityBans.includes(charId) || session.immunityPool.includes(charId)) return;
+            
             if (session.currentAction === 'immunity_ban') session.immunityBans.push(charId);
             else session.immunityPool.push(charId);
+            
             nextImmunityStep(roomId);
             return;
         }
 
-        // Проверки банов/пиков
-        const isBanned = session.bans.some(b => b.id === charId);
-        const isPicked = session.bluePicks.includes(charId) || session.redPicks.includes(charId);
-        if (isBanned) return;
-        if (session.currentTeam === 'blue' && session.bluePicks.includes(charId)) return;
-        if (session.currentTeam === 'red' && session.redPicks.includes(charId)) return;
+        // --- ОБЫЧНЫЙ ДРАФТ ---
         
-        // ... проверки иммунитета ... (оставляем как есть)
+        // 1. Проверка Глобального Бана
+        const isGlobalBanned = session.bans.some(b => b.id === charId);
+        if (isGlobalBanned) return;
 
-        if (session.currentAction === 'ban') session.bans.push({ id: charId, team: session.currentTeam });
+        // 2. Проверка: Я уже взял этого чара? (Нельзя брать дубликатов себе)
+        const iHaveIt = isBlue ? session.bluePicks.includes(charId) : session.redPicks.includes(charId);
+        if (iHaveIt) return;
+
+        // 3. Проверка: Враг взял этого чара?
+        const enemyHasIt = isBlue ? session.redPicks.includes(charId) : session.bluePicks.includes(charId);
+        
+        // 4. Проверка: Чар в иммунитете? (Игнорируем "скипнутые" слоты)
+        const isImmune = session.immunityPool.filter(id => id !== 'skipped').includes(charId);
+
+        // ГЛАВНОЕ ПРАВИЛО: 
+        // Если враг взял чара, я могу его взять ТОЛЬКО если он в иммунитете.
+        if (enemyHasIt && !isImmune) return;
+
+        // Если это бан-фаза
+        if (session.currentAction === 'ban') {
+            // Нельзя банить иммунных (если правила это подразумевают, обычно иммунных банить нельзя)
+            if (isImmune) return;
+            session.bans.push({ id: charId, team: session.currentTeam });
+        } 
+        // Если это пик-фаза
         else {
-            if (session.currentTeam === 'blue') session.bluePicks.push(charId);
+            if (isBlue) session.bluePicks.push(charId);
             else session.redPicks.push(charId);
         }
+        
         nextStep(roomId);
     });
-});
 
 // ... (функции nextImmunityStep, startTimer без изменений) ...
 function nextImmunityStep(roomId) {
