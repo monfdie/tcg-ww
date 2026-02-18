@@ -82,17 +82,14 @@
     /* --- ИЗМЕНЕННЫЙ СТИЛЬ СЛОТА --- */
     .deck-slot {
         width: 60px; height: 60px; border-radius: 50%;
-        /* Был #444, стал темно-синий #3c4566 */
         border: 2px solid #3c4566; 
         background: rgba(0,0,0,0.5);
         display: flex; align-items: center; justify-content: center;
         cursor: pointer; transition: 0.2s; position: relative;
     }
-    /* При наведении ярче */
     .deck-slot:hover { border-color: #4facfe; transform: scale(1.05); }
     .deck-slot img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
     
-
     /* Модалка */
     #char-select-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
     .select-box { background: #161c30; border: 1px solid #4facfe; padding: 20px; border-radius: 8px; width: 600px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
@@ -101,12 +98,17 @@
     .select-char-item { 
         width: 70px; height: 70px; border-radius: 50%; cursor: pointer; 
         border: 2px solid transparent; 
-        /* Фон теперь темно-синий, а не черный */
         background: rgba(20, 25, 40, 0.8); 
         position: relative; overflow: hidden; 
     }
     .select-char-item:hover { border-color: #4facfe; transform: scale(1.1); }
     .select-char-item img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Подсветка иммунных (золотая обводка) */
+    .immunity-highlight {
+        border: 2px solid #d4af37 !important;
+        box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+    }
 
 </style>
 
@@ -173,7 +175,6 @@
          
          <div class="builder-header">
              <div id="score-display" class="match-score">0 - 0</div>
-             
              <button class="save-match-btn" id="finish-btn" onclick="finishMatch()">FINISH</button>
          </div>
 
@@ -270,7 +271,6 @@
             document.getElementById('skip-btn').style.display = 'none';
             document.getElementById('status').innerText = "SETUP PHASE";
             
-            // Если матч сохранен, прячем кнопку финиш навсегда
             if (state.matchSaved) {
                 document.getElementById('finish-btn').style.display = 'none';
             }
@@ -314,19 +314,50 @@
 
         renderSlots(state);
         
+        // --- ЛОГИКА БЛОКИРОВКИ (ИСПРАВЛЕНО ДЛЯ ИММУНИТЕТА) ---
+        
+        // Сброс классов
         document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
+        
+        // 1. Глобальные баны (всегда недоступны)
         state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
-        [...state.bluePicks, ...state.redPicks].forEach(id => document.getElementById(`char-${id}`)?.classList.add('disabled'));
+
+        // 2. Фаза иммунитета (баним все пикнутое и забаненное)
         if(state.immunityPhaseActive) {
              [...state.immunityBans, ...state.immunityPool].forEach(id => {
                  if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
              });
+        } 
+        // 3. Основной драфт
+        else if (state.gameStarted && !state.draftFinished) {
+            const immuneChars = state.immunityPool || [];
+
+            // Проверяем Синих
+            state.bluePicks.forEach(id => {
+                // Если я синий, я не могу взять то, что уже взял
+                if (myRole === 'blue') document.getElementById(`char-${id}`)?.classList.add('disabled');
+                // Если я красный, я не могу взять то, что взял синий... КРОМЕ СЛУЧАЯ ИММУНИТЕТА
+                else if (myRole === 'red' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
+                // Зритель видит занятым, если не в иммуне
+                else if (myRole === 'spectator' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
+            });
+
+            // Проверяем Красных
+            state.redPicks.forEach(id => {
+                if (myRole === 'red') document.getElementById(`char-${id}`)?.classList.add('disabled');
+                else if (myRole === 'blue' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
+                else if (myRole === 'spectator' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
+            });
+
+            // Подсвечиваем иммунных (для красоты)
+            immuneChars.forEach(id => {
+                 if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('immunity-highlight');
+            });
         }
     }
 
     // --- ЛОГИКА DECK BUILDER ---
     function renderDeckBuilder(state) {
-        // 1. Подсчет счета
         let blueScore = 0;
         let redScore = 0;
         state.gameResults.forEach(r => {
@@ -341,7 +372,6 @@
         const grid = document.getElementById('games-grid');
         grid.innerHTML = '';
 
-        // 2. Логика отображения рядов (2 или 3)
         let showThirdGame = false;
         if (state.gameResults[0] && state.gameResults[1] && state.gameResults[0] !== state.gameResults[1]) {
             showThirdGame = true;
@@ -424,7 +454,7 @@
         const myChars = all.filter(c => myPicksList.includes(c.id));
 
         const clr = document.createElement('div'); clr.className = 'select-char-item';
-        // Изменил цвет обводки для CLEAR на темно-синий
+        // Цвет обводки CLEAR = темно-синий
         clr.style.border = '1px dashed #3c4566';
         clr.innerHTML = '<span style="color:#aaa; position:absolute; top:35%; left:15%;">CLEAR</span>';
         clr.onclick = () => selectDeckChar(null);
