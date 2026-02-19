@@ -21,7 +21,6 @@
         }
         input:focus, select:focus, textarea:focus { border-color: #d4af37; outline: none; }
 
-        /* Красивая зона загрузки */
         .upload-zone {
             border: 2px dashed #3c4566; padding: 20px; text-align: center; border-radius: 6px;
             transition: 0.3s; background: rgba(0,0,0,0.2);
@@ -41,7 +40,6 @@
         <h1>📢 New Announcement</h1>
         
         <form action="/admin/add" method="POST" enctype="multipart/form-data">
-            
             <input type="hidden" name="type" value="announcement">
 
             <label>Title (Headline):</label>
@@ -52,8 +50,8 @@
                 <input type="file" name="image" accept="image/*" required style="border: none; background: transparent;">
             </div>
 
-            <label>Post Text / Content:</label>
-            <textarea name="description" rows="8" placeholder="Write your news here..." required></textarea>
+            <label>Post Text / Content (Optional):</label>
+            <textarea name="description" rows="8" placeholder="Write your news here..."></textarea>
             
             <label>Slug (Optional ID):</label>
             <input name="slug" placeholder="Leave empty to auto-generate">
