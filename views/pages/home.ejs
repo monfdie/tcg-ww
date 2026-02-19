@@ -3,82 +3,44 @@
 <style>
     /* --- СТИЛИ ГЛАВНОЙ СТРАНИЦЫ --- */
     .hero-section {
-        text-align: center;
-        margin-top: 40px;
-        margin-bottom: 60px;
-        animation: fadeIn 1s ease-out;
+        text-align: center; margin-top: 40px; margin-bottom: 60px; animation: fadeIn 1s ease-out;
     }
     
     .main-title {
-        font-family: 'Cinzel', serif;
-        font-size: 3.5em;
-        color: #fff;
-        margin: 0;
-        text-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
-        letter-spacing: 2px;
+        font-family: 'Cinzel', serif; font-size: 3.5em; color: #fff; margin: 0;
+        text-shadow: 0 0 20px rgba(79, 172, 254, 0.5); letter-spacing: 2px;
     }
 
     /* --- СЕТКА: 2 КАРТОЧКИ В РЯД --- */
     .news-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* 2 колонки */
-        gap: 30px;
-        padding: 0 20px;
-        max-width: 1400px;
-        margin: 0 auto;
+        display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 0 20px;
+        max-width: 1400px; margin: 0 auto; align-items: start; /* Карточки независимы по высоте */
     }
 
-    @media (max-width: 900px) {
-        .news-container { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 900px) { .news-container { grid-template-columns: 1fr; } }
 
     /* --- КАРТОЧКА --- */
     .news-card {
-        background: rgba(22, 28, 48, 0.85);
-        border: 1px solid #2a3454;
-        border-radius: 10px;
-        min-height: 280px;
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        background: rgba(22, 28, 48, 0.85); border: 1px solid #2a3454; border-radius: 10px;
+        min-height: 280px; position: relative; overflow: hidden; display: flex; flex-direction: column;
         transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        text-decoration: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-decoration: none;
     }
-
-    .news-card:hover {
-        transform: translateY(-5px);
-        border-color: #4facfe;
-    }
-
-    /* Внутренний контейнер */
-    .card-content-wrapper {
-        padding: 30px;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        z-index: 2;
-    }
+    .news-card:hover { transform: translateY(-5px); border-color: #4facfe; }
 
     /* ЗОЛОТАЯ КАРТОЧКА */
     .cup-card {
-        border: 1px solid #d4af37;
-        background: radial-gradient(circle at center, rgba(212, 175, 55, 0.15) 0%, rgba(22, 28, 48, 1) 80%);
-        box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
+        border: 1px solid #d4af37; background: radial-gradient(circle at center, rgba(212, 175, 55, 0.15) 0%, rgba(22, 28, 48, 1) 80%);
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.15); justify-content: center; align-items: center; padding: 30px;
     }
-    .cup-card:hover {
-        box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
-        border-color: #f2d06b;
-    }
+    .cup-card:hover { box-shadow: 0 0 50px rgba(212, 175, 55, 0.3); border-color: #f2d06b; }
     .cup-glow {
         position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
         background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 60%);
         animation: rotateGlow 15s linear infinite; pointer-events: none; z-index: 0;
     }
 
-    /* СИНЯЯ КАРТОЧКА */
+    /* СИНЯЯ ЛИНИЯ (Только для постов БЕЗ картинки) */
     .live-card { border-top: 4px solid #4facfe; }
     .live-card:hover { box-shadow: 0 15px 40px rgba(79, 172, 254, 0.2); }
 
@@ -92,37 +54,19 @@
     .badge-live { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.4); animation: pulseGreen 2s infinite; }
 
     /* ТЕКСТЫ */
-    .card-title {
-        font-family: 'Cinzel', serif; font-size: 1.8em; margin: 10px 0 15px 0; color: #fff;
-    }
+    .card-title { font-family: 'Cinzel', serif; font-size: 1.8em; margin: 10px 0 15px 0; color: #fff; }
     
-    /* ОПИСАНИЕ НОВОСТИ */
     .news-description {
-        color: #ccc;
-        font-size: 0.95em;
-        line-height: 1.5;
-        margin-bottom: 20px;
-        display: -webkit-box;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        flex-grow: 1;
+        color: #ccc; font-size: 0.95em; line-height: 1.5; margin-bottom: 20px;
+        display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+        overflow: hidden; flex-grow: 1;
     }
-
-    .tour-details { background: rgba(10, 12, 20, 0.6); padding: 15px; border-radius: 6px; border: 1px solid #1e2640; margin-bottom: 20px; font-size: 0.95em; backdrop-filter: blur(2px); }
-    .tour-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    .tour-label { color: #889; }
-    .tour-value { color: #fff; font-weight: 500; }
-    .tour-prize { color: #d4af37; font-weight: bold; }
 
     .home-action-btn { display: block; width: 100%; padding: 14px 0; border-radius: 50px; font-family: 'Segoe UI', sans-serif; font-size: 1.1em; font-weight: bold; text-align: center; text-decoration: none !important; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s ease; box-sizing: border-box; border: 2px solid transparent; cursor: pointer; margin-top: auto; }
-    
     .btn-gold { color: #0b0d17 !important; background: linear-gradient(45deg, #d4af37, #f2d06b); border: none; box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
     .btn-gold:hover { box-shadow: 0 0 30px rgba(212, 175, 55, 0.6); transform: scale(1.02); }
-    
     .btn-blue { color: #4facfe; border-color: #4facfe; background: rgba(79, 172, 254, 0.15); backdrop-filter: blur(4px); }
     .btn-blue:hover { background: #4facfe; color: #0b0d17 !important; box-shadow: 0 0 20px rgba(79, 172, 254, 0.5); }
-
     .pulse-text { display: block; text-align: center; color: #d4af37; font-weight: bold; letter-spacing: 2px; margin-top: 15px; font-size: 0.85em; animation: pulseAlpha 2s infinite; opacity: 0.8; }
 
     /* Модалка */
@@ -135,7 +79,6 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     @keyframes pulseAlpha { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-    @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
 </style>
 
 <div class="hero-section">
@@ -148,17 +91,13 @@
         <div class="cup-glow"></div>
         <div class="badge badge-soon">SOON</div>
         
-        <div class="card-content-wrapper" style="align-items: center; justify-content: center;">
-            <div style="flex-grow: 1; display: flex; align-items: center;">
-                <h2 class="card-title" style="color: #d4af37; font-size: 2.8em; text-shadow: 0 0 20px rgba(212, 175, 55, 0.5); margin: 0;">
-                    GITCG CUP 2
-                </h2>
-            </div>
-            
-            <div style="width: 100%; margin-top: 20px;">
-                <a href="/create" class="home-action-btn btn-gold">Practice Draft</a>
-                <span class="pulse-text">PREPARE YOUR DECKS</span>
-            </div>
+        <h2 class="card-title" style="color: #d4af37; font-size: 2.8em; text-shadow: 0 0 20px rgba(212, 175, 55, 0.5); margin: 0; z-index: 1;">
+            GITCG CUP 2
+        </h2>
+        
+        <div style="width: 100%; margin-top: 20px; z-index: 1;">
+            <a href="/create" class="home-action-btn btn-gold">Practice Draft</a>
+            <span class="pulse-text">PREPARE YOUR DECKS</span>
         </div>
     </div>
 
@@ -179,7 +118,7 @@
                }
             %>
 
-            <a href="<%= hrefAttr %>" target="<%= targetAttr %>" class="news-card live-card" 
+            <a href="<%= hrefAttr %>" target="<%= targetAttr %>" class="news-card <%= item.image ? '' : 'live-card' %>" 
                <%= clickAction %>
                data-title="<%= item.title %>"
                data-prize="<%= item.prize %>"
@@ -188,41 +127,52 @@
                data-link="<%= item.regLink %>">
                
                <% if (item.image) { %>
-                   <img src="/uploads/<%= item.image %>" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; opacity: 1; transition: 0.3s; z-index: 1;">
-                   <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index: 1;"></div>
+                   <img src="/uploads/<%= item.image %>" style="width: 100%; height: auto; min-height: 100%; object-fit: cover; display: block; z-index: 1;">
+                   
+                   <div style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 25px; box-sizing: border-box; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 70%, transparent 100%); z-index: 2; display: flex; flex-direction: column;">
+                       
+                       <% if (!isNews && item.badgeText) { %>
+                           <div class="badge badge-live" style="position: absolute; top: -40px; right: 20px;"><%= item.badgeText %></div>
+                       <% } %>
+
+                       <h2 class="card-title" style="text-align: left; margin: 0; text-shadow: 0 2px 10px #000;"><%= item.title %></h2>
+                       
+                       <% if (isNews && item.description && item.description.trim() !== '') { %>
+                           <div class="news-description" style="margin-top: 10px; margin-bottom: 0; text-shadow: 0 1px 5px #000; color: #eee;">
+                               <%= item.description %>
+                           </div>
+                       <% } %>
+
+                       <% if (!isNews || item.regLink) { %>
+                           <span class="home-action-btn btn-blue" style="margin-top: 15px; padding: 12px 0; font-size: 1em;">
+                               <%= isNews ? 'Read More' : 'Details' %>
+                           </span>
+                       <% } %>
+                   </div>
+
+               <% } else { %>
+                   <div style="padding: 30px; height: 100%; display: flex; flex-direction: column; z-index: 2;">
+                       <% if (!isNews && item.badgeText) { %>
+                           <div class="badge badge-live"><%= item.badgeText %></div>
+                       <% } %>
+
+                       <h2 class="card-title" style="<%= isNews ? 'text-align: left; margin-top: 0;' : '' %>"><%= item.title %></h2>
+                       
+                       <% if (isNews && item.description && item.description.trim() !== '') { %>
+                           <div class="news-description">
+                               <%= item.description %>
+                           </div>
+                       <% } %>
+
+                       <div style="margin-top: auto;"></div>
+
+                       <% if (!isNews || item.regLink) { %>
+                           <span class="home-action-btn btn-blue" style="margin-top: 10px;">
+                               <%= isNews ? 'Read More' : 'Details' %>
+                           </span>
+                       <% } %>
+                   </div>
                <% } %>
-
-               <div class="card-content-wrapper">
-                   
-                   <% if (!isNews && item.badgeText) { %>
-                       <div class="badge badge-live"><%= item.badgeText %></div>
-                   <% } %>
-
-                   <h2 class="card-title" style="<%= isNews ? 'text-align: left; margin-top: 0;' : '' %> text-shadow: 0 2px 10px #000, 0 2px 20px rgba(0,0,0,0.8);"><%= item.title %></h2>
-                   
-                   <% if (isNews && item.description) { %>
-                       <div class="news-description" style="text-shadow: 0 1px 5px #000;">
-                           <%= item.description %>
-                       </div>
-                   <% } %>
-
-                   <% if (!isNews) { %>
-                       <div class="tour-details" style="background: rgba(10, 12, 20, 0.8);">
-                           <% if (item.prize) { %>
-                               <div class="tour-row"><span class="tour-label">Prize:</span><span class="tour-value tour-prize"><%= item.prize %></span></div>
-                           <% } %>
-                       </div>
-                   <% } else { %>
-                        <div style="margin-top: auto;"></div>
-                   <% } %>
-
-                   <% if (!isNews || item.regLink) { %>
-                       <span class="home-action-btn btn-blue" style="margin-top: 10px;">
-                           <%= isNews ? 'Read More' : 'Details' %>
-                       </span>
-                   <% } %>
-
-               </div>
             </a>
 
         <% }); %>
