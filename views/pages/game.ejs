@@ -6,109 +6,48 @@
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
     .player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
     
-    /* --- СТИЛИ ДЛЯ DECK BUILDER (ВНИЗУ) --- */
     .deck-builder-panel {
-        display: none; /* Скрыто по умолчанию */
-        flex-grow: 1;
-        background: rgba(10, 12, 20, 0.95);
-        border-top: 2px solid #3c4566;
-        padding: 20px;
-        flex-direction: column;
-        align-items: center;
-        overflow-y: auto;
+        display: none; flex-grow: 1; background: rgba(10, 12, 20, 0.95);
+        border-top: 2px solid #3c4566; padding: 20px; flex-direction: column; align-items: center; overflow-y: auto;
     }
 
     .builder-header {
-        display: flex; 
-        justify-content: center; /* Центрируем счет */
-        position: relative; /* Чтобы кнопка Finish была сбоку */
-        width: 100%; max-width: 1000px;
-        margin-bottom: 20px; 
-        align-items: center; 
-        border-bottom: 1px solid #333; 
-        padding-bottom: 15px;
-        min-height: 50px;
+        display: flex; justify-content: center; position: relative; width: 100%; max-width: 1000px;
+        margin-bottom: 20px; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; min-height: 50px;
     }
     
-    .match-score {
-        font-family: 'Cinzel', serif; 
-        font-size: 2.5em; 
-        color: #fff; 
-        text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
-        letter-spacing: 5px;
-    }
+    .match-score { font-family: 'Cinzel', serif; font-size: 2.5em; color: #fff; text-shadow: 0 0 15px rgba(212, 175, 55, 0.6); letter-spacing: 5px; }
 
-    /* Кнопки победителя (W) */
-    .winner-controls {
-        display: flex; align-items: center; gap: 15px; min-width: 150px; justify-content: center;
-    }
-    .win-btn {
-        width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555;
-        background: transparent; color: #555; font-weight: bold; cursor: pointer;
-        display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif;
-        transition: 0.2s; font-size: 1.2em;
-    }
+    .winner-controls { display: flex; align-items: center; gap: 15px; min-width: 150px; justify-content: center; }
+    .win-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555; background: transparent; color: #555; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; transition: 0.2s; font-size: 1.2em; }
     .win-btn:hover { border-color: #aaa; color: #aaa; }
-    
     .win-btn.active-blue { background: #4facfe; border-color: #4facfe; color: #000; box-shadow: 0 0 15px #4facfe; }
     .win-btn.active-red { background: #ff6b6b; border-color: #ff6b6b; color: #000; box-shadow: 0 0 15px #ff6b6b; }
-
     .vs-text { font-family: 'Cinzel', serif; color: #666; font-size: 1.2em; }
 
-    .save-match-btn {
-        position: absolute; right: 0; top: 5px;
-        background: #d4af37; color: #000; font-weight: bold; border: none; padding: 12px 30px;
-        border-radius: 4px; font-family: 'Cinzel', serif; cursor: pointer; 
-        transition: 0.2s;
-    }
+    .save-match-btn { position: absolute; right: 0; top: 5px; background: #d4af37; color: #000; font-weight: bold; border: none; padding: 12px 30px; border-radius: 4px; font-family: 'Cinzel', serif; cursor: pointer; transition: 0.2s; }
     .save-match-btn:hover { box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); transform: scale(1.05); }
 
-    .games-grid {
-        display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 1100px;
-    }
-
-    .game-row {
-        display: flex; align-items: center; justify-content: center; gap: 30px;
-        background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid #2a3454;
-        animation: fadeIn 0.5s ease;
-    }
+    .games-grid { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 1100px; }
+    .game-row { display: flex; align-items: center; justify-content: center; gap: 30px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid #2a3454; animation: fadeIn 0.5s ease; }
     
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .deck-slots-group {
-        display: flex; gap: 10px;
-    }
-
-    /* --- ИЗМЕНЕННЫЙ СТИЛЬ СЛОТА --- */
-    .deck-slot {
-        width: 60px; height: 60px; border-radius: 50%;
-        border: 2px solid #3c4566; 
-        background: rgba(0,0,0,0.5);
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer; transition: 0.2s; position: relative;
-    }
+    .deck-slots-group { display: flex; gap: 10px; }
+    
+    .deck-slot { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #3c4566; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; }
     .deck-slot:hover { border-color: #4facfe; transform: scale(1.05); }
     .deck-slot img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
     
-    /* Модалка */
     #char-select-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
     .select-box { background: #161c30; border: 1px solid #4facfe; padding: 20px; border-radius: 8px; width: 600px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
     
-    /* --- ИЗМЕНЕННЫЙ СТИЛЬ ЭЛЕМЕНТА ВЫБОРА --- */
-    .select-char-item { 
-        width: 70px; height: 70px; border-radius: 50%; cursor: pointer; 
-        border: 2px solid transparent; 
-        background: rgba(20, 25, 40, 0.8); 
-        position: relative; overflow: hidden; 
-    }
+    .select-char-item { width: 70px; height: 70px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; background: rgba(20, 25, 40, 0.8); position: relative; overflow: hidden; }
     .select-char-item:hover { border-color: #4facfe; transform: scale(1.1); }
     .select-char-item img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* Подсветка иммунных (золотая обводка) */
-    .immunity-highlight {
-        border: 2px solid #d4af37 !important;
-        box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-    }
+    .immunity-highlight { border: 2px solid #d4af37 !important; box-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+    .turn-timer { transition: opacity 0.3s ease; }
 </style>
 
 <div id="game-screen">
@@ -129,7 +68,7 @@
          </div>
          <div class="team-side blue-side">
              <div class="player-header">
-                 <div id="blue-timer" class="turn-timer" style="transition: opacity 0.3s;">45</div>
+                 <div id="blue-timer" class="turn-timer">45</div>
                  <div class="player-info-wrapper">
                      <img id="blue-avatar" class="player-avatar" src="" alt="">
                      <h2 id="blue-name-display">PLAYER 1</h2>
@@ -155,7 +94,7 @@
                      <img id="red-avatar" class="player-avatar" src="" alt="">
                      <h2 id="red-name-display">PLAYER 2</h2>
                  </div>
-                 <div id="red-timer" class="turn-timer" style="transition: opacity 0.3s;">45</div>
+                 <div id="red-timer" class="turn-timer">45</div>
              </div>
              <div class="ban-row" id="red-bans"></div>
              <div class="pick-row" id="red-picks-1"></div>
@@ -163,7 +102,7 @@
          </div>
      </div>
 
-     <div class="controls-area">
+     <div class="controls-area" style="min-height: 40px;">
          <button id="skip-btn" class="round-btn" onclick="skipTurn()" style="display: none;">SKIP</button>
          <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled style="display: none;">SELECT</button>
      </div>
@@ -192,13 +131,16 @@
     const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
     
-    // ДОБАВЛЕНО activeTeam
-    let myRole = '', currentDraftType = 'gitcg', isGameStarted = false, activeTeam = null;
+    let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
     let charsData = {}, selectedCharId = null;
+    
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
+    const myNick = <%- locals.user ? JSON.stringify(locals.user.username) : '""' %>; 
+
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
+
     let currentSlotIndex = null;
     let myPicksList = [];
 
@@ -220,7 +162,12 @@
         updateUI(mockState);
     } else {
         socket.on('connect', () => {
-            if (currentRoom && myUserId) socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId, discordId: myRealDiscordId, avatar: myAvatarHash });
+            if (currentRoom && myUserId) {
+                socket.emit('rejoin_game', { 
+                    roomId: currentRoom, userId: myUserId, 
+                    discordId: myRealDiscordId, avatar: myAvatarHash, nickname: myNick 
+                });
+            }
         });
         socket.on('init_game', (data) => {
             myRole = data.role; charsData = data.chars; currentDraftType = data.state.draftType || 'gitcg';
@@ -233,7 +180,6 @@
         
         socket.on('timer_tick', (data) => {
             const t = typeof data === 'object' ? data.main : data;
-            // Обновляем текст, а видимость регулируется через opacity в updateUI
             document.getElementById('blue-timer').innerText = t; 
             document.getElementById('red-timer').innerText = t;
             if(typeof data === 'object') {
@@ -264,33 +210,39 @@
         }
 
         isGameStarted = state.gameStarted; 
-        activeTeam = state.currentTeam;
         const isMyTurn = (myRole === state.currentTeam);
 
-        // --- ЛОГИКА ТАЙМЕРА (Только у активного игрока) ---
         if (!state.gameStarted || state.draftFinished) {
              document.getElementById('blue-timer').style.opacity = '0';
              document.getElementById('red-timer').style.opacity = '0';
         } else {
-             document.getElementById('blue-timer').style.opacity = (activeTeam === 'blue') ? '1' : '0';
-             document.getElementById('red-timer').style.opacity = (activeTeam === 'red') ? '1' : '0';
+             document.getElementById('blue-timer').style.opacity = (state.currentTeam === 'blue') ? '1' : '0';
+             document.getElementById('red-timer').style.opacity = (state.currentTeam === 'red') ? '1' : '0';
         }
 
-        // --- ЛОГИКА КНОПОК ---
+        document.querySelectorAll('.ladder-step').forEach((el, idx) => {
+            el.classList.remove('step-active', 'step-done');
+            if (idx < state.stepIndex - 1) {
+                el.classList.add('step-done');
+            } else if (idx === state.stepIndex - 1 && state.gameStarted && !state.draftFinished && !state.immunityPhaseActive) {
+                el.classList.add('step-active');
+            }
+        });
+
         const confirmBtn = document.getElementById('confirm-btn');
+        const skipBtn = document.getElementById('skip-btn');
+
         if (state.gameStarted && !state.draftFinished && !savedData && isMyTurn) {
             confirmBtn.style.display = 'inline-block';
+            if (state.immunityPhaseActive) {
+                skipBtn.style.display = 'inline-block';
+                skipBtn.className = (state.currentTeam === 'blue') ? 'round-btn skip-left' : 'round-btn skip-right';
+            } else {
+                skipBtn.style.display = 'none';
+            }
         } else {
             confirmBtn.style.display = 'none';
-        }
-
-        const skipBtn = document.getElementById('skip-btn');
-        if (state.immunityPhaseActive && isMyTurn && !savedData && !state.draftFinished) {
-             skipBtn.style.display = 'inline-block';
-             if (state.currentTeam === 'blue') skipBtn.className = 'round-btn skip-left'; 
-             else skipBtn.className = 'round-btn skip-right';
-        } else {
-             skipBtn.style.display = 'none';
+            skipBtn.style.display = 'none';
         }
 
         document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
@@ -315,29 +267,37 @@
         document.getElementById('status').innerText = txt.toUpperCase();
 
         updateImmunityTop(state);
-
-        // --- ЛОГИКА ПОДСВЕТКИ ЛЕСТНИЦЫ (LADDER) ---
-        document.querySelectorAll('.ladder-step').forEach((el, idx) => {
-            el.classList.remove('step-active', 'step-done');
-            if (idx < state.stepIndex - 1) {
-                el.classList.add('step-done');
-            } else if (idx === state.stepIndex - 1 && !state.immunityPhaseActive && !state.draftFinished && state.gameStarted) {
-                el.classList.add('step-active');
-            }
-        });
-
         renderSlots(state);
         
         // --- ЛОГИКА БЛОКИРОВКИ ЧАРОВ ---
         document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
+        
+        // 1. Обычные баны
         state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
 
+        // 2. Иммунные баны (Заблокированы навсегда)
+        const immunityBans = state.immunityBans || [];
+        immunityBans.forEach(id => {
+            if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
+        });
+
+        const immuneChars = state.immunityPool || [];
+
+        // 3. Во время фазы иммунитета
         if(state.immunityPhaseActive) {
-             [...state.immunityBans, ...state.immunityPool].forEach(id => {
+             immuneChars.forEach(id => {
                  if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
              });
-        } else if (state.gameStarted && !state.draftFinished) {
-            const immuneChars = state.immunityPool || [];
+        } 
+        // 4. Основной драфт
+        else if (state.gameStarted && !state.draftFinished) {
+            
+            // Если сейчас стадия БАНА, то иммунных персонажей банить нельзя (они серые)
+            if (state.currentAction && state.currentAction.includes('ban')) {
+                immuneChars.forEach(id => {
+                    if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
+                });
+            }
 
             state.bluePicks.forEach(id => {
                 if (myRole === 'blue') document.getElementById(`char-${id}`)?.classList.add('disabled');
@@ -351,6 +311,7 @@
                 else if (myRole === 'spectator' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
             });
 
+            // Подсветка золотым
             immuneChars.forEach(id => {
                  if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('immunity-highlight');
             });
