@@ -6,6 +6,7 @@
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
     .player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
     
+    /* --- СТИЛИ ДЛЯ DECK BUILDER (ВНИЗУ) --- */
     .deck-builder-panel {
         display: none; flex-grow: 1; background: rgba(10, 12, 20, 0.95);
         border-top: 2px solid #3c4566; padding: 20px; flex-direction: column; align-items: center; overflow-y: auto;
@@ -18,6 +19,7 @@
     
     .match-score { font-family: 'Cinzel', serif; font-size: 2.5em; color: #fff; text-shadow: 0 0 15px rgba(212, 175, 55, 0.6); letter-spacing: 5px; }
 
+    /* Кнопки победителя (W) */
     .winner-controls { display: flex; align-items: center; gap: 15px; min-width: 150px; justify-content: center; }
     .win-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555; background: transparent; color: #555; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; transition: 0.2s; font-size: 1.2em; }
     .win-btn:hover { border-color: #aaa; color: #aaa; }
@@ -34,7 +36,6 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     .deck-slots-group { display: flex; gap: 10px; }
-    
     .deck-slot { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #3c4566; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; }
     .deck-slot:hover { border-color: #4facfe; transform: scale(1.05); }
     .deck-slot img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
@@ -269,13 +270,9 @@
         updateImmunityTop(state);
         renderSlots(state);
         
-        // --- ЛОГИКА БЛОКИРОВКИ ЧАРОВ ---
         document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
-        
-        // 1. Обычные баны
         state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
 
-        // 2. Иммунные баны (Заблокированы навсегда)
         const immunityBans = state.immunityBans || [];
         immunityBans.forEach(id => {
             if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
@@ -283,16 +280,11 @@
 
         const immuneChars = state.immunityPool || [];
 
-        // 3. Во время фазы иммунитета
         if(state.immunityPhaseActive) {
              immuneChars.forEach(id => {
                  if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
              });
-        } 
-        // 4. Основной драфт
-        else if (state.gameStarted && !state.draftFinished) {
-            
-            // Если сейчас стадия БАНА, то иммунных персонажей банить нельзя (они серые)
+        } else if (state.gameStarted && !state.draftFinished) {
             if (state.currentAction && state.currentAction.includes('ban')) {
                 immuneChars.forEach(id => {
                     if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
@@ -311,7 +303,6 @@
                 else if (myRole === 'spectator' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
             });
 
-            // Подсветка золотым
             immuneChars.forEach(id => {
                  if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('immunity-highlight');
             });
