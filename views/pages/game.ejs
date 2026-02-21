@@ -44,20 +44,15 @@
     #char-pool-container .char-option.disabled {
         pointer-events: none !important;
         opacity: 0.5;
-        filter: none !important; /* Убираем фильтр с самого блока, чтобы рамка оставалась яркой */
-    }
-    
-    /* Делаем серой ТОЛЬКО картинку внутри заблокированного блока */
-    #char-pool-container .char-option.disabled img {
         filter: grayscale(100%);
     }
 
-    /* Рамка иммунитета */
+    /* Рамка иммунитета (теперь используется только в самой первой стадии, когда мы их выбираем) */
     #char-pool-container .char-option.immunity-highlight { 
         border: 3px solid #d4af37 !important; 
         box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; 
     }
-    
+
     .turn-timer { transition: opacity 0.3s ease; }
 </style>
 
@@ -280,7 +275,7 @@
         updateImmunityTop(state);
         renderSlots(state);
         
-        // --- ЛОГИКА БЛОКИРОВОК (СТРОГО ПО ВАШЕМУ ЗАПРОСУ) ---
+        // --- ЛОГИКА БЛОКИРОВОК ---
         document.querySelectorAll('.char-option').forEach(el => {
             el.classList.remove('disabled', 'immunity-highlight');
         });
@@ -289,7 +284,8 @@
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
 
         if (state.immunityPhaseActive) {
-            // ФАЗА ИММУНИТЕТА
+            // ФАЗА ИММУНИТЕТА (0 стадия)
+            // Здесь рамка остается, чтобы игроки видели, кого уже забрали в иммунитет
             immuneChars.forEach(id => {
                 const el = document.getElementById(`char-${id}`);
                 if(el) el.classList.add('immunity-highlight', 'disabled');
@@ -318,10 +314,10 @@
 
                 if (isPickPhase && isImmuneStep) {
                     // Это СТАДИЯ ИММУННОГО ПИКА -> Они цветные и БЕЗ РАМКИ (доступны для пика)
-                    // (Мы уже сняли классы в начале, поэтому ничего не добавляем)
+                    // Мы не добавляем ни disabled, ни highlight
                 } else {
-                    // Любая другая стадия -> Они серые, но мы оставляем золотую рамку, чтобы было видно, что это иммунитет
-                    el.classList.add('disabled', 'immunity-highlight');
+                    // Любая другая стадия -> Они серые и БЕЗ РАМКИ
+                    el.classList.add('disabled');
                 }
             });
 
