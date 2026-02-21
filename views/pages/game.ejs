@@ -38,30 +38,26 @@
     .select-char-item:hover { border-color: #4facfe; transform: scale(1.1); }
     .select-char-item img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* ОСОБОЕ ПРАВИЛО: Делаем серым ТОЛЬКО КАРТИНКУ, чтобы желтая рамка не теряла цвет */
+    /* --- ЛОГИКА ФИЛЬТРОВ И РАМОК --- */
+    
+    /* Стандартная блокировка (серый + нельзя нажать) */
     #char-pool-container .char-option.disabled {
         pointer-events: none !important;
         opacity: 0.5;
-        filter: none !important; /* Убираем стандартный глобальный фильтр */
+        filter: none !important; /* Убираем фильтр с самого блока, чтобы рамка оставалась яркой */
     }
+    
+    /* Делаем серой ТОЛЬКО картинку внутри заблокированного блока */
     #char-pool-container .char-option.disabled img {
         filter: grayscale(100%);
     }
 
-    /* Подсветка иммунных */
+    /* Рамка иммунитета */
     #char-pool-container .char-option.immunity-highlight { 
         border: 3px solid #d4af37 !important; 
         box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; 
     }
     
-    /* Если иммунитет заблокирован - оставляем картинку полуцветной, рамка остается золотой */
-    #char-pool-container .char-option.disabled.immunity-highlight {
-        opacity: 0.8 !important; 
-    }
-    #char-pool-container .char-option.disabled.immunity-highlight img {
-        filter: grayscale(70%);
-    }
-
     .turn-timer { transition: opacity 0.3s ease; }
 </style>
 
@@ -284,8 +280,10 @@
         updateImmunityTop(state);
         renderSlots(state);
         
-        // --- ЛОГИКА БЛОКИРОВОК ---
-        document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
+        // --- ЛОГИКА БЛОКИРОВОК (СТРОГО ПО ВАШЕМУ ЗАПРОСУ) ---
+        document.querySelectorAll('.char-option').forEach(el => {
+            el.classList.remove('disabled', 'immunity-highlight');
+        });
         
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
@@ -296,53 +294,48 @@
                 const el = document.getElementById(`char-${id}`);
                 if(el) el.classList.add('immunity-highlight', 'disabled');
             });
-
             immunityBans.forEach(id => {
-                document.getElementById(`char-${id}`)?.classList.add('disabled');
+                const el = document.getElementById(`char-${id}`);
+                if(el) el.classList.add('disabled');
             });
             
         } else if (state.gameStarted && !state.draftFinished) {
             // ОБЫЧНЫЙ ДРАФТ
-            
             const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] || {};
             const isImmuneStep = currentStepData.immunity === true;
+            const isPickPhase = state.currentAction && state.currentAction.includes('pick');
             
             // 1. Обычные баны - заблокированы всегда
-            state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
-
-            // 2. Иммунные баны (красные) БОЛЬШЕ НЕ БЛОКИРУЮТСЯ ЗДЕСЬ! Их можно брать.
-
-            // 3. Обработка Иммунных пиков (золотых)
-            if (state.currentAction && state.currentAction.includes('ban')) {
-                // Стадия обычного БАНА: Иммунных банить нельзя, они становятся недоступными
-                immuneChars.forEach(id => {
-                    document.getElementById(`char-${id}`)?.classList.add('disabled');
-                });
-            } else {
-                // Стадия обычного ПИКА
-                if (!isImmuneStep) {
-                    // Это НЕ иммунный слот (не 4 или 9 пик), значит иммунных брать нельзя
-                    immuneChars.forEach(id => {
-                        document.getElementById(`char-${id}`)?.classList.add('disabled');
-                    });
-                }
-                // Если isImmuneStep === true, мы НЕ добавляем им класс disabled, они доступны!
-            }
-
-            // Золотая рамка для иммунных вешается в любом случае
-            immuneChars.forEach(id => {
-                 const el = document.getElementById(`char-${id}`);
-                 if(el) el.classList.add('immunity-highlight');
+            state.bans.forEach(b => {
+                const el = document.getElementById(`char-${b.id}`);
+                if(el) el.classList.add('disabled');
             });
 
-            // 4. Обычные пики (нельзя взять то, что уже взял ты сам, или то, что взял враг)
+            // 2. ИММУННЫЕ ПИКИ (Золотые)
+            immuneChars.forEach(id => {
+                const el = document.getElementById(`char-${id}`);
+                if (!el) return;
+
+                if (isPickPhase && isImmuneStep) {
+                    // Это СТАДИЯ ИММУННОГО ПИКА -> Они цветные и БЕЗ РАМКИ (доступны для пика)
+                    // (Мы уже сняли классы в начале, поэтому ничего не добавляем)
+                } else {
+                    // Любая другая стадия -> Они серые, но мы оставляем золотую рамку, чтобы было видно, что это иммунитет
+                    el.classList.add('disabled', 'immunity-highlight');
+                }
+            });
+
+            // 3. ИММУННЫЕ БАНЫ (Ху Тао)
+            // Мы ИХ НЕ БЛОКИРУЕМ! Они остаются цветными и их можно пикать/банить в обычном драфте.
+
+            // 4. Обычные пики
             state.bluePicks.forEach(id => {
                 if (myRole === 'blue') {
-                    document.getElementById(`char-${id}`)?.classList.add('disabled'); // Я уже взял
+                    document.getElementById(`char-${id}`)?.classList.add('disabled'); 
                 } else if (myRole === 'red') {
-                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); // Враг взял
+                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); 
                 } else {
-                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); // Спектатор
+                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); 
                 }
             });
 
