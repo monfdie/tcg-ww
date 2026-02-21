@@ -99,7 +99,8 @@ io.on('connection', (socket) => {
             blueDecks: Array(9).fill(null), 
             redDecks: Array(9).fill(null),
             gameResults: [null, null, null],
-            matchSaved: false
+            matchSaved: false,
+            finishedAt: null
         };
         socket.join(roomId);
         socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
@@ -109,6 +110,8 @@ io.on('connection', (socket) => {
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Room not found');
         
+        session.lastActive = Date.now();
+
         if (!session.redPlayer && !asSpectator) {
             session.redPlayer = socket.id; session.redUserId = userId; session.redName = nickname || 'Player 2';
             socket.join(roomId); socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
@@ -123,6 +126,7 @@ io.on('connection', (socket) => {
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Session expired');
         
+        session.lastActive = Date.now();
         let role = 'spectator';
         if (session.blueUserId === userId) { 
             session.bluePlayer = socket.id; session.blueDiscordId = discordId || session.blueDiscordId; session.blueAvatar = avatar || session.blueAvatar; role = 'blue'; 
@@ -132,6 +136,8 @@ io.on('connection', (socket) => {
             session.redUserId = userId; session.redPlayer = socket.id;
             session.redName = nickname || 'Player 2'; session.redDiscordId = discordId; session.redAvatar = avatar; role = 'red';
             io.to(roomId).emit('update_state', getPublicState(session));
+        } else {
+            session.spectators.push(socket.id);
         }
         socket.join(roomId);
         socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
@@ -140,6 +146,8 @@ io.on('connection', (socket) => {
     socket.on('player_ready', (roomId) => {
         const session = sessions[roomId];
         if (!session) return;
+        session.lastActive = Date.now();
+        
         if (socket.id === session.bluePlayer) session.ready.blue = true;
         if (socket.id === session.redPlayer) session.ready.red = true;
         io.to(roomId).emit('update_state', getPublicState(session));
@@ -160,13 +168,11 @@ io.on('connection', (socket) => {
         }
     });
 
-    // --- DECK BUILDER ---
     socket.on('update_deck_slot', ({ roomId, slotIndex, charId }) => {
         const s = sessions[roomId];
         if (!s || !s.draftFinished || s.matchSaved) return;
         s.lastActive = Date.now();
 
-        // Игроки собирают деки строго из тех, кого они реально пикнули
         if (socket.id === s.bluePlayer) {
             if (s.bluePicks.includes(charId) || charId === null) s.blueDecks[slotIndex] = charId;
         } else if (socket.id === s.redPlayer) {
@@ -228,7 +234,6 @@ io.on('connection', (socket) => {
         nextImmunityStep(roomId);
     });
 
-    // --- ACTION (ПИК/БАН) ---
     socket.on('action', ({ roomId, charId }) => {
         const session = sessions[roomId];
         if (!session || !session.redPlayer || !session.gameStarted || session.draftFinished) return;
@@ -237,7 +242,7 @@ io.on('connection', (socket) => {
         const isBlue = session.currentTeam === 'blue';
         if ((isBlue && socket.id !== session.bluePlayer) || (!isBlue && socket.id !== session.redPlayer)) return;
 
-        // 1. Фаза иммунитета
+        // 1. ФАЗА ИММУНИТЕТА
         if (session.immunityPhaseActive) {
             if (session.immunityBans.includes(charId) || session.immunityPool.includes(charId)) return;
             
@@ -248,32 +253,28 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // 2. Обычный драфт
+        // 2. ОБЫЧНЫЙ ДРАФТ
         const isImmune = session.immunityPool.filter(id => id !== 'skipped').includes(charId);
-        
-        // Проверяем: текущий шаг является ли "Иммунным пиком" (4-й или 9-й слот)
         const currentStepData = session.draftOrder[session.stepIndex];
         const isImmuneStep = currentStepData && currentStepData.immunity === true;
 
-        // Глобальный бан (обычные баны)
+        // Обычные баны
         if (session.bans.some(b => b.id === charId)) return;
 
+        // ВНИМАНИЕ: Мы специально не блокируем session.immunityBans! Они здесь полностью свободны.
+
         if (session.currentAction === 'ban') {
-            if (isImmune) return; // Иммунных банить НЕЛЬЗЯ!
+            if (isImmune) return; // Иммунных банить нельзя
             session.bans.push({ id: charId, team: session.currentTeam });
         } else {
             // ПИК
-            if (isImmune && !isImmuneStep) return; // ИММУННЫХ МОЖНО ПИКАТЬ ТОЛЬКО ВО ВРЕМЯ ИММУННЫХ ШАГОВ
+            if (isImmune && !isImmuneStep) return; // ИММУННЫХ берем только в иммунный шаг
             
-            // Уже есть у меня?
             const iHaveIt = isBlue ? session.bluePicks.includes(charId) : session.redPicks.includes(charId);
             if (iHaveIt) return; 
 
-            // Есть у врага?
             const enemyHasIt = isBlue ? session.redPicks.includes(charId) : session.bluePicks.includes(charId);
-            
-            // Если у врага есть, но перс НЕ в иммунитете -> брать нельзя
-            // Если он в иммунитете -> МОЖНО брать
+            // Если враг взял, а перс НЕ иммунный - брать нельзя.
             if (enemyHasIt && !isImmune) return;
 
             if (isBlue) session.bluePicks.push(charId);
@@ -304,12 +305,96 @@ function nextStep(roomId) {
             s.draftFinished = true;
             io.to(roomId).emit('update_state', getPublicState(s));
         } else {
+            s.finishedAt = Date.now();
             saveMatchImmediately(s);
         }
         return;
     }
     const c = s.draftOrder[s.stepIndex]; s.currentTeam = c.team; s.currentAction = c.type;
     io.to(roomId).emit('update_state', getPublicState(s));
+}
+
+function startTimer(roomId) {
+    const session = sessions[roomId];
+    if (session.timerInterval) clearInterval(session.timerInterval);
+    
+    session.timerInterval = setInterval(() => {
+        if (session.timer > 0) {
+            session.timer--;
+        } else {
+            if (session.currentTeam === 'blue') {
+                session.blueReserve--;
+                if (session.blueReserve <= 0) {
+                    session.blueReserve = 0;
+                    autoPick(roomId);
+                }
+            } else {
+                session.redReserve--;
+                if (session.redReserve <= 0) {
+                    session.redReserve = 0;
+                    autoPick(roomId);
+                }
+            }
+        }
+        io.to(roomId).emit('timer_tick', { main: session.timer, blueReserve: session.blueReserve, redReserve: session.redReserve });
+    }, 1000);
+}
+
+function autoPick(roomId) {
+    const session = sessions[roomId];
+    let allFlat = [];
+    Object.values(CHARACTERS_BY_ELEMENT).forEach(arr => allFlat.push(...arr));
+    session.lastActive = Date.now();
+
+    if (session.immunityPhaseActive) {
+        const available = allFlat.filter(c => !session.immunityBans.includes(c.id) && !session.immunityPool.includes(c.id));
+        if (available.length > 0) {
+            const r = available[Math.floor(Math.random() * available.length)];
+            if (session.currentAction === 'immunity_ban') session.immunityBans.push(r.id);
+            else session.immunityPool.push(r.id);
+            nextImmunityStep(roomId);
+        } else {
+            if (session.currentAction === 'immunity_ban') session.immunityBans.push('skipped');
+            else session.immunityPool.push('skipped');
+            nextImmunityStep(roomId);
+        }
+        return;
+    }
+
+    const currentConfig = session.draftOrder[session.stepIndex];
+    const isImmunityTurn = !!currentConfig.immunity;
+
+    const available = allFlat.filter(c => {
+        const isBanned = session.bans.some(b => b.id === c.id);
+        if (isBanned) return false;
+        
+        const myPicks = session.currentTeam === 'blue' ? session.bluePicks : session.redPicks;
+        const oppPicks = session.currentTeam === 'blue' ? session.redPicks : session.bluePicks;
+        if (myPicks.includes(c.id)) return false;
+        
+        const isInImmunityPool = session.immunityPool.includes(c.id);
+        if (isInImmunityPool) {
+            if (session.currentAction === 'ban') return false;
+            if (session.currentAction === 'pick' && !isImmunityTurn) return false;
+        }
+
+        if (oppPicks.includes(c.id)) {
+            if (isImmunityTurn && isInImmunityPool) return true;
+            return false;
+        }
+        return true;
+    });
+
+    if (available.length > 0) {
+        const randomChar = available[Math.floor(Math.random() * available.length)];
+        if (session.currentAction === 'ban') {
+            session.bans.push({ id: randomChar.id, team: session.currentTeam });
+        } else {
+            if (session.currentTeam === 'blue') session.bluePicks.push(randomChar.id);
+            else session.redPicks.push(randomChar.id);
+        }
+        nextStep(roomId);
+    }
 }
 
 async function saveMatchImmediately(s) {
@@ -325,17 +410,6 @@ async function saveMatchImmediately(s) {
         if (s.blueDiscordId) await User.updateOne({ discordId: s.blueDiscordId }, { $inc: { gamesPlayed: 1 } });
         if (s.redDiscordId) await User.updateOne({ discordId: s.redDiscordId }, { $inc: { gamesPlayed: 1 } });
     } catch (e) { console.error(e); }
-}
-
-function startTimer(roomId) {
-    const s = sessions[roomId]; if (s.timerInterval) clearInterval(s.timerInterval);
-    s.timerInterval = setInterval(() => {
-        if (s.timer > 0) s.timer--;
-        else {
-            if (s.currentTeam === 'blue') s.blueReserve--; else s.redReserve--;
-        }
-        io.to(roomId).emit('timer_tick', { main: s.timer, blueReserve: s.blueReserve, redReserve: s.redReserve });
-    }, 1000);
 }
 
 function getPublicState(session) {
@@ -358,16 +432,25 @@ function getPublicState(session) {
     };
 }
 
+const CLEANUP_INTERVAL = 60 * 1000; 
+const SESSION_TIMEOUT = 60 * 60 * 1000; 
+
 setInterval(() => {
     const now = Date.now();
     for (const roomId in sessions) {
         const session = sessions[roomId];
-        if (now - session.lastActive > 7200000) {
+        const room = io.sockets.adapter.rooms.get(roomId);
+        const isEmpty = !room || room.size === 0;
+
+        const isOldFinished = session.finishedAt && (now - session.finishedAt > SESSION_TIMEOUT);
+        const isAbandoned = isEmpty && (now - session.lastActive > SESSION_TIMEOUT);
+
+        if (isOldFinished || isAbandoned) {
             if (session.timerInterval) clearInterval(session.timerInterval);
             delete sessions[roomId];
         }
     }
-}, 1800000);
+}, CLEANUP_INTERVAL);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
