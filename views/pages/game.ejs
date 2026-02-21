@@ -6,20 +6,11 @@
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
     .player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
     
-    /* --- СТИЛИ ДЛЯ DECK BUILDER (ВНИЗУ) --- */
-    .deck-builder-panel {
-        display: none; flex-grow: 1; background: rgba(10, 12, 20, 0.95);
-        border-top: 2px solid #3c4566; padding: 20px; flex-direction: column; align-items: center; overflow-y: auto;
-    }
-
-    .builder-header {
-        display: flex; justify-content: center; position: relative; width: 100%; max-width: 1000px;
-        margin-bottom: 20px; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; min-height: 50px;
-    }
+    .deck-builder-panel { display: none; flex-grow: 1; background: rgba(10, 12, 20, 0.95); border-top: 2px solid #3c4566; padding: 20px; flex-direction: column; align-items: center; overflow-y: auto; }
+    .builder-header { display: flex; justify-content: center; position: relative; width: 100%; max-width: 1000px; margin-bottom: 20px; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; min-height: 50px; }
     
     .match-score { font-family: 'Cinzel', serif; font-size: 2.5em; color: #fff; text-shadow: 0 0 15px rgba(212, 175, 55, 0.6); letter-spacing: 5px; }
 
-    /* Кнопки победителя (W) */
     .winner-controls { display: flex; align-items: center; gap: 15px; min-width: 150px; justify-content: center; }
     .win-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555; background: transparent; color: #555; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; transition: 0.2s; font-size: 1.2em; }
     .win-btn:hover { border-color: #aaa; color: #aaa; }
@@ -47,7 +38,30 @@
     .select-char-item:hover { border-color: #4facfe; transform: scale(1.1); }
     .select-char-item img { width: 100%; height: 100%; object-fit: cover; }
 
-    .immunity-highlight { border: 2px solid #d4af37 !important; box-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+    /* ОСОБОЕ ПРАВИЛО: Делаем серым ТОЛЬКО КАРТИНКУ, чтобы желтая рамка не теряла цвет */
+    #char-pool-container .char-option.disabled {
+        pointer-events: none !important;
+        opacity: 0.5;
+        filter: none !important; /* Убираем стандартный глобальный фильтр */
+    }
+    #char-pool-container .char-option.disabled img {
+        filter: grayscale(100%);
+    }
+
+    /* Подсветка иммунных */
+    #char-pool-container .char-option.immunity-highlight { 
+        border: 3px solid #d4af37 !important; 
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; 
+    }
+    
+    /* Если иммунитет заблокирован - оставляем картинку полуцветной, рамка остается золотой */
+    #char-pool-container .char-option.disabled.immunity-highlight {
+        opacity: 0.8 !important; 
+    }
+    #char-pool-container .char-option.disabled.immunity-highlight img {
+        filter: grayscale(70%);
+    }
+
     .turn-timer { transition: opacity 0.3s ease; }
 </style>
 
@@ -270,41 +284,76 @@
         updateImmunityTop(state);
         renderSlots(state);
         
+        // --- ЛОГИКА БЛОКИРОВОК ---
         document.querySelectorAll('.char-option').forEach(el => el.classList.remove('disabled', 'immunity-highlight'));
-        state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
+        
+        const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
+        const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
 
-        const immunityBans = state.immunityBans || [];
-        immunityBans.forEach(id => {
-            if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
-        });
+        if (state.immunityPhaseActive) {
+            // ФАЗА ИММУНИТЕТА
+            immuneChars.forEach(id => {
+                const el = document.getElementById(`char-${id}`);
+                if(el) el.classList.add('immunity-highlight', 'disabled');
+            });
 
-        const immuneChars = state.immunityPool || [];
-
-        if(state.immunityPhaseActive) {
-             immuneChars.forEach(id => {
-                 if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
-             });
+            immunityBans.forEach(id => {
+                document.getElementById(`char-${id}`)?.classList.add('disabled');
+            });
+            
         } else if (state.gameStarted && !state.draftFinished) {
+            // ОБЫЧНЫЙ ДРАФТ
+            
+            const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] || {};
+            const isImmuneStep = currentStepData.immunity === true;
+            
+            // 1. Обычные баны - заблокированы всегда
+            state.bans.forEach(b => document.getElementById(`char-${b.id}`)?.classList.add('disabled'));
+
+            // 2. Иммунные баны (красные) БОЛЬШЕ НЕ БЛОКИРУЮТСЯ ЗДЕСЬ! Их можно брать.
+
+            // 3. Обработка Иммунных пиков (золотых)
             if (state.currentAction && state.currentAction.includes('ban')) {
+                // Стадия обычного БАНА: Иммунных банить нельзя, они становятся недоступными
                 immuneChars.forEach(id => {
-                    if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('disabled');
+                    document.getElementById(`char-${id}`)?.classList.add('disabled');
                 });
+            } else {
+                // Стадия обычного ПИКА
+                if (!isImmuneStep) {
+                    // Это НЕ иммунный слот (не 4 или 9 пик), значит иммунных брать нельзя
+                    immuneChars.forEach(id => {
+                        document.getElementById(`char-${id}`)?.classList.add('disabled');
+                    });
+                }
+                // Если isImmuneStep === true, мы НЕ добавляем им класс disabled, они доступны!
             }
 
+            // Золотая рамка для иммунных вешается в любом случае
+            immuneChars.forEach(id => {
+                 const el = document.getElementById(`char-${id}`);
+                 if(el) el.classList.add('immunity-highlight');
+            });
+
+            // 4. Обычные пики (нельзя взять то, что уже взял ты сам, или то, что взял враг)
             state.bluePicks.forEach(id => {
-                if (myRole === 'blue') document.getElementById(`char-${id}`)?.classList.add('disabled');
-                else if (myRole === 'red' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
-                else if (myRole === 'spectator' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
+                if (myRole === 'blue') {
+                    document.getElementById(`char-${id}`)?.classList.add('disabled'); // Я уже взял
+                } else if (myRole === 'red') {
+                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); // Враг взял
+                } else {
+                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); // Спектатор
+                }
             });
 
             state.redPicks.forEach(id => {
-                if (myRole === 'red') document.getElementById(`char-${id}`)?.classList.add('disabled');
-                else if (myRole === 'blue' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
-                else if (myRole === 'spectator' && !immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
-            });
-
-            immuneChars.forEach(id => {
-                 if (id !== 'skipped') document.getElementById(`char-${id}`)?.classList.add('immunity-highlight');
+                if (myRole === 'red') {
+                    document.getElementById(`char-${id}`)?.classList.add('disabled');
+                } else if (myRole === 'blue') {
+                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
+                } else {
+                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
+                }
             });
         }
     }
