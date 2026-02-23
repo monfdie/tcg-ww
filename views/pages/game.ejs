@@ -14,28 +14,39 @@ body, html {
     margin: 0;
 }
 
-/* Убираем серый фон у верхней панели (код комнаты, статус) */
+/* Убираем серый фон у верхней панели */
 .game-header {
     background: transparent !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Опционально: тонкая линия для разделения */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
 }
 
-/* Убираем серые прямоугольники над игроками (где таймеры и имена) */
-.player-header {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-/* Делаем прозрачными блоки резервного времени по бокам */
+/* Возвращаем стиль для полосок резервного времени */
 .reserve-timer {
-    background: rgba(10, 12, 20, 0.4) !important; /* Легкое затемнение для читаемости цифр */
+    background: rgba(10, 12, 20, 0.6) !important;
     backdrop-filter: blur(4px);
     border-radius: 8px;
+    padding: 5px 15px;
+    font-family: 'monospace';
+    font-size: 1.2em;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Если серый прямоугольник остался вокруг кода комнаты */
-#room-container {
+.blue-res { border-left: 4px solid #4facfe; }
+.red-res { border-right: 4px solid #ff6b6b; }
+
+/* Делаем пулл персонажей прозрачным для общего фона */
+.char-pool {
+    background: transparent !important;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+/* Контейнер всей игры также делаем прозрачным */
+#game-screen {
     background: transparent !important;
 }
 
