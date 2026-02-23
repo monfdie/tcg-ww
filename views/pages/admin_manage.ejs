@@ -15,14 +15,14 @@
 
         <div style="display: flex; gap: 15px;">
             <select name="region" class="form-input" style="flex: 1;">
-                <option value="Europe" <%= tour.region === 'Europe' ? 'selected' : '' %>>Europe</option>
-                <option value="America" <%= tour.region === 'America' ? 'selected' : '' %>>America</option>
-                <option value="Asia" <%= tour.region === 'Asia' ? 'selected' : '' %>>Asia</option>
                 <option value="Global" <%= tour.region === 'Global' ? 'selected' : '' %>>Global</option>
+                <option value="EU" <%= tour.region === 'EU' ? 'selected' : '' %>>EU</option>
+                <option value="AS" <%= tour.region === 'AS' ? 'selected' : '' %>>AS</option>
+                <option value="NA" <%= tour.region === 'NA' ? 'selected' : '' %>>NA</option>
             </select>
             <select name="format" class="form-input" style="flex: 1;">
-                <option value="Standard" <%= tour.format === 'Standard' ? 'selected' : '' %>>Standard</option>
-                <option value="Conquest" <%= tour.format === 'Conquest' ? 'selected' : '' %>>Conquest</option>
+                <option value="Draft" <%= tour.format === 'Draft' ? 'selected' : '' %>>Draft</option>
+                <option value="All Pick" <%= tour.format === 'All Pick' ? 'selected' : '' %>>All Pick</option>
             </select>
         </div>
 
