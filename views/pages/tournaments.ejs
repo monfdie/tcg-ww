@@ -3,10 +3,14 @@
 <style>
     .page-container { max-width: 1200px !important; }
     
-    /* ФИЛЬТРЫ */
-    .filter-section { display: flex; gap: 15px; margin-bottom: 30px; background: rgba(22, 28, 48, 0.6); padding: 15px; border-radius: 8px; border: 1px solid #2a3454; }
-    .filter-select { background: #0f131f; border: 1px solid #3c4566; color: #fff; padding: 10px; border-radius: 4px; font-family: 'Segoe UI', sans-serif; outline: none; cursor: pointer; }
-    .filter-select:focus { border-color: #4facfe; }
+    /* КНОПКИ ФИЛЬТРОВ */
+    .filter-section { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; background: rgba(16, 20, 32, 0.6); padding: 25px; border-radius: 12px; border: 1px solid #2a3454; }
+    .filter-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .filter-label { color: #556; font-size: 0.85em; font-weight: bold; margin-right: 10px; text-transform: uppercase; letter-spacing: 1px; min-width: 70px; }
+    
+    .filter-tag { background: rgba(0,0,0,0.4); border: 1px solid #3c4566; color: #8da4c4; padding: 8px 22px; border-radius: 30px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: 'Segoe UI', sans-serif; outline: none; }
+    .filter-tag:hover { border-color: #4facfe; color: #fff; transform: translateY(-1px); }
+    .filter-tag.active { background: rgba(79, 172, 254, 0.15); color: #4facfe; border-color: #4facfe; box-shadow: 0 0 15px rgba(79, 172, 254, 0.3); }
 
     .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #2a3454; padding-bottom: 10px; }
     .section-header h2 { font-family: 'Segoe UI', sans-serif; font-size: 1.2em; margin: 0; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
@@ -29,7 +33,7 @@
     .info-group span { color: #fff; font-size: 0.95em; font-weight: 500; }
     .prize-text { color: #d4af37; font-weight: bold; }
 
-    /* НОВАЯ ГОРИЗОНТАЛЬНАЯ МОДАЛКА */
+    /* МОДАЛКА В СТИЛЕ TONAMEL */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
     .modal-box { background: #232b40; border: 1px solid #3c4566; width: 90%; max-width: 750px; padding: 35px; border-radius: 12px; position: relative; box-shadow: 0 15px 50px rgba(0,0,0,0.6); }
     .modal-close { position: absolute; top: 15px; right: 20px; color: #8da4c4; font-size: 28px; cursor: pointer; transition: 0.2s; line-height: 1; }
@@ -61,18 +65,20 @@
 <div class="page-container">
 
     <div class="filter-section">
-        <select id="filter-region" class="filter-select" onchange="filterTournaments()">
-            <option value="All">All Regions</option>
-            <option value="Europe">Europe</option>
-            <option value="America">America</option>
-            <option value="Asia">Asia</option>
-            <option value="Global">Global</option>
-        </select>
-        <select id="filter-format" class="filter-select" onchange="filterTournaments()">
-            <option value="All">All Formats</option>
-            <option value="Standard">Standard</option>
-            <option value="Conquest">Conquest</option>
-        </select>
+        <div class="filter-group" id="region-group">
+            <span class="filter-label">Region:</span>
+            <button class="filter-tag active" data-filter="all" onclick="toggleFilter('region', 'all', this)">All</button>
+            <button class="filter-tag" data-filter="EU" onclick="toggleFilter('region', 'EU', this)">EU</button>
+            <button class="filter-tag" data-filter="AS" onclick="toggleFilter('region', 'AS', this)">AS</button>
+            <button class="filter-tag" data-filter="NA" onclick="toggleFilter('region', 'NA', this)">NA</button>
+            <button class="filter-tag" data-filter="Global" onclick="toggleFilter('region', 'Global', this)">Global</button>
+        </div>
+        <div class="filter-group" id="format-group">
+            <span class="filter-label">Format:</span>
+            <button class="filter-tag active" data-filter="all" onclick="toggleFilter('format', 'all', this)">All</button>
+            <button class="filter-tag" data-filter="Draft" onclick="toggleFilter('format', 'Draft', this)">Draft</button>
+            <button class="filter-tag" data-filter="All Pick" onclick="toggleFilter('format', 'All Pick', this)">All Pick</button>
+        </div>
     </div>
 
     <div class="section-header">
@@ -85,9 +91,9 @@
             <% tournaments.forEach(tour => { %>
                 
                 <% if (tour.isMine !== false) { %>
-                    <a href="/tournament/<%= tour.slug %>" class="tour-rect-card" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Standard' %>">
+                    <a href="/tournament/<%= tour.slug %>" class="tour-rect-card" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Draft' %>">
                 <% } else { %>
-                    <div class="tour-rect-card" onclick="openModal('<%= tour._id %>')" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Standard' %>">
+                    <div class="tour-rect-card" onclick="openModal('<%= tour._id %>')" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Draft' %>">
                 <% } %>
                     
                     <div class="card-center">
@@ -95,7 +101,7 @@
                         <div class="card-hashtags">
                             <span><%= tour.region || 'Global' %></span>
                             <span class="dot-separator">•</span>
-                            <span><%= tour.format || 'Standard' %></span>
+                            <span><%= tour.format || 'Draft' %></span>
                         </div>
                     </div>
 
@@ -139,9 +145,9 @@
             <% archive.forEach(tour => { %>
                 
                 <% if (tour.isMine !== false) { %>
-                    <a href="/tournament/<%= tour.slug %>" class="tour-rect-card archive-style" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Standard' %>">
+                    <a href="/tournament/<%= tour.slug %>" class="tour-rect-card archive-style" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Draft' %>">
                 <% } else { %>
-                    <div class="tour-rect-card archive-style" onclick="openModal('<%= tour._id %>')" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Standard' %>">
+                    <div class="tour-rect-card archive-style" onclick="openModal('<%= tour._id %>')" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Draft' %>">
                 <% } %>
                     
                     <div class="card-center">
@@ -149,7 +155,7 @@
                         <div class="card-hashtags">
                             <span><%= tour.date || 'TBA' %></span>
                             <span class="dot-separator">•</span>
-                            <span><%= tour.format || 'Standard' %></span>
+                            <span><%= tour.format || 'Draft' %></span>
                         </div>
                     </div>
                     <div class="card-right">
@@ -214,16 +220,45 @@
 </div>
 
 <script>
-    function filterTournaments() {
-        const regFilter = document.getElementById('filter-region').value;
-        const fmtFilter = document.getElementById('filter-format').value;
+    // ЛОГИКА МНОЖЕСТВЕННОГО ВЫБОРА ФИЛЬТРОВ
+    let activeRegions = new Set();
+    let activeFormats = new Set();
+
+    function toggleFilter(type, value, btnElement) {
+        let activeSet = (type === 'region') ? activeRegions : activeFormats;
+        const groupContainer = btnElement.parentElement;
         
+        if (value === 'all') {
+            activeSet.clear();
+            groupContainer.querySelectorAll('.filter-tag').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+        } else {
+            // Убираем "All"
+            groupContainer.querySelector('[data-filter="all"]').classList.remove('active');
+            
+            if (activeSet.has(value)) {
+                activeSet.delete(value);
+                btnElement.classList.remove('active');
+                // Если ничего не выбрано, активируем "All"
+                if(activeSet.size === 0) {
+                    groupContainer.querySelector('[data-filter="all"]').classList.add('active');
+                }
+            } else {
+                activeSet.add(value);
+                btnElement.classList.add('active');
+            }
+        }
+        applyFilters();
+    }
+
+    function applyFilters() {
         document.querySelectorAll('.tour-rect-card').forEach(card => {
             const cardReg = card.getAttribute('data-region');
             const cardFmt = card.getAttribute('data-format');
             
-            const matchReg = (regFilter === 'All' || cardReg === regFilter);
-            const matchFmt = (fmtFilter === 'All' || cardFmt === fmtFilter);
+            // Если Set пустой, значит активна кнопка All
+            const matchReg = activeRegions.size === 0 || activeRegions.has(cardReg);
+            const matchFmt = activeFormats.size === 0 || activeFormats.has(cardFmt);
             
             card.style.display = (matchReg && matchFmt) ? 'flex' : 'none';
         });
