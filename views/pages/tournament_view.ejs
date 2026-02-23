@@ -1,66 +1,88 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* ШАПКА ТУРНИРА */
-    .tv-header { background: rgba(22, 28, 48, 0.9); border: 1px solid #3c4566; border-radius: 8px; padding: 30px; margin-bottom: 30px; }
-    .tv-title { font-family: 'Cinzel', serif; font-size: 2.5em; color: #fff; margin: 0 0 10px 0; text-shadow: 0 0 15px rgba(79, 172, 254, 0.5); }
-    .tv-meta { display: flex; gap: 20px; color: #8da4c4; font-size: 1.1em; margin-bottom: 20px; font-weight: bold; flex-wrap: wrap; }
+    .page-container { max-width: 900px !important; margin: 0 auto; }
     
-    /* КНОПКИ */
-    .tv-links { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
-    .tv-btn { padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 0.9em; transition: 0.2s; border: 1px solid transparent; }
-    .tv-btn-reg { background: #d4af37; color: #000; }
-    .tv-btn-reg:hover { background: #f2d06b; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+    .tv-header {
+        background: rgba(10, 12, 20, 0.6); 
+        border: 1px solid #1e2640; 
+        border-radius: 8px; 
+        padding: 40px; 
+        margin-bottom: 30px;
+        display: flex; 
+        flex-direction: column; 
+        align-items: center;
+    }
+    
+    .tv-title { 
+        font-family: 'Cinzel', serif; 
+        font-size: 2.8em; 
+        color: #fff; 
+        margin: 0 0 20px 0; 
+        text-shadow: 0 0 20px rgba(79, 172, 254, 0.5); 
+        text-align: center;
+    }
+    
+    .tv-badges { display: flex; gap: 20px; margin-bottom: 30px; }
+    .tv-badge { 
+        background: rgba(0,0,0,0.4); border: 2px solid #4facfe; color: #4facfe; 
+        padding: 10px 30px; border-radius: 8px; font-weight: bold; 
+        text-transform: uppercase; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif;
+    }
+
+    .tv-links { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 30px; }
+    .tv-btn { padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.95em; transition: 0.2s; border: 1px solid transparent; }
     .tv-btn-normal { background: rgba(79, 172, 254, 0.1); color: #4facfe; border-color: #4facfe; }
-    .tv-btn-normal:hover { background: #4facfe; color: #000; }
+    .tv-btn-normal:hover { background: #4facfe; color: #000; box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
 
-    /* ФИЛЬТРЫ МАТЧЕЙ */
-    .stage-filters { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #3c4566; padding-bottom: 15px; overflow-x: auto; }
-    .filter-btn { background: transparent; border: 1px solid #3c4566; color: #8da4c4; padding: 8px 16px; border-radius: 20px; cursor: pointer; transition: 0.2s; font-weight: bold; white-space: nowrap; }
+    .tv-divider { width: 100%; height: 1px; background: #2a3454; margin: 10px 0 20px 0; }
+    .tv-date { font-family: 'Segoe UI', sans-serif; font-size: 1.3em; color: #8da4c4; font-weight: bold; text-transform: uppercase; }
+    .tv-date span { color: #fff; }
+
+    .stage-filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; justify-content: center; }
+    .filter-btn { background: transparent; border: 1px solid #3c4566; color: #8da4c4; padding: 8px 20px; border-radius: 20px; cursor: pointer; transition: 0.2s; font-weight: bold; white-space: nowrap; }
     .filter-btn:hover { border-color: #d4af37; color: #fff; }
-    .filter-btn.active { background: #d4af37; color: #000; border-color: #d4af37; }
+    .filter-btn.active { background: #d4af37; color: #000; border-color: #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
 
-    /* КАРТОЧКА МАТЧА */
-    .match-item { background: rgba(0,0,0,0.3); border: 1px solid #2a3454; padding: 15px 20px; border-radius: 6px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; text-decoration: none; }
+    .match-item { background: rgba(0,0,0,0.4); border: 1px solid #2a3454; padding: 15px 25px; border-radius: 6px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; text-decoration: none; }
     .match-item:hover { border-color: #4facfe; background: rgba(79, 172, 254, 0.05); transform: translateX(5px); }
-    
     .m-title { font-family: 'Cinzel', serif; font-size: 1.2em; color: #fff; display: flex; align-items: center; gap: 10px; }
     .m-score { font-size: 1.3em; font-weight: bold; color: #d4af37; margin: 0 20px; letter-spacing: 2px; }
     .m-replay { background: #2a3454; color: #fff; padding: 6px 15px; border-radius: 4px; font-size: 0.85em; text-transform: uppercase; font-weight: bold; border: 1px solid #3c4566; transition: 0.2s; }
     .match-item:hover .m-replay { background: #4facfe; color: #000; border-color: #4facfe; }
 </style>
 
-<div class="page-container" style="max-width: 900px;">
-    
+<div class="page-container">
     <div class="tv-header">
         <h1 class="tv-title"><%= tour.title %></h1>
-        <div class="tv-meta">
-            <span>🌍 <%= tour.region || 'Global' %></span>
-            <span>⚔️ <%= tour.format || 'Standard' %></span>
-            <span style="color:#d4af37;">🏆 <%= tour.prize || 'TBA' %></span>
-            <span>📅 <%= tour.date || 'TBA' %></span>
-        </div>
         
-        <% if (tour.description) { %>
-            <p style="color: #ccc; line-height: 1.6; border-left: 3px solid #3c4566; padding-left: 15px;"><%= tour.description %></p>
-        <% } %>
+        <div class="tv-badges">
+            <div class="tv-badge"><%= tour.region || 'Global' %></div>
+            <div class="tv-badge"><%= tour.format || 'Standard' %></div>
+        </div>
 
         <div class="tv-links">
-            <% if (tour.regLink) { %> <a href="<%= tour.regLink %>" target="_blank" class="tv-btn tv-btn-reg">📝 Register</a> <% } %>
-            <% if (tour.bracketLink) { %> <a href="<%= tour.bracketLink %>" target="_blank" class="tv-btn tv-btn-normal">🏆 Bracket</a> <% } %>
-            <% if (tour.rulesLink) { %> <a href="<%= tour.rulesLink %>" target="_blank" class="tv-btn tv-btn-normal">📜 Rules (RU)</a> <% } %>
-            <% if (tour.rulesEnLink) { %> <a href="<%= tour.rulesEnLink %>" target="_blank" class="tv-btn tv-btn-normal">📜 Rules (EN)</a> <% } %>
-            <% if (tour.discordLink) { %> <a href="<%= tour.discordLink %>" target="_blank" class="tv-btn tv-btn-normal">💬 Discord</a> <% } %>
-            <% if (tour.telegramLink) { %> <a href="<%= tour.telegramLink %>" target="_blank" class="tv-btn tv-btn-normal">✈️ Telegram</a> <% } %>
+            <% if (tour.regLink) { %> <a href="<%= tour.regLink %>" target="_blank" class="tv-btn tv-btn-normal">Register</a> <% } %>
+            <% if (tour.bracketLink) { %> <a href="<%= tour.bracketLink %>" target="_blank" class="tv-btn tv-btn-normal">Bracket</a> <% } %>
+            <% if (tour.rulesLink) { %> <a href="<%= tour.rulesLink %>" target="_blank" class="tv-btn tv-btn-normal">Rules (RU)</a> <% } %>
+            <% if (tour.rulesEnLink) { %> <a href="<%= tour.rulesEnLink %>" target="_blank" class="tv-btn tv-btn-normal">Rules (EN)</a> <% } %>
+            <% if (tour.discordLink) { %> <a href="<%= tour.discordLink %>" target="_blank" class="tv-btn tv-btn-normal">Discord</a> <% } %>
+            <% if (tour.telegramLink) { %> <a href="<%= tour.telegramLink %>" target="_blank" class="tv-btn tv-btn-normal">Telegram</a> <% } %>
+        </div>
+
+        <div class="tv-divider"></div>
+
+        <div class="tv-date">
+            ДАТА / DATE: <span><%= tour.date || 'TBA' %></span>
+            <% if(tour.prize) { %>
+                &nbsp;&nbsp;<span style="color:#3c4566;">|</span>&nbsp;&nbsp;
+                <span style="color:#d4af37;">ПРИЗ: <span style="color:#fff;"><%= tour.prize %></span></span>
+            <% } %>
         </div>
     </div>
 
-    <h2 style="font-family: 'Cinzel', serif; border-bottom: 2px solid #3c4566; padding-bottom: 10px; color: #fff;">Tournament Matches</h2>
-
     <% if (matches && matches.length > 0) { %>
-        <% 
-            let uniqueStages = [...new Set(matches.map(m => m.stage))];
-        %>
+        <% let uniqueStages = [...new Set(matches.map(m => m.stage))]; %>
         
         <div class="stage-filters">
             <button class="filter-btn active" onclick="filterMatches('all', this)">All Stages</button>
@@ -93,13 +115,11 @@
                 </a>
             <% }) %>
         </div>
-
     <% } else { %>
         <div style="text-align: center; padding: 40px; color: #8da4c4; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed #2a3454;">
             <p style="margin: 0;">No matches added to this tournament yet.</p>
         </div>
     <% } %>
-
 </div>
 
 <script>
