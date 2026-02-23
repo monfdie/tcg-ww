@@ -21,14 +21,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage, limits: { fileSize: 5000000 } });
 const urlencodedParser = express.urlencoded({ extended: false });
 
-// Middleware для проверки админа
-// Middleware для проверки админа
 function isAdmin(req, res, next) {
-    if (req.isAuthenticated()) {
-        // Пускает, если твой Discord ID совпадает с .env ИЛИ если в базе тебе выдали role: 'admin'
-        if (req.user.discordId === process.env.ADMIN_DISCORD_ID || req.user.role === 'admin') {
-            return next();
-        }
+    if (req.isAuthenticated() && (req.user.discordId === process.env.ADMIN_DISCORD_ID || req.user.role === 'admin')) {
+        return next();
     }
     res.redirect('/');
 }
@@ -36,14 +31,9 @@ function isAdmin(req, res, next) {
 router.use((req, res, next) => {
     res.locals.user = req.user || null;
     res.locals.path = req.path;
-    // Создаем глобальную переменную isAdmin для всех EJS файлов
     res.locals.isAdmin = req.isAuthenticated() && (req.user.discordId === process.env.ADMIN_DISCORD_ID || req.user.role === 'admin');
     next();
 });
-
-// ==========================================
-//           ПУБЛИЧНЫЕ СТРАНИЦЫ
-// ==========================================
 
 router.get('/', async (req, res) => {
     try {
@@ -62,10 +52,8 @@ router.get('/create', (req, res) => { res.render('pages/create', { title: 'Creat
 
 router.get('/tournaments', async (req, res) => {
     try {
-        const currentDate = new Date();
         const activeTournaments = await Tournament.find({ type: 'tournament', isLive: true }).sort({ createdAt: -1 });
         const archivedTournaments = await Tournament.find({ type: 'tournament', isLive: false }).sort({ createdAt: -1 });
-        
         res.render('pages/tournaments', { title: 'Tournaments', tournaments: activeTournaments, archive: archivedTournaments });
     } catch (e) {
         res.render('pages/tournaments', { title: 'Tournaments', tournaments: [], archive: [] });
@@ -77,7 +65,6 @@ router.get('/tournament/:slug', async (req, res) => {
         const tour = await Tournament.findOne({ slug: req.params.slug });
         if (!tour) return res.status(404).send('Tournament not found');
         
-        // ЕСЛИ ЭТО ЧУЖОЙ ТУРНИР - НЕ ПУСКАЕМ НА ЭТУ СТРАНИЦУ
         if (tour.isMine === false) {
             return res.redirect('/tournaments');
         }
@@ -90,8 +77,8 @@ router.get('/tournament/:slug', async (req, res) => {
             return {
                 ...tm,
                 score: found ? found.score : null,
-                blueName: found ? found.blueName : 'P1',
-                redName: found ? found.redName : 'P2',
+                blueName: found ? found.blueName : 'Player 1',
+                redName: found ? found.redName : 'Player 2',
                 date: found ? found.date : null
             };
         });
@@ -113,12 +100,7 @@ router.get('/history', async (req, res) => {
     } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
 });
 
-
-// ==========================================
-//           АДМИН-ПАНЕЛЬ
-// ==========================================
-
-router.get('/admin/dashboard', , async (req, res) => {
+router.get('/admin/dashboard', isAdmin, async (req, res) => {
     const tournaments = await Tournament.find().sort({ createdAt: -1 });
     res.render('pages/admin_dashboard', { tournaments });
 });
@@ -193,10 +175,6 @@ router.post('/admin/edit/:id', isAdmin, upload.single('image'), async (req, res)
         res.redirect('/admin/dashboard');
     } catch (err) { res.status(500).send('Error: ' + err.message); }
 });
-
-// ==========================================
-//           ИГРА И АВТОРИЗАЦИЯ
-// ==========================================
 
 router.get('/game/:id', async (req, res) => {
     try {
