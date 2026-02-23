@@ -3,14 +3,52 @@
 <style>
     .page-container { max-width: 1200px !important; }
     
-    /* КНОПКИ ФИЛЬТРОВ */
-    .filter-section { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; background: rgba(16, 20, 32, 0.6); padding: 25px; border-radius: 12px; border: 1px solid #2a3454; }
-    .filter-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .filter-label { color: #556; font-size: 0.85em; font-weight: bold; margin-right: 10px; text-transform: uppercase; letter-spacing: 1px; min-width: 70px; }
+    /* КНОПКИ ФИЛЬТРОВ (БЕЗ ФОНА, В РЯД) */
+    .filter-section { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 40px; /* Отступ между секциями Региона и Формата */
+        margin-bottom: 30px; 
+        align-items: center;
+    }
+    .filter-group { 
+        display: flex; 
+        align-items: center; 
+        gap: 12px; 
+        flex-wrap: wrap; 
+    }
+    .filter-label { 
+        color: #6a7b9c; 
+        font-size: 0.9em; 
+        font-weight: bold; 
+        text-transform: uppercase; 
+        letter-spacing: 1px; 
+        margin-right: 5px; 
+    }
     
-    .filter-tag { background: rgba(0,0,0,0.4); border: 1px solid #3c4566; color: #8da4c4; padding: 8px 22px; border-radius: 30px; cursor: pointer; transition: 0.2s; font-weight: bold; font-family: 'Segoe UI', sans-serif; outline: none; }
-    .filter-tag:hover { border-color: #4facfe; color: #fff; transform: translateY(-1px); }
-    .filter-tag.active { background: rgba(79, 172, 254, 0.15); color: #4facfe; border-color: #4facfe; box-shadow: 0 0 15px rgba(79, 172, 254, 0.3); }
+    .filter-tag { 
+        background: rgba(16, 20, 32, 0.8); 
+        border: 1px solid #2a3454; 
+        color: #8da4c4; 
+        padding: 8px 20px; 
+        border-radius: 6px; /* Сделали более квадратными */
+        cursor: pointer; 
+        transition: 0.2s; 
+        font-weight: bold; 
+        font-family: 'Segoe UI', sans-serif; 
+        outline: none; 
+    }
+    .filter-tag:hover { 
+        border-color: #4facfe; 
+        color: #fff; 
+        transform: translateY(-2px); 
+    }
+    .filter-tag.active { 
+        background: rgba(79, 172, 254, 0.15); 
+        color: #4facfe; 
+        border-color: #4facfe; 
+        box-shadow: 0 0 15px rgba(79, 172, 254, 0.3); 
+    }
 
     .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #2a3454; padding-bottom: 10px; }
     .section-header h2 { font-family: 'Segoe UI', sans-serif; font-size: 1.2em; margin: 0; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
