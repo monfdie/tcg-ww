@@ -2,13 +2,19 @@
 
 <style>
     .page-container { max-width: 1200px !important; }
+    
+    /* ФИЛЬТРЫ */
+    .filter-section { display: flex; gap: 15px; margin-bottom: 30px; background: rgba(22, 28, 48, 0.6); padding: 15px; border-radius: 8px; border: 1px solid #2a3454; }
+    .filter-select { background: #0f131f; border: 1px solid #3c4566; color: #fff; padding: 10px; border-radius: 4px; font-family: 'Segoe UI', sans-serif; outline: none; cursor: pointer; }
+    .filter-select:focus { border-color: #4facfe; }
+
     .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #2a3454; padding-bottom: 10px; }
-    .section-header h2 { font-family: 'Segoe UI', sans-serif; font-size: 1.2em; margin: 0; color: #fff; }
+    .section-header h2 { font-family: 'Segoe UI', sans-serif; font-size: 1.2em; margin: 0; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
     .live-indicator { width: 8px; height: 8px; background: #ff4444; border-radius: 50%; box-shadow: 0 0 10px #ff4444; }
 
     .tournament-list { display: flex; flex-direction: column; gap: 10px; }
     .tour-rect-card { display: flex; align-items: center; background: #161c30; border: 1px solid #2a3454; border-radius: 6px; text-decoration: none; transition: 0.2s; height: 80px; padding: 0 25px; cursor: pointer; }
-    .tour-rect-card:hover { background: #1e2538; border-color: #4facfe; transform: translateX(5px); }
+    .tour-rect-card:hover { background: #1e2538; border-color: #4facfe; transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
     .archive-style { opacity: 0.6; }
     .archive-style:hover { opacity: 1; border-color: #d4af37; }
 
@@ -19,36 +25,56 @@
 
     .card-right { display: flex; gap: 40px; text-align: right; }
     .info-group { display: flex; flex-direction: column; justify-content: center; }
-    .info-group label { font-size: 0.75em; color: #556; margin-bottom: 2px; }
+    .info-group label { font-size: 0.75em; color: #556; margin-bottom: 2px; text-transform: uppercase; }
     .info-group span { color: #fff; font-size: 0.95em; font-weight: 500; }
     .prize-text { color: #d4af37; font-weight: bold; }
 
-    /* МОДАЛКА В СТИЛЕ TONAMEL */
+    /* НОВАЯ ГОРИЗОНТАЛЬНАЯ МОДАЛКА */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-    .modal-box { background: #111526; border: 1px solid #2a3454; width: 90%; max-width: 450px; padding: 30px; border-radius: 12px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column; }
-    .modal-close { position: absolute; top: 15px; right: 20px; color: #556; font-size: 28px; cursor: pointer; transition: 0.2s; line-height: 1; }
+    .modal-box { background: #232b40; border: 1px solid #3c4566; width: 90%; max-width: 750px; padding: 35px; border-radius: 12px; position: relative; box-shadow: 0 15px 50px rgba(0,0,0,0.6); }
+    .modal-close { position: absolute; top: 15px; right: 20px; color: #8da4c4; font-size: 28px; cursor: pointer; transition: 0.2s; line-height: 1; }
     .modal-close:hover { color: #fff; }
     
+    .modal-content-wrap { display: flex; gap: 40px; flex-wrap: wrap; }
+    .modal-left { flex: 1; min-width: 250px; }
+    .modal-right { flex: 1; min-width: 250px; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+
     .m-title { margin: 0 0 20px 0; font-family: 'Segoe UI', sans-serif; color: #fff; font-size: 1.8em; font-weight: bold; }
-    .m-info-card { background: rgba(26, 31, 51, 0.8); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-    .m-info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .m-info-card { background: rgba(22, 28, 48, 0.8); border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #2a3454; }
+    .m-info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .m-info-row:last-child { margin-bottom: 0; }
-    .m-label { color: #556; font-size: 0.9em; font-weight: bold; }
+    .m-label { color: #8da4c4; font-size: 0.9em; font-weight: bold; }
     .m-value { color: #fff; font-weight: bold; }
     .m-prize-val { color: #d4af37; font-weight: bold; font-size: 1.1em; }
     
-    .m-tags { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
-    .m-tag { background: rgba(79, 172, 254, 0.1); color: #4facfe; padding: 5px 15px; border-radius: 20px; font-size: 0.85em; font-weight: bold; }
-    .m-tag-gold { background: rgba(212, 175, 55, 0.1); color: #d4af37; }
+    .m-tags { display: flex; gap: 10px; flex-wrap: wrap; }
+    .m-tag { background: rgba(79, 172, 254, 0.15); color: #4facfe; padding: 6px 16px; border-radius: 20px; font-size: 0.85em; font-weight: bold; border: 1px solid rgba(79, 172, 254, 0.3); }
+    .m-tag-gold { background: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3); }
     
-    .main-reg-btn { display: block; width: 100%; padding: 15px; border-radius: 30px; border: 2px solid #4facfe; color: #4facfe; text-align: center; text-decoration: none; font-weight: bold; transition: 0.2s; text-transform: uppercase; margin-bottom: 15px; font-family: 'Segoe UI', sans-serif;}
-    .main-reg-btn:hover { background: #4facfe; color: #000; box-shadow: 0 0 20px rgba(79,172,254,0.4); }
+    .main-reg-btn { display: block; width: 100%; padding: 15px; border-radius: 8px; background: #4facfe; color: #000; text-align: center; text-decoration: none; font-weight: bold; transition: 0.2s; text-transform: uppercase; margin-bottom: 10px; font-family: 'Segoe UI', sans-serif; box-sizing: border-box; }
+    .main-reg-btn:hover { box-shadow: 0 0 20px rgba(79,172,254,0.5); transform: translateY(-2px); }
     
-    .secondary-link { display: block; width: 100%; padding: 12px; border-radius: 8px; background: #1a1f33; color: #fff; text-align: center; text-decoration: none; font-size: 0.9em; transition: 0.2s; font-weight: bold; margin-bottom: 8px; }
-    .secondary-link:hover { background: #2a3454; }
+    .secondary-link { display: block; width: 100%; padding: 12px; border-radius: 8px; background: #1a1f33; color: #fff; text-align: center; text-decoration: none; font-size: 0.9em; transition: 0.2s; font-weight: bold; border: 1px solid #2a3454; box-sizing: border-box; }
+    .secondary-link:hover { background: #2a3454; border-color: #4facfe; }
 </style>
 
 <div class="page-container">
+
+    <div class="filter-section">
+        <select id="filter-region" class="filter-select" onchange="filterTournaments()">
+            <option value="All">All Regions</option>
+            <option value="Europe">Europe</option>
+            <option value="America">America</option>
+            <option value="Asia">Asia</option>
+            <option value="Global">Global</option>
+        </select>
+        <select id="filter-format" class="filter-select" onchange="filterTournaments()">
+            <option value="All">All Formats</option>
+            <option value="Standard">Standard</option>
+            <option value="Conquest">Conquest</option>
+        </select>
+    </div>
+
     <div class="section-header">
         <div class="live-indicator"></div>
         <h2>Live Events</h2>
@@ -58,11 +84,12 @@
         <% if (tournaments && tournaments.length > 0) { %>
             <% tournaments.forEach(tour => { %>
                 
-                <% if (tour.isMine) { %>
-                    <a href="/tournament/<%= tour.slug %>" class="tour-rect-card">
+                <% if (tour.isMine !== false) { %>
+                    <a href="/tournament/<%= tour.slug %>" class="tour-rect-card" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Standard' %>">
                 <% } else { %>
-                    <div class="tour-rect-card" onclick="openModal('<%= tour._id %>')">
+                    <div class="tour-rect-card" onclick="openModal('<%= tour._id %>')" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Standard' %>">
                 <% } %>
+                    
                     <div class="card-center">
                         <div class="card-title"><%= tour.title %></div>
                         <div class="card-hashtags">
@@ -71,15 +98,17 @@
                             <span><%= tour.format || 'Standard' %></span>
                         </div>
                     </div>
+
                     <div class="card-right">
                         <div class="info-group">
-                            <label>Prize</label>
+                            <label>Prize Pool</label>
                             <span class="prize-text">🏆 <%= tour.prize || 'TBA' %></span>
                         </div>
                     </div>
-                <% if (tour.isMine) { %> </a> <% } else { %> </div> <% } %>
 
-                <% if (!tour.isMine) { %>
+                <% if (tour.isMine !== false) { %> </a> <% } else { %> </div> <% } %>
+
+                <% if (tour.isMine === false) { %>
                     <div id="data-<%= tour._id %>" style="display:none;" 
                         data-title="<%= tour.title %>" 
                         data-date="<%= tour.date %>"
@@ -94,6 +123,7 @@
                         data-bracket="<%= tour.bracketLink %>">
                     </div>
                 <% } %>
+
             <% }); %>
         <% } else { %>
             <div style="color: #556; padding: 20px; font-style: italic;">No active tournaments.</div>
@@ -107,11 +137,13 @@
     <div class="tournament-list" id="list-archive">
         <% if (archive && archive.length > 0) { %>
             <% archive.forEach(tour => { %>
-                <% if (tour.isMine) { %>
-                    <a href="/tournament/<%= tour.slug %>" class="tour-rect-card archive-style">
+                
+                <% if (tour.isMine !== false) { %>
+                    <a href="/tournament/<%= tour.slug %>" class="tour-rect-card archive-style" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Standard' %>">
                 <% } else { %>
-                    <div class="tour-rect-card archive-style" onclick="openModal('<%= tour._id %>')">
+                    <div class="tour-rect-card archive-style" onclick="openModal('<%= tour._id %>')" data-region="<%= tour.region || 'Global' %>" data-format="<%= tour.format || 'Standard' %>">
                 <% } %>
+                    
                     <div class="card-center">
                         <div class="card-title"><%= tour.title %></div>
                         <div class="card-hashtags">
@@ -122,13 +154,14 @@
                     </div>
                     <div class="card-right">
                         <div class="info-group">
-                            <label>Prize</label>
+                            <label>Prize Pool</label>
                             <span class="prize-text" style="color:#aaa;">🏆 <%= tour.prize || 'TBA' %></span>
                         </div>
                     </div>
-                <% if (tour.isMine) { %> </a> <% } else { %> </div> <% } %>
 
-                <% if (!tour.isMine) { %>
+                <% if (tour.isMine !== false) { %> </a> <% } else { %> </div> <% } %>
+
+                <% if (tour.isMine === false) { %>
                     <div id="data-<%= tour._id %>" style="display:none;" 
                         data-title="<%= tour.title %>" 
                         data-date="<%= tour.date %>"
@@ -143,35 +176,59 @@
                         data-bracket="<%= tour.bracketLink %>">
                     </div>
                 <% } %>
+
             <% }); %>
         <% } else { %>
             <div style="color: #556; padding: 20px; font-style: italic;">Archive is empty.</div>
         <% } %>
     </div>
+
 </div>
 
 <div id="tModal" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-box" id="modalBox">
         <span class="modal-close" onclick="closeModalDirect()">×</span>
-        <h2 id="m-title" class="m-title">Title</h2>
         
-        <div class="m-info-card">
-            <div class="m-info-row">
-                <span class="m-label">Date:</span>
-                <span id="m-date" class="m-value">-</span>
-            </div>
-            <div class="m-info-row">
-                <span class="m-label">Prize Pool:</span>
-                <span id="m-prize" class="m-prize-val">-</span>
-            </div>
-        </div>
+        <div class="modal-content-wrap">
+            <div class="modal-left">
+                <h2 id="m-title" class="m-title">Title</h2>
+                
+                <div class="m-info-card">
+                    <div class="m-info-row">
+                        <span class="m-label">Date:</span>
+                        <span id="m-date" class="m-value">-</span>
+                    </div>
+                    <div class="m-info-row">
+                        <span class="m-label">Prize Pool:</span>
+                        <span id="m-prize" class="m-prize-val">-</span>
+                    </div>
+                </div>
 
-        <div id="m-tags" class="m-tags"></div>
-        <div id="m-links"></div>
+                <div id="m-tags" class="m-tags"></div>
+            </div>
+            
+            <div class="modal-right" id="m-links">
+                </div>
+        </div>
     </div>
 </div>
 
 <script>
+    function filterTournaments() {
+        const regFilter = document.getElementById('filter-region').value;
+        const fmtFilter = document.getElementById('filter-format').value;
+        
+        document.querySelectorAll('.tour-rect-card').forEach(card => {
+            const cardReg = card.getAttribute('data-region');
+            const cardFmt = card.getAttribute('data-format');
+            
+            const matchReg = (regFilter === 'All' || cardReg === regFilter);
+            const matchFmt = (fmtFilter === 'All' || cardFmt === fmtFilter);
+            
+            card.style.display = (matchReg && matchFmt) ? 'flex' : 'none';
+        });
+    }
+
     function openModal(id) {
         const data = document.getElementById('data-' + id);
         document.getElementById('m-title').innerText = data.getAttribute('data-title');
@@ -211,6 +268,7 @@
 
         document.getElementById('tModal').style.display = 'flex';
     }
+    
     function closeModal(event) { if (event.target.id === 'tModal') closeModalDirect(); }
     function closeModalDirect() { document.getElementById('tModal').style.display = 'none'; }
 </script>
