@@ -1,0 +1,20 @@
+<%- include('../partials/header') %>
+<div class="page-container" style="max-width: 800px;">
+    <h2 style="color: #d4af37;">📢 Create Announcement</h2>
+    <form action="/admin/add-announcement" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
+        
+        <input type="text" name="title" placeholder="Announcement Title" required class="form-input">
+        <input type="text" name="slug" placeholder="URL Slug (Optional)" class="form-input">
+        
+        <textarea name="description" placeholder="Short text for the card..." required class="form-input" rows="5"></textarea>
+        
+        <input type="text" name="regLink" placeholder="Link (Where the 'Read More' button leads)" class="form-input">
+
+        <label style="color: #8da4c4;">Banner Image (Recommended):</label>
+        <input type="file" name="image" class="form-input" style="color: #fff;">
+        
+        <button type="submit" style="background: #d4af37; border: none; padding: 15px; color: #000; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; transition: 0.2s;">PUBLISH ANNOUNCEMENT</button>
+    </form>
+</div>
+<style> .form-input { padding: 12px; border-radius: 4px; border: 1px solid #3c4566; background: rgba(0,0,0,0.3); color: #fff; font-family: 'Segoe UI', sans-serif; } </style>
+<%- include('../partials/footer') %>
