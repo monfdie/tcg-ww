@@ -2,23 +2,15 @@
 
 <style>
 
-/* 1. ГЛАВНЫЙ ФОН */
-body, html {
-    /* Затемнение 0.85 — делает картинку достаточно темной для интерфейса */
-    background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important;
-    background-size: cover !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-attachment: fixed !important;
-    min-height: 100vh;
-    margin: 0;
-}
-
-/* 2. ПРОЗРАЧНОСТЬ КОНТЕЙНЕРОВ (чтобы фон было видно везде) */
-.page-container, #game-screen, .char-pool {
-    background: transparent !important;
-}
-
+body {
+        /* Накладываем темный фильтр поверх картинки, чтобы интерфейс было видно */
+        background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        min-height: 100vh;
+    }
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
     .player-header { height: auto !important; min-height: 70px; }
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
@@ -105,7 +97,10 @@ body, html {
              <div class="pick-row" id="blue-picks-1"></div>
              <div class="pick-row-small" id="blue-picks-2"></div>
          </div>
-        
+         <div class="center-axis">
+             <div class="mid-label ban-label">BANS</div>
+             <div class="mid-label pick-label">PICKS</div>
+         </div>
          <div class="team-side red-side">
              <div class="player-header">
                  <div id="red-ready-switch" class="ready-switch" onclick="toggleReady('red')">
