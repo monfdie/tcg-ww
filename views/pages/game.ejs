@@ -1,60 +1,27 @@
 <%- include('../partials/header') %>
 
 <style>
+/* 1. ГЛАВНЫЙ ФОН */
+body, html {
+    background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    min-height: 100vh;
+    margin: 0;
+}
 
-/* 1. ГЛАВНЫЙ ФОН (Затемнение 0.85 означает 85% темноты) */
-    body, html {
-        background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important;
-        background-size: cover !important;
-        background-position: center !important;
-        background-repeat: no-repeat !important;
-        background-attachment: fixed !important;
-        min-height: 100vh;
-    }
-
-    /* 2. ДЕЛАЕМ ПУЛЛ ПЕРСОНАЖЕЙ И ФОН ИГРЫ ПРОЗРАЧНЫМИ */
-    .page-container, #game-screen, .char-pool {
-        background: transparent !important;
-    }
-   
+/* 2. ПРОЗРАЧНОСТЬ КОНТЕЙНЕРОВ */
+.page-container, #game-screen, .char-pool {
+    background: transparent !important;
+}
 
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
     .player-header { height: auto !important; min-height: 70px; }
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
     .player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
     
-    .deck-builder-panel { display: none; flex-grow: 1; background: rgba(10, 12, 20, 0.95); border-top: 2px solid #3c4566; padding: 20px; flex-direction: column; align-items: center; overflow-y: auto; }
-    .builder-header { display: flex; justify-content: center; position: relative; width: 100%; max-width: 1000px; margin-bottom: 20px; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; min-height: 50px; }
-    
-    .match-score { font-family: 'Cinzel', serif; font-size: 2.5em; color: #fff; text-shadow: 0 0 15px rgba(212, 175, 55, 0.6); letter-spacing: 5px; }
-
-    .winner-controls { display: flex; align-items: center; gap: 15px; min-width: 150px; justify-content: center; }
-    .win-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555; background: transparent; color: #555; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; transition: 0.2s; font-size: 1.2em; }
-    .win-btn:hover { border-color: #aaa; color: #aaa; }
-    .win-btn.active-blue { background: #4facfe; border-color: #4facfe; color: #000; box-shadow: 0 0 15px #4facfe; }
-    .win-btn.active-red { background: #ff6b6b; border-color: #ff6b6b; color: #000; box-shadow: 0 0 15px #ff6b6b; }
-    .vs-text { font-family: 'Cinzel', serif; color: #666; font-size: 1.2em; }
-
-    .save-match-btn { position: absolute; right: 0; top: 5px; background: #d4af37; color: #000; font-weight: bold; border: none; padding: 12px 30px; border-radius: 4px; font-family: 'Cinzel', serif; cursor: pointer; transition: 0.2s; }
-    .save-match-btn:hover { box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); transform: scale(1.05); }
-
-    .games-grid { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 1100px; }
-    .game-row { display: flex; align-items: center; justify-content: center; gap: 30px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid #2a3454; animation: fadeIn 0.5s ease; }
-    
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .deck-slots-group { display: flex; gap: 10px; }
-    .deck-slot { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #3c4566; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; }
-    .deck-slot:hover { border-color: #4facfe; transform: scale(1.05); }
-    .deck-slot img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-    
-    #char-select-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
-    .select-box { background: #161c30; border: 1px solid #4facfe; padding: 20px; border-radius: 8px; width: 600px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-    
-    .select-char-item { width: 70px; height: 70px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; background: rgba(20, 25, 40, 0.8); position: relative; overflow: hidden; }
-    .select-char-item:hover { border-color: #4facfe; transform: scale(1.1); }
-    .select-char-item img { width: 100%; height: 100%; object-fit: cover; }
-
     /* --- ЛОГИКА ФИЛЬТРОВ И РАМОК --- */
     
     /* Стандартная блокировка (серый + нельзя нажать) */
@@ -64,13 +31,20 @@
         filter: grayscale(100%);
     }
 
-    /* Рамка иммунитета (теперь используется только в самой первой стадии, когда мы их выбираем) */
+    /* Рамка иммунитета */
     #char-pool-container .char-option.immunity-highlight { 
         border: 3px solid #d4af37 !important; 
         box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; 
     }
 
     .turn-timer { transition: opacity 0.3s ease; }
+
+    /* Отступ между панелями игроков (вместо линии) */
+    .draft-area {
+        display: flex;
+        justify-content: center;
+        gap: 60px;
+    }
 </style>
 
 <div id="game-screen">
@@ -104,10 +78,7 @@
              <div class="pick-row" id="blue-picks-1"></div>
              <div class="pick-row-small" id="blue-picks-2"></div>
          </div>
-         <div class="center-axis">
-             <div class="mid-label ban-label">BANS</div>
-             <div class="mid-label pick-label">PICKS</div>
-         </div>
+         
          <div class="team-side red-side">
              <div class="player-header">
                  <div id="red-ready-switch" class="ready-switch" onclick="toggleReady('red')">
@@ -131,18 +102,6 @@
      </div>
 
      <div class="char-pool" id="char-pool-container"></div>
-
-     <div class="deck-builder-panel" id="deck-builder-panel">
-         <div class="builder-header">
-             <div id="score-display" class="match-score">0 - 0</div>
-             <button class="save-match-btn" id="finish-btn" onclick="finishMatch()">FINISH</button>
-         </div>
-         <div class="games-grid" id="games-grid"></div>
-     </div>
-</div>
-
-<div id="char-select-modal" onclick="closeSelectModal(event)">
-    <div class="select-box" id="select-box-content"></div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -156,6 +115,7 @@
     
     let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
     let charsData = {}, selectedCharId = null;
+    let isDraftFinishedLocal = false;
     
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
@@ -163,9 +123,6 @@
 
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
-
-    let currentSlotIndex = null;
-    let myPicksList = [];
 
     if (savedData) {
         socket.disconnect(); charsData = serverChars;
@@ -179,8 +136,7 @@
             draftType: savedData.draftType, immunityPhaseActive: false,
             immunityPool: savedData.immunityPool||[], immunityBans: savedData.immunityBans||[],
             stepIndex: 999, ready: { blue: true, red: true },
-            draftFinished: true, blueDecks: savedData.blueDecks || [], redDecks: savedData.redDecks || [],
-            gameResults: savedData.gameResults || [null,null,null], matchSaved: true
+            draftFinished: true
         };
         updateUI(mockState);
     } else {
@@ -199,7 +155,7 @@
         });
         socket.on('update_state', updateUI);
         socket.on('game_started', () => { isGameStarted = true; });
-        socket.on('game_over', (state) => { updateUI(state); });
+        socket.on('game_over', (state) => { updateUI(state); alert("Draft is complete and saved!"); });
         
         socket.on('timer_tick', (data) => {
             const t = typeof data === 'object' ? data.main : data;
@@ -210,29 +166,16 @@
                  document.getElementById('red-res').innerText = formatTime(data.redReserve);
             }
         });
-        socket.on('match_saved_success', () => { alert("Match Saved!"); window.location.href = '/'; });
     }
 
     function formatTime(s) { if (s < 0) s = 0; const m=Math.floor(s/60), sec=s%60; return `${m}:${sec<10?'0':''}${sec}`; }
     function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
     function copyRoomCode() { navigator.clipboard.writeText(currentRoom); }
-    function skipTurn() { if(currentRoom && !savedData) socket.emit('skip_action', currentRoom); }
+    function skipTurn() { if(currentRoom && !savedData && !isDraftFinishedLocal) socket.emit('skip_action', currentRoom); }
     
     function updateUI(state) {
-        if (state.draftFinished) {
-            document.getElementById('char-pool-container').style.display = 'none';
-            document.getElementById('deck-builder-panel').style.display = 'flex';
-            document.getElementById('confirm-btn').style.display = 'none';
-            document.getElementById('skip-btn').style.display = 'none';
-            document.getElementById('status').innerText = "SETUP PHASE";
-            if (state.matchSaved) document.getElementById('finish-btn').style.display = 'none';
-            renderDeckBuilder(state);
-        } else {
-            document.getElementById('char-pool-container').style.display = 'flex';
-            document.getElementById('deck-builder-panel').style.display = 'none';
-        }
-
         isGameStarted = state.gameStarted; 
+        isDraftFinishedLocal = state.draftFinished;
         const isMyTurn = (myRole === state.currentTeam);
 
         if (!state.gameStarted || state.draftFinished) {
@@ -283,10 +226,13 @@
         if (state.redAvatar && state.redDiscordId) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; }
         
         let txt = "WAITING...";
-        if(state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
-        else if(state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
-        if (state.draftFinished) txt = "MATCH SETUP / PLAYING";
-        if (state.matchSaved) txt = "MATCH FINISHED";
+        if (state.draftFinished) {
+            txt = "DRAFT FINISHED";
+        } else if (state.immunityPhaseActive) {
+            txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
+        } else if (state.gameStarted) {
+            txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
+        }
         document.getElementById('status').innerText = txt.toUpperCase();
 
         updateImmunityTop(state);
@@ -301,8 +247,6 @@
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
 
         if (state.immunityPhaseActive) {
-            // ФАЗА ИММУНИТЕТА (0 стадия)
-            // Здесь рамка остается, чтобы игроки видели, кого уже забрали в иммунитет
             immuneChars.forEach(id => {
                 const el = document.getElementById(`char-${id}`);
                 if(el) el.classList.add('immunity-highlight', 'disabled');
@@ -313,35 +257,26 @@
             });
             
         } else if (state.gameStarted && !state.draftFinished) {
-            // ОБЫЧНЫЙ ДРАФТ
             const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] || {};
             const isImmuneStep = currentStepData.immunity === true;
             const isPickPhase = state.currentAction && state.currentAction.includes('pick');
             
-            // 1. Обычные баны - заблокированы всегда
             state.bans.forEach(b => {
                 const el = document.getElementById(`char-${b.id}`);
                 if(el) el.classList.add('disabled');
             });
 
-            // 2. ИММУННЫЕ ПИКИ (Золотые)
             immuneChars.forEach(id => {
                 const el = document.getElementById(`char-${id}`);
                 if (!el) return;
 
                 if (isPickPhase && isImmuneStep) {
-                    // Это СТАДИЯ ИММУННОГО ПИКА -> Они цветные и БЕЗ РАМКИ (доступны для пика)
-                    // Мы не добавляем ни disabled, ни highlight
+                    // Доступно для пика - без стилей блокировки
                 } else {
-                    // Любая другая стадия -> Они серые и БЕЗ РАМКИ
                     el.classList.add('disabled');
                 }
             });
 
-            // 3. ИММУННЫЕ БАНЫ (Ху Тао)
-            // Мы ИХ НЕ БЛОКИРУЕМ! Они остаются цветными и их можно пикать/банить в обычном драфте.
-
-            // 4. Обычные пики
             state.bluePicks.forEach(id => {
                 if (myRole === 'blue') {
                     document.getElementById(`char-${id}`)?.classList.add('disabled'); 
@@ -361,80 +296,13 @@
                     if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
                 }
             });
+        } else if (state.draftFinished) {
+            // Если драфт закончен, блокируем абсолютно все карточки, чтобы их нельзя было кликать
+            document.querySelectorAll('.char-option').forEach(el => {
+                el.classList.add('disabled');
+            });
         }
     }
-
-    function renderDeckBuilder(state) {
-        let blueScore = 0, redScore = 0;
-        state.gameResults.forEach(r => { if(r === 'blue') blueScore++; if(r === 'red') redScore++; });
-        document.getElementById('score-display').innerText = `${blueScore} - ${redScore}`;
-
-        if (myRole === 'blue') myPicksList = state.bluePicks;
-        if (myRole === 'red') myPicksList = state.redPicks;
-
-        const grid = document.getElementById('games-grid');
-        grid.innerHTML = '';
-
-        let showThirdGame = false;
-        if (state.gameResults[0] && state.gameResults[1] && state.gameResults[0] !== state.gameResults[1]) showThirdGame = true;
-
-        for (let i = 0; i < 3; i++) {
-            if (i === 2 && !showThirdGame) continue;
-            const row = document.createElement('div'); row.className = 'game-row';
-
-            const blueGroup = document.createElement('div'); blueGroup.className = 'deck-slots-group';
-            for (let j=0; j<3; j++) { blueGroup.appendChild(createDeckSlot(state.blueDecks[i*3 + j], i*3 + j, 'blue')); }
-
-            const controls = document.createElement('div'); controls.className = 'winner-controls';
-            
-            const btnBlue = document.createElement('button'); btnBlue.className = `win-btn ${state.gameResults[i] === 'blue' ? 'active-blue' : ''}`;
-            btnBlue.innerText = 'W'; btnBlue.onclick = () => setWinner(i, 'blue');
-
-            const vsText = document.createElement('span'); vsText.className = 'vs-text'; vsText.innerText = 'VS';
-
-            const btnRed = document.createElement('button'); btnRed.className = `win-btn ${state.gameResults[i] === 'red' ? 'active-red' : ''}`;
-            btnRed.innerText = 'W'; btnRed.onclick = () => setWinner(i, 'red');
-
-            controls.appendChild(btnBlue); controls.appendChild(vsText); controls.appendChild(btnRed);
-
-            const redGroup = document.createElement('div'); redGroup.className = 'deck-slots-group';
-            for (let j=0; j<3; j++) { redGroup.appendChild(createDeckSlot(state.redDecks[i*3 + j], i*3 + j, 'red')); }
-
-            row.appendChild(blueGroup); row.appendChild(controls); row.appendChild(redGroup); grid.appendChild(row);
-        }
-    }
-
-    function createDeckSlot(charId, index, team) {
-        const slot = document.createElement('div'); slot.className = 'deck-slot';
-        if (charId) {
-            let all = []; Object.values(charsData).forEach(a => all.push(...a));
-            const c = all.find(x => x.id === charId);
-            if (c) slot.innerHTML = `<img src="${c.img}">`;
-        }
-        if (!savedData && myRole === team) slot.onclick = () => openCharSelector(index);
-        return slot;
-    }
-
-    function setWinner(gameIdx, winner) { if (!savedData) socket.emit('update_game_winner', { roomId: currentRoom, gameIndex: gameIdx, winner: winner }); }
-
-    function openCharSelector(idx) {
-        currentSlotIndex = idx;
-        const box = document.getElementById('select-box-content'); box.innerHTML = '';
-        let all = []; Object.values(charsData).forEach(a => all.push(...a));
-        const myChars = all.filter(c => myPicksList.includes(c.id));
-        const clr = document.createElement('div'); clr.className = 'select-char-item';
-        clr.style.border = '1px dashed #3c4566'; clr.innerHTML = '<span style="color:#aaa; position:absolute; top:35%; left:15%;">CLEAR</span>';
-        clr.onclick = () => selectDeckChar(null); box.appendChild(clr);
-        myChars.forEach(c => {
-            const d = document.createElement('div'); d.className = 'select-char-item'; d.innerHTML = `<img src="${c.img}">`;
-            d.onclick = () => selectDeckChar(c.id); box.appendChild(d);
-        });
-        document.getElementById('char-select-modal').style.display = 'flex';
-    }
-
-    function selectDeckChar(charId) { socket.emit('update_deck_slot', { roomId: currentRoom, slotIndex: currentSlotIndex, charId: charId }); document.getElementById('char-select-modal').style.display = 'none'; }
-    function closeSelectModal(e) { if(e.target.id === 'char-select-modal') document.getElementById('char-select-modal').style.display = 'none'; }
-    function finishMatch() { if(confirm("Save results and finish match?")) { document.getElementById('finish-btn').style.display = 'none'; socket.emit('finish_match_setup', { roomId: currentRoom }); } }
 
     function renderRows() {
         const container = document.getElementById('char-pool-container'); container.innerHTML = '';
@@ -465,24 +333,27 @@
             container.appendChild(row);
         });
     }
+
     function createChar(char) {
         const el = document.createElement('div'); el.className = 'char-option'; el.id = `char-${char.id}`;
         el.innerHTML = `<img src="${char.img}">`;
         el.onclick = () => {
-            if(!isGameStarted || myRole === 'spectator' || savedData) return;
+            if(!isGameStarted || myRole === 'spectator' || savedData || isDraftFinishedLocal) return;
             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
             selectedCharId = char.id; el.classList.add('selected-pending');
             document.getElementById('confirm-btn').disabled = false;
         };
         return el;
     }
+
     function confirmSelection() {
-        if(selectedCharId && currentRoom && !savedData) {
+        if(selectedCharId && currentRoom && !savedData && !isDraftFinishedLocal) {
             socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
             selectedCharId = null; document.getElementById('confirm-btn').disabled = true;
             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
         }
     }
+
     function updateImmunityTop(state) {
          const topDisp = document.getElementById('immunity-top-display');
          if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
@@ -501,6 +372,7 @@
              row.appendChild(div);
          });
     }
+
     function renderSlots(state) {
          const currentSchema = DRAFT_RULES[currentDraftType]; if (!currentSchema) return;
          const getStepsFor = (schema, team, type) => schema.map((step, index) => ({ ...step, globalIndex: index + 1 })).filter(step => step.team === team && step.type === type).map(step => ({ num: step.globalIndex, immunity: step.immunity }));
@@ -512,7 +384,7 @@
                  const slot = document.createElement('div'); slot.className = 'slot-circle';
                  if (isBan) slot.classList.add('slot-ban');
                  if (step.immunity) slot.classList.add('slot-immunity-pick');
-                 if (!state.immunityPhaseActive && state.gameStarted && !savedData && step.num === state.stepIndex) slot.classList.add('active-slot');
+                 if (!state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && step.num === state.stepIndex) slot.classList.add('active-slot');
                  let charId = null; if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
                  if (charId) {
                      let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
