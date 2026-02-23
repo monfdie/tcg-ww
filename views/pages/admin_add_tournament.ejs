@@ -11,13 +11,21 @@
         <input type="text" name="slug" placeholder="URL Slug (e.g., gitcg-cup-2)" required class="form-input">
         
         <div style="display: flex; gap: 15px;">
-            <input type="text" name="date" placeholder="Date (e.g., 20.10.2024)" class="form-input" style="flex: 1;">
-            <input type="text" name="prize" placeholder="Prize (e.g., $500)" class="form-input" style="flex: 1;">
+            <input type="text" name="date" placeholder="Date (e.g., Feb 15, 2026)" class="form-input" style="flex: 1;">
+            <input type="text" name="prize" placeholder="Prize Pool (e.g., $500)" class="form-input" style="flex: 1;">
         </div>
 
         <div style="display: flex; gap: 15px;">
-            <input type="text" name="region" placeholder="Region (e.g., Global)" class="form-input" style="flex: 1;">
-            <input type="text" name="format" placeholder="Format (e.g., Bo3 / Conquest)" class="form-input" style="flex: 1;">
+            <select name="region" class="form-input" style="flex: 1;">
+                <option value="Europe">Europe</option>
+                <option value="America">America</option>
+                <option value="Asia">Asia</option>
+                <option value="Global">Global</option>
+            </select>
+            <select name="format" class="form-input" style="flex: 1;">
+                <option value="Standard">Standard</option>
+                <option value="Conquest">Conquest</option>
+            </select>
         </div>
 
         <textarea name="description" placeholder="Description (Optional)" class="form-input" rows="4"></textarea>
