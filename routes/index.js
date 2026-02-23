@@ -117,15 +117,62 @@ router.get('/history', async (req, res) => {
 //           АДМИН-ПАНЕЛЬ
 // ==========================================
 
-router.get('/admin/secret-add', (req, res) => {
-    res.render('pages/admin_add', { title: 'Admin Add' });
-});
-
 router.get('/admin/dashboard', async (req, res) => {
     const tournaments = await Tournament.find().sort({ date: -1 });
     res.render('pages/admin_dashboard', { tournaments });
 });
 
+// --- 1. ДОБАВЛЕНИЕ ТУРНИРА ---
+router.get('/admin/add-tournament', (req, res) => {
+    res.render('pages/admin_add_tournament', { title: 'Add Tournament' });
+});
+
+router.post('/admin/add-tournament', upload.single('image'), async (req, res) => {
+    try {
+        const { title, slug, date, prize, isMine, region, format, description, regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink } = req.body;
+        const image = req.file ? req.file.filename : '';
+        
+        await Tournament.create({ 
+            type: 'tournament',
+            title, slug, date, prize, image,
+            isMine: isMine === 'on',
+            region, format, description,
+            regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink,
+            isLive: true
+        });
+        res.redirect('/admin/dashboard');
+    } catch (err) { console.error(err); res.status(500).send('Error'); }
+});
+
+// --- 2. ДОБАВЛЕНИЕ ОБЪЯВЛЕНИЯ (НОВОСТИ) ---
+router.get('/admin/add-announcement', (req, res) => {
+    res.render('pages/admin_add_announcement', { title: 'Add Announcement' });
+});
+
+router.post('/admin/add-announcement', upload.single('image'), async (req, res) => {
+    try {
+        const { title, description, slug, regLink } = req.body;
+        let finalSlug = slug && slug.trim() !== '' ? slug : 'news-' + Date.now();
+        let imageFilename = req.file ? req.file.filename : null;
+
+        await Tournament.create({
+            type: 'announcement', 
+            slug: finalSlug, 
+            title: title, 
+            image: imageFilename,
+            description: description, 
+            regLink: regLink, 
+            isLive: true, 
+            date: new Date().toLocaleDateString()
+        });
+        
+        res.redirect('/admin/dashboard');
+    } catch (e) { 
+        res.send(`Error: ${e.message}`); 
+    }
+});
+
+// --- 3. УДАЛЕНИЕ И РЕДАКТИРОВАНИЕ ---
 router.post('/admin/delete/:id', async (req, res) => {
     try { 
         await Tournament.findByIdAndDelete(req.params.id); 
@@ -135,125 +182,43 @@ router.post('/admin/delete/:id', async (req, res) => {
     }
 });
 
-router.post('/admin/add', upload.single('image'), async (req, res) => {
-    try {
-        const { title, description, slug, regLink } = req.body;
-        
-        let finalSlug = slug;
-        if (!finalSlug || finalSlug.trim() === '') {
-            finalSlug = 'news-' + Date.now();
-        }
-        
-        let imageFilename = null;
-        if (req.file) {
-            imageFilename = req.file.filename;
-        }
-
-        await Tournament.create({
-            slug: finalSlug, 
-            title: title, 
-            type: 'announcement', 
-            image: imageFilename,
-            description: description, 
-            regLink: regLink, 
-            isLive: true, 
-            date: new Date().toLocaleDateString()
-        });
-        
-        res.send(`
-            <body style="background:#111; color:#fff; text-align:center; padding:50px;">
-                <h1 style="color:#d4af37">Post Published!</h1><br>
-                <a href="/admin/secret-add" style="color:#fff;">Create Another</a><br><br>
-                <a href="/" style="color:#4facfe">Go Home</a>
-            </body>
-        `);
-    } catch (e) { 
-        res.send(`Error: ${e.message}`); 
-    }
-});
-
 router.get('/admin/manage/:slug', async (req, res) => {
     const tour = await Tournament.findOne({ slug: req.params.slug });
     if(!tour) return res.send("Tournament not found");
-    res.render('pages/admin_manage', { tour });
+    res.render('pages/admin_manage', { tour: tour });
 });
 
-router.post('/admin/update-links', urlencodedParser, async (req, res) => {
+router.post('/admin/edit/:id', upload.single('image'), async (req, res) => {
     try {
-        await Tournament.updateOne(
-            { slug: req.body.slug }, 
-            { 
-                regLink: req.body.regLink, 
-                rulesLinkRu: req.body.rulesLinkRu, 
-                rulesLinkEn: req.body.rulesLinkEn 
+        const { title, slug, date, prize, isMine, region, format, description, regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink } = req.body;
+        const updateData = { 
+            title, slug, date, prize,
+            isMine: isMine === 'on',
+            region, format, description,
+            regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink
+        };
+        if (req.file) updateData.image = req.file.filename;
+
+        // Обработка ручного добавления матчей
+        let newMatches = [];
+        if (req.body.matchStage) {
+            let stages = Array.isArray(req.body.matchStage) ? req.body.matchStage : [req.body.matchStage];
+            let titles = Array.isArray(req.body.matchTitle) ? req.body.matchTitle : [req.body.matchTitle];
+            let roomIds = Array.isArray(req.body.matchRoomId) ? req.body.matchRoomId : [req.body.matchRoomId];
+            for (let i = 0; i < stages.length; i++) {
+                if (stages[i] && roomIds[i]) {
+                    newMatches.push({ stage: stages[i].trim(), title: titles[i].trim(), roomId: roomIds[i].trim() });
+                }
             }
-        );
-        res.redirect('/admin/manage/' + req.body.slug);
-    } catch(e) { 
-        res.send(e.message); 
-    }
-});
-
-router.post('/admin/announce', upload.single('image'), async (req, res) => {
-    try {
-        let filename = null; 
-        if (req.file) filename = req.file.filename;
-        
-        await Tournament.updateOne(
-            { slug: req.body.slug }, 
-            { $push: { announcements: { text: req.body.text, image: filename, date: new Date() } } }
-        );
-        res.redirect('/admin/manage/' + req.body.slug);
-    } catch (e) { 
-        res.send(e.message); 
-    }
-});
-
-router.post('/admin/link-match', urlencodedParser, async (req, res) => {
-    const match = await Match.findOne({ roomId: req.body.roomId.toUpperCase() });
-    if (match) { 
-        match.tournamentSlug = req.body.slug; 
-        await match.save(); 
-        res.redirect('/admin/manage/' + req.body.slug); 
-    } else { 
-        res.send(`Match not found!`); 
-    }
-});
-
-// --- СЕКРЕТНЫЙ РОУТ ДЛЯ СОЗДАНИЯ ТУРНИРА LUNA ---
-router.get('/admin/create-luna', async (req, res) => {
-    try {
-        let tour = await Tournament.findOne({ slug: 'luna-iv' });
-        if (!tour) {
-            await Tournament.create({
-                slug: 'luna-iv',
-                title: 'Luna IV TCG Fast Cup 1',
-                date: '21.02',
-                prize: '2 Welkins',
-                region: 'EU / All Pick',
-                regLink: 'https://battlefy.com/2-4-8/luna-iv-tcg-fastcup-1/6995f49550e84a001bb3d95d/info?infoTab=details',
-                type: 'tournament',
-                badgeText: 'OPEN',
-                isLive: true
-            });
-            res.send(`
-                <body style="background:#111; color:#fff; text-align:center; padding:50px;">
-                    <h1 style="color:#4facfe;">Luna IV Tournament Created!</h1><br>
-                    <a href="/" style="color:#d4af37; font-size:1.2em;">Return to Home</a>
-                </body>
-            `);
-        } else {
-            res.send(`
-                <body style="background:#111; color:#fff; text-align:center; padding:50px;">
-                    <h1 style="color:#ff6b6b;">Tournament Already Exists!</h1><br>
-                    <a href="/" style="color:#d4af37; font-size:1.2em;">Return to Home</a>
-                </body>
-            `);
         }
-    } catch(e) { 
-        res.send(e.message); 
-    }
+        updateData.matches = newMatches;
+
+        await Tournament.findByIdAndUpdate(req.params.id, updateData);
+        res.redirect('/admin/dashboard');
+    } catch (err) { console.error(err); res.status(500).send('Error'); }
 });
+
+
 
 // ==========================================
 //           ИГРА И АВТОРИЗАЦИЯ
