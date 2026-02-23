@@ -1,58 +1,88 @@
 <%- include('../partials/header') %>
 
 <style>
-    .page-container { max-width: 900px !important; margin: 0 auto; }
+    /* Убираем ограничение в 900px, позволяем растянуться до 1400px (почти на весь экран) */
+    .page-container { max-width: 1400px !important; width: 100%; margin: 0 auto; box-sizing: border-box; }
     
+    /* ШАПКА ТУРНИРА ПО ЭСКИЗУ */
     .tv-header {
-        background: rgba(10, 12, 20, 0.6); 
-        border: 1px solid #1e2640; 
-        border-radius: 8px; 
-        padding: 40px; 
-        margin-bottom: 30px;
+        background: rgba(16, 20, 32, 0.85); 
+        border: 1px solid #2a3454; 
+        border-radius: 12px; 
+        padding: 50px 30px; 
+        margin-bottom: 40px;
         display: flex; 
         flex-direction: column; 
-        align-items: center;
+        align-items: center; /* Центровка всего контента */
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
     }
     
     .tv-title { 
         font-family: 'Cinzel', serif; 
-        font-size: 2.8em; 
+        font-size: 3.2em; 
         color: #fff; 
-        margin: 0 0 20px 0; 
-        text-shadow: 0 0 20px rgba(79, 172, 254, 0.5); 
+        margin: 0 0 25px 0; 
+        text-shadow: 0 0 20px rgba(79, 172, 254, 0.4); 
         text-align: center;
+        letter-spacing: 2px;
     }
     
-    .tv-badges { display: flex; gap: 20px; margin-bottom: 30px; }
+    .tv-badges { display: flex; gap: 20px; margin-bottom: 35px; flex-wrap: wrap; justify-content: center; }
     .tv-badge { 
-        background: rgba(0,0,0,0.4); border: 2px solid #4facfe; color: #4facfe; 
-        padding: 10px 30px; border-radius: 8px; font-weight: bold; 
-        text-transform: uppercase; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif;
+        background: rgba(0,0,0,0.4); 
+        border: 1px solid #4facfe; 
+        color: #4facfe; 
+        padding: 10px 30px; 
+        border-radius: 30px; /* Скругленные формы */
+        font-weight: bold; 
+        text-transform: uppercase; 
+        letter-spacing: 1px;
+        font-family: 'Segoe UI', sans-serif;
     }
 
-    .tv-links { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 30px; }
-    .tv-btn { padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.95em; transition: 0.2s; border: 1px solid transparent; }
-    .tv-btn-normal { background: rgba(79, 172, 254, 0.1); color: #4facfe; border-color: #4facfe; }
-    .tv-btn-normal:hover { background: #4facfe; color: #000; box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
+    /* КНОПКИ */
+    .tv-links { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 35px; }
+    .tv-btn { 
+        padding: 12px 28px; 
+        border-radius: 8px; 
+        text-decoration: none; 
+        font-weight: bold; 
+        font-size: 0.95em; 
+        transition: all 0.3s ease; 
+        border: 1px solid #3c4566; 
+        background: rgba(42, 52, 84, 0.5);
+        color: #8da4c4;
+    }
+    .tv-btn:hover { 
+        background: #4facfe; 
+        color: #000; 
+        border-color: #4facfe;
+        box-shadow: 0 0 20px rgba(79, 172, 254, 0.4); 
+        transform: translateY(-2px);
+    }
 
-    .tv-divider { width: 100%; height: 1px; background: #2a3454; margin: 10px 0 20px 0; }
-    .tv-date { font-family: 'Segoe UI', sans-serif; font-size: 1.3em; color: #8da4c4; font-weight: bold; text-transform: uppercase; }
-    .tv-date span { color: #fff; }
+    .tv-divider { width: 80%; height: 1px; background: #2a3454; margin: 10px 0 25px 0; }
+    
+    .tv-date { font-family: 'Segoe UI', sans-serif; font-size: 1.2em; color: #8da4c4; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+    .tv-date span { color: #fff; margin-left: 10px;}
 
-    .stage-filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; justify-content: center; }
-    .filter-btn { background: transparent; border: 1px solid #3c4566; color: #8da4c4; padding: 8px 20px; border-radius: 20px; cursor: pointer; transition: 0.2s; font-weight: bold; white-space: nowrap; }
+    /* ФИЛЬТРЫ МАТЧЕЙ */
+    .stage-filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; justify-content: center; padding-bottom: 10px; }
+    .filter-btn { background: transparent; border: 1px solid #3c4566; color: #8da4c4; padding: 10px 25px; border-radius: 30px; cursor: pointer; transition: 0.2s; font-weight: bold; white-space: nowrap; }
     .filter-btn:hover { border-color: #d4af37; color: #fff; }
-    .filter-btn.active { background: #d4af37; color: #000; border-color: #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
+    .filter-btn.active { background: #d4af37; color: #000; border-color: #d4af37; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
 
-    .match-item { background: rgba(0,0,0,0.4); border: 1px solid #2a3454; padding: 15px 25px; border-radius: 6px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; text-decoration: none; }
-    .match-item:hover { border-color: #4facfe; background: rgba(79, 172, 254, 0.05); transform: translateX(5px); }
-    .m-title { font-family: 'Cinzel', serif; font-size: 1.2em; color: #fff; display: flex; align-items: center; gap: 10px; }
-    .m-score { font-size: 1.3em; font-weight: bold; color: #d4af37; margin: 0 20px; letter-spacing: 2px; }
-    .m-replay { background: #2a3454; color: #fff; padding: 6px 15px; border-radius: 4px; font-size: 0.85em; text-transform: uppercase; font-weight: bold; border: 1px solid #3c4566; transition: 0.2s; }
+    /* КАРТОЧКА МАТЧА */
+    .match-item { background: rgba(16, 20, 32, 0.8); border: 1px solid #2a3454; padding: 20px 30px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; text-decoration: none; }
+    .match-item:hover { border-color: #4facfe; background: rgba(26, 31, 51, 1); transform: translateX(5px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+    .m-title { font-family: 'Cinzel', serif; font-size: 1.3em; color: #fff; display: flex; align-items: center; gap: 15px; }
+    .m-score { font-size: 1.5em; font-weight: bold; color: #d4af37; margin: 0 25px; letter-spacing: 2px; }
+    .m-replay { background: #2a3454; color: #fff; padding: 8px 20px; border-radius: 4px; font-size: 0.85em; text-transform: uppercase; font-weight: bold; border: 1px solid #3c4566; transition: 0.2s; }
     .match-item:hover .m-replay { background: #4facfe; color: #000; border-color: #4facfe; }
 </style>
 
 <div class="page-container">
+    
     <div class="tv-header">
         <h1 class="tv-title"><%= tour.title %></h1>
         
@@ -62,21 +92,21 @@
         </div>
 
         <div class="tv-links">
-            <% if (tour.regLink) { %> <a href="<%= tour.regLink %>" target="_blank" class="tv-btn tv-btn-normal">Register</a> <% } %>
-            <% if (tour.bracketLink) { %> <a href="<%= tour.bracketLink %>" target="_blank" class="tv-btn tv-btn-normal">Bracket</a> <% } %>
-            <% if (tour.rulesLink) { %> <a href="<%= tour.rulesLink %>" target="_blank" class="tv-btn tv-btn-normal">Rules (RU)</a> <% } %>
-            <% if (tour.rulesEnLink) { %> <a href="<%= tour.rulesEnLink %>" target="_blank" class="tv-btn tv-btn-normal">Rules (EN)</a> <% } %>
-            <% if (tour.discordLink) { %> <a href="<%= tour.discordLink %>" target="_blank" class="tv-btn tv-btn-normal">Discord</a> <% } %>
-            <% if (tour.telegramLink) { %> <a href="<%= tour.telegramLink %>" target="_blank" class="tv-btn tv-btn-normal">Telegram</a> <% } %>
+            <% if (tour.regLink) { %> <a href="<%= tour.regLink %>" target="_blank" class="tv-btn">Register</a> <% } %>
+            <% if (tour.bracketLink) { %> <a href="<%= tour.bracketLink %>" target="_blank" class="tv-btn">Bracket</a> <% } %>
+            <% if (tour.rulesLink) { %> <a href="<%= tour.rulesLink %>" target="_blank" class="tv-btn">Rules (RU)</a> <% } %>
+            <% if (tour.rulesEnLink) { %> <a href="<%= tour.rulesEnLink %>" target="_blank" class="tv-btn">Rules (EN)</a> <% } %>
+            <% if (tour.discordLink) { %> <a href="<%= tour.discordLink %>" target="_blank" class="tv-btn">Discord</a> <% } %>
+            <% if (tour.telegramLink) { %> <a href="<%= tour.telegramLink %>" target="_blank" class="tv-btn">Telegram</a> <% } %>
         </div>
 
         <div class="tv-divider"></div>
 
         <div class="tv-date">
-            ДАТА / DATE: <span><%= tour.date || 'TBA' %></span>
+            DATE: <span><%= tour.date || 'TBA' %></span>
             <% if(tour.prize) { %>
-                &nbsp;&nbsp;<span style="color:#3c4566;">|</span>&nbsp;&nbsp;
-                <span style="color:#d4af37;">ПРИЗ: <span style="color:#fff;"><%= tour.prize %></span></span>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3c4566;">|</span>&nbsp;&nbsp;&nbsp;&nbsp;
+                PRIZE POOL: <span style="color:#d4af37;"><%= tour.prize %></span>
             <% } %>
         </div>
     </div>
@@ -95,13 +125,13 @@
             <% matches.forEach(m => { %>
                 <a href="/game/<%= m.roomId %>" class="match-item" data-stage="<%= m.stage %>">
                     <div style="display: flex; align-items: center; gap: 20px;">
-                        <span style="color: #8da4c4; font-weight: bold; width: 60px; text-transform: uppercase;"><%= m.stage %></span>
+                        <span style="color: #8da4c4; font-weight: bold; width: 70px; text-transform: uppercase;"><%= m.stage %></span>
                         <div class="m-title">
                             <span style="color: #4facfe;"><%= m.blueName %></span> 
-                            <span style="color: #666; font-size: 0.8em;">VS</span> 
+                            <span style="color: #556; font-size: 0.8em;">VS</span> 
                             <span style="color: #ff6b6b;"><%= m.redName %></span>
                             <% if (m.title) { %>
-                                <span style="font-family: 'Segoe UI', sans-serif; font-size: 0.8em; color: #888; font-weight: normal;">(<%= m.title %>)</span>
+                                <span style="font-family: 'Segoe UI', sans-serif; font-size: 0.8em; color: #6a7b9c; font-weight: normal; margin-left: 10px;">(<%= m.title %>)</span>
                             <% } %>
                         </div>
                     </div>
@@ -115,11 +145,13 @@
                 </a>
             <% }) %>
         </div>
+
     <% } else { %>
-        <div style="text-align: center; padding: 40px; color: #8da4c4; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed #2a3454;">
-            <p style="margin: 0;">No matches added to this tournament yet.</p>
+        <div style="text-align: center; padding: 50px; color: #8da4c4; background: rgba(16, 20, 32, 0.6); border-radius: 12px; border: 1px dashed #2a3454;">
+            <p style="margin: 0; font-size: 1.1em;">No matches added to this tournament yet.</p>
         </div>
     <% } %>
+
 </div>
 
 <script>
