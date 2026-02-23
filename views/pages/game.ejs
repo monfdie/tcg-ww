@@ -72,6 +72,13 @@ body, html {
     }
 
     .turn-timer { transition: opacity 0.3s ease; }
+
+    /* Отступ между панелями игроков (вместо линии) */
+    .draft-area {
+        display: flex;
+        justify-content: center;
+        gap: 60px;
+    }
 </style>
 
 <div id="game-screen">
@@ -105,7 +112,7 @@ body, html {
              <div class="pick-row" id="blue-picks-1"></div>
              <div class="pick-row-small" id="blue-picks-2"></div>
          </div>
-        
+         
          <div class="team-side red-side">
              <div class="player-header">
                  <div id="red-ready-switch" class="ready-switch" onclick="toggleReady('red')">
