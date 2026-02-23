@@ -1,21 +1,43 @@
 <%- include('../partials/header') %>
 
 <style>
-    .page-container {
-        max-width: 1600px !important; /* Было 1200px */
-    }
+    .page-container { max-width: 1200px !important; }
+    .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #2a3454; padding-bottom: 10px; }
+    .section-header h2 { font-family: 'Segoe UI', sans-serif; font-size: 1.2em; margin: 0; color: #fff; }
+    .live-indicator { width: 8px; height: 8px; background: #ff4444; border-radius: 50%; box-shadow: 0 0 10px #ff4444; }
+
+    .tournament-list { display: flex; flex-direction: column; gap: 10px; }
+    .tour-rect-card { display: flex; align-items: center; background: #161c30; border: 1px solid #2a3454; border-radius: 6px; text-decoration: none; transition: 0.2s; height: 80px; padding: 0 25px; cursor: pointer; }
+    .tour-rect-card:hover { background: #1e2538; border-color: #4facfe; transform: translateX(5px); }
+    .archive-style { opacity: 0.6; }
+    .archive-style:hover { opacity: 1; border-color: #d4af37; }
+
+    .card-center { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+    .card-title { color: #fff; font-size: 1.1em; font-weight: bold; margin-bottom: 5px; }
+    .card-hashtags { display: flex; gap: 8px; font-size: 0.85em; color: #6a7b9c; align-items: center; }
+    .dot-separator { font-size: 0.6em; color: #444; }
+
+    .card-right { display: flex; gap: 40px; text-align: right; }
+    .info-group { display: flex; flex-direction: column; justify-content: center; }
+    .info-group label { font-size: 0.75em; color: #556; margin-bottom: 2px; }
+    .info-group span { color: #fff; font-size: 0.95em; font-weight: 500; }
+    .prize-text { color: #d4af37; font-weight: bold; }
+
+    /* МОДАЛКА */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+    .modal-box { background: #161c30; border: 1px solid #4facfe; width: 90%; max-width: 500px; padding: 30px; border-radius: 8px; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .modal-close { position: absolute; top: 15px; right: 20px; color: #888; font-size: 24px; cursor: pointer; transition: 0.2s; }
+    .modal-close:hover { color: #fff; }
+    .m-title { margin: 0; font-family: 'Cinzel', serif; color: #fff; border-bottom: 1px solid #2a3454; padding-bottom: 10px; font-size: 1.8em; }
+    .m-desc { color: #ccc; font-size: 0.95em; line-height: 1.5; margin: 0; }
+    
+    .link-btn { padding: 12px; background: #2a3454; color: #fff; text-align: center; text-decoration: none; border-radius: 4px; font-weight: bold; transition: 0.2s; border: 1px solid transparent; font-family: 'Segoe UI', sans-serif; }
+    .link-btn:hover { background: #3c4566; border-color: #4facfe; }
+    .btn-reg { background: #d4af37; color: #000; }
+    .btn-reg:hover { background: #f2d06b; border-color: #fff; color: #000; }
 </style>
 
 <div class="page-container">
-
-    <div class="filters-container">
-        <span style="color: #8da4c4; margin-right: 10px; font-size: 0.9em;">Filters:</span>
-        <button class="filter-pill" onclick="toggleFilter('AS', this)">AS</button>
-        <button class="filter-pill" onclick="toggleFilter('NA', this)">NA</button>
-        <button class="filter-pill" onclick="toggleFilter('EU', this)">EU</button>
-        <button class="filter-pill" onclick="toggleFilter('Draft', this)">Draft</button>
-        <button class="filter-pill" onclick="toggleFilter('Allpick', this)">All pick</button>
-    </div>
 
     <div class="section-header">
         <div class="live-indicator"></div>
@@ -25,250 +47,136 @@
     <div class="tournament-list" id="list-active">
         <% if (tournaments && tournaments.length > 0) { %>
             <% tournaments.forEach(tour => { %>
-                <a href="<%= (tour.regLink && tour.regLink.startsWith('http')) ? tour.regLink : '/tournament/' + tour.slug %>" 
-                   class="tour-rect-card" 
-                   target="<%= (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self' %>"
-                   data-tags="<%= tour.region %> <%= tour.system %>">
+                
+                <% if (tour.isMine !== false) { %>
+                    <a href="/tournament/<%= tour.slug %>" class="tour-rect-card">
+                <% } else { %>
+                    <div class="tour-rect-card" onclick="openModal('<%= tour._id %>')">
+                <% } %>
                     
                     <div class="card-center">
                         <div class="card-title"><%= tour.title %></div>
                         <div class="card-hashtags">
-                            <span><%= tour.slug %></span>
+                            <span><%= tour.region || 'Global' %></span>
                             <span class="dot-separator">•</span>
-                            <span><%= tour.region %></span>
-                            <span class="dot-separator">•</span>
-                            <span><%= tour.system %></span>
+                            <span><%= tour.format || 'Standard' %></span>
                         </div>
                     </div>
 
                     <div class="card-right">
                         <div class="info-group">
-                            <label>Draft system</label>
-                            <span><%= tour.system %></span>
-                        </div>
-                        <div class="info-group">
                             <label>Prize</label>
-                            <span class="prize-text">🏆 <%= tour.prize %></span>
+                            <span class="prize-text">🏆 <%= tour.prize || 'TBA' %></span>
                         </div>
                     </div>
-                </a>
+
+                <% if (tour.isMine !== false) { %> </a> <% } else { %> </div> <% } %>
+
+                <% if (tour.isMine === false) { %>
+                    <div id="data-<%= tour._id %>" style="display:none;" 
+                        data-title="<%= tour.title %>" data-desc="<%= tour.description %>"
+                        data-reg="<%= tour.regLink %>" data-rules="<%= tour.rulesLink %>"
+                        data-rulesen="<%= tour.rulesEnLink %>" data-discord="<%= tour.discordLink %>"
+                        data-telegram="<%= tour.telegramLink %>" data-bracket="<%= tour.bracketLink %>">
+                    </div>
+                <% } %>
+
             <% }); %>
         <% } else { %>
-            <div class="empty-state">No active tournaments.</div>
+            <div style="color: #556; padding: 20px; font-style: italic;">No active tournaments.</div>
         <% } %>
     </div>
 
-    <div class="section-header" style="margin-top: 40px;">
+    <div class="section-header" style="margin-top: 50px;">
         <h2 style="color: #8da4c4;">Archive</h2>
     </div>
 
     <div class="tournament-list" id="list-archive">
         <% if (archive && archive.length > 0) { %>
             <% archive.forEach(tour => { %>
-                <a href="<%= (tour.regLink && tour.regLink.startsWith('http')) ? tour.regLink : '/tournament/' + tour.slug %>" 
-                   class="tour-rect-card archive-style" 
-                   target="<%= (tour.regLink && tour.regLink.startsWith('http')) ? '_blank' : '_self' %>"
-                   data-tags="<%= tour.region %> <%= tour.system %>">
+                
+                <% if (tour.isMine !== false) { %>
+                    <a href="/tournament/<%= tour.slug %>" class="tour-rect-card archive-style">
+                <% } else { %>
+                    <div class="tour-rect-card archive-style" onclick="openModal('<%= tour._id %>')">
+                <% } %>
                     
                     <div class="card-center">
                         <div class="card-title"><%= tour.title %></div>
                         <div class="card-hashtags">
-                            <span><%= tour.slug %></span>
+                            <span><%= tour.date || 'TBA' %></span>
                             <span class="dot-separator">•</span>
-                            <span><%= tour.date %></span>
+                            <span><%= tour.format || 'Standard' %></span>
+                        </div>
+                    </div>
+                    <div class="card-right">
+                        <div class="info-group">
+                            <label>Prize</label>
+                            <span class="prize-text" style="color:#aaa;">🏆 <%= tour.prize || 'TBA' %></span>
                         </div>
                     </div>
 
-                    <div class="card-right">
-                        <div class="info-group">
-                            <label>System</label>
-                            <span><%= tour.system %></span>
-                        </div>
-                        <div class="info-group">
-                            <label>Prize</label>
-                            <span class="prize-text">🏆 <%= tour.prize %></span>
-                        </div>
+                <% if (tour.isMine !== false) { %> </a> <% } else { %> </div> <% } %>
+
+                <% if (tour.isMine === false) { %>
+                    <div id="data-<%= tour._id %>" style="display:none;" 
+                        data-title="<%= tour.title %>" data-desc="<%= tour.description %>"
+                        data-reg="<%= tour.regLink %>" data-rules="<%= tour.rulesLink %>"
+                        data-rulesen="<%= tour.rulesEnLink %>" data-discord="<%= tour.discordLink %>"
+                        data-telegram="<%= tour.telegramLink %>" data-bracket="<%= tour.bracketLink %>">
                     </div>
-                </a>
+                <% } %>
+
             <% }); %>
         <% } else { %>
-            <div class="empty-state">Archive is empty.</div>
+            <div style="color: #556; padding: 20px; font-style: italic;">Archive is empty.</div>
         <% } %>
     </div>
 
 </div>
 
-<style>
-    /* --- ФИЛЬТРЫ --- */
-    .filters-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 30px;
-        flex-wrap: wrap;
-    }
-    .filter-pill {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid #3c4566;
-        color: #8da4c4;
-        padding: 6px 16px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 0.9em;
-        transition: 0.2s;
-    }
-    .filter-pill:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-    }
-    .filter-pill.active {
-        background: #4facfe;
-        color: #0b0d17;
-        border-color: #4facfe;
-        font-weight: bold;
-    }
-
-    /* --- ЗАГОЛОВКИ РАЗДЕЛОВ --- */
-    .section-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 15px;
-        border-bottom: 1px solid #2a3454;
-        padding-bottom: 10px;
-    }
-    .section-header h2 {
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 1.2em;
-        margin: 0;
-        color: #fff;
-    }
-    .live-indicator {
-        width: 8px;
-        height: 8px;
-        background: #ff4444;
-        border-radius: 50%;
-        box-shadow: 0 0 10px #ff4444;
-    }
-
-    /* --- КАРТОЧКА ТУРНИРА --- */
-    .tournament-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .tour-rect-card {
-        display: flex;
-        align-items: center;
-        background: #161c30;
-        border: 1px solid #2a3454;
-        border-radius: 4px;
-        text-decoration: none;
-        transition: 0.2s;
-        height: 80px;
-        overflow: hidden;
-        padding-left: 25px; /* Отступ слева вместо картинки */
-    }
-    .tour-rect-card:hover {
-        background: #1e2538;
-        border-color: #4facfe;
-    }
-
-    /* Центр (Название) */
-    .card-center {
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    .card-title {
-        color: #fff;
-        font-size: 1.1em;
-        font-weight: bold;
-        margin-bottom: 5px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .card-hashtags {
-        display: flex;
-        gap: 8px;
-        font-size: 0.85em;
-        color: #6a7b9c;
-        align-items: center;
-    }
-    .dot-separator {
-        font-size: 0.6em;
-        color: #444;
-    }
-
-    /* Правая часть (Инфо) */
-    .card-right {
-        display: flex;
-        gap: 40px;
-        padding-right: 30px;
-        text-align: right;
-    }
-    .info-group {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    .info-group label {
-        font-size: 0.75em;
-        color: #556;
-        margin-bottom: 2px;
-    }
-    .info-group span {
-        color: #fff;
-        font-size: 0.95em;
-        font-weight: 500;
-    }
-    .prize-text { color: #fff; font-weight: bold; }
-
-    /* Архивный стиль */
-    .archive-style { opacity: 0.7; }
-    .empty-state { color: #556; padding: 20px; font-style: italic; }
-</style>
+<div id="tModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-box" id="modalBox">
+        <span class="modal-close" onclick="closeModalDirect()">×</span>
+        <h2 id="m-title" class="m-title">Title</h2>
+        <p id="m-desc" class="m-desc"></p>
+        
+        <div id="m-links" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            </div>
+    </div>
+</div>
 
 <script>
-    let activeFilters = new Set();
-
-    function toggleFilter(tag, btn) {
-        if (activeFilters.has(tag)) {
-            activeFilters.delete(tag);
-            btn.classList.remove('active');
-        } else {
-            activeFilters.add(tag);
-            btn.classList.add('active');
-        }
-        applyFilters();
-    }
-
-    function applyFilters() {
-        const cards = document.querySelectorAll('.tour-rect-card');
+    function openModal(id) {
+        const data = document.getElementById('data-' + id);
+        document.getElementById('m-title').innerText = data.getAttribute('data-title');
         
-        cards.forEach(card => {
-            if (activeFilters.size === 0) {
-                card.style.display = 'flex';
-                return;
+        const desc = data.getAttribute('data-desc');
+        document.getElementById('m-desc').innerText = desc ? desc : '';
+        document.getElementById('m-desc').style.display = desc ? 'block' : 'none';
+        
+        const linksDiv = document.getElementById('m-links');
+        linksDiv.innerHTML = ''; 
+        
+        const addBtn = (link, text, cls = 'link-btn') => {
+            if(link && link.trim() !== '') {
+                linksDiv.innerHTML += `<a href="${link}" target="_blank" class="${cls}">${text}</a>`;
             }
+        };
 
-            const cardTags = card.getAttribute('data-tags');
-            let isVisible = false;
-            activeFilters.forEach(filter => {
-                if (cardTags.includes(filter)) isVisible = true;
-            });
+        addBtn(data.getAttribute('data-reg'), '📝 Register', 'link-btn btn-reg');
+        addBtn(data.getAttribute('data-bracket'), '🏆 Bracket');
+        addBtn(data.getAttribute('data-rules'), '📜 Rules (RU)');
+        addBtn(data.getAttribute('data-rulesen'), '📜 Rules (EN)');
+        addBtn(data.getAttribute('data-discord'), '💬 Discord');
+        addBtn(data.getAttribute('data-telegram'), '✈️ Telegram');
 
-            if (isVisible) {
-                card.style.display = 'flex';
-            } else {
-                card.style.display = 'none';
-            }
-        });
+        if(linksDiv.innerHTML === '') linksDiv.innerHTML = '<span style="color:#666; text-align:center; padding: 10px;">No links provided</span>';
+
+        document.getElementById('tModal').style.display = 'flex';
     }
+    function closeModal(event) { if (event.target.id === 'tModal') closeModalDirect(); }
+    function closeModalDirect() { document.getElementById('tModal').style.display = 'none'; }
 </script>
 
 <%- include('../partials/footer') %>
