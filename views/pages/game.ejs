@@ -2,15 +2,29 @@
 
 <style>
 
-body {
-        /* Накладываем темный фильтр поверх картинки, чтобы интерфейс было видно */
-        background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
+/* 1. ГЛАВНЫЙ ФОН (Затемнение 0.85 означает 85% темноты) */
+    body, html {
+        background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important;
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+        background-attachment: fixed !important;
         min-height: 100vh;
     }
+
+    /* 2. ДЕЛАЕМ ПУЛЛ ПЕРСОНАЖЕЙ И ФОН ИГРЫ ПРОЗРАЧНЫМИ */
+    .page-container, #game-screen, .char-pool {
+        background: transparent !important;
+    }
+    
+    /* Полупрозрачная подложка под лестницу (порядок пиков) */
+    .ladder-container {
+        background: rgba(10, 12, 20, 0.4) !important;
+        backdrop-filter: blur(8px);
+        border-radius: 12px;
+        padding: 10px;
+    }
+
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
     .player-header { height: auto !important; min-height: 70px; }
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
