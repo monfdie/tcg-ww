@@ -2,12 +2,16 @@ const mongoose = require('mongoose');
 
 const tournamentSchema = new mongoose.Schema({
     title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
+    slug: { type: String, required: true, unique: true }, // СЛАГ ДОЛЖЕН БЫТЬ УНИКАЛЬНЫМ
     date: { type: String },
     prize: { type: String },
     
+    // ВЕРНУЛИ ЭТИ ПОЛЯ (Они нужны для работы главной страницы и новостей)
+    type: { type: String, default: 'tournament' }, 
+    isLive: { type: Boolean, default: true },
+    
     // Новые поля
-    isMine: { type: Boolean, default: true }, // Твой или Чужой
+    isMine: { type: Boolean, default: true },
     region: { type: String, default: 'Global' },
     format: { type: String, default: 'Standard' },
     description: { type: String, default: '' },
@@ -21,8 +25,7 @@ const tournamentSchema = new mongoose.Schema({
     telegramLink: { type: String, default: '' },
     bracketLink: { type: String, default: '' },
 
-    // Матчи (для твоих турниров)
-    // Формат: [{ stage: "Final", title: "P1 vs P2", roomId: "ABCD" }]
+    // Матчи
     matches: { type: Array, default: [] },
     
     createdAt: { type: Date, default: Date.now }
