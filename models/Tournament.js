@@ -1,35 +1,31 @@
 const mongoose = require('mongoose');
 
 const tournamentSchema = new mongoose.Schema({
-    slug: { type: String, unique: true },
-    title: String,
-    date: String,
-    prize: String,
-    region: String,
-    system: String,
+    title: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
+    date: { type: String },
+    prize: { type: String },
+    
+    // Новые поля
+    isMine: { type: Boolean, default: true }, // Твой или Чужой
+    region: { type: String, default: 'Global' },
+    format: { type: String, default: 'Standard' },
+    description: { type: String, default: '' },
+    image: { type: String, default: '' },
     
     // Ссылки
-    regLink: String,      // Регистрация
-    rulesLinkRu: String,  // Регламент RU
-    rulesLinkEn: String,  // Регламент EN
-    
-    // Внешний вид
-    image: { type: String, default: null },
-    type: { type: String, default: 'tournament' },
-    description: { type: String, default: '' },
-    openInModal: { type: Boolean, default: false },
-    cardStyle: { type: String, default: 'blue' },
-    badgeText: { type: String, default: 'OPEN' },
-    
-    // ЛЕНТА НОВОСТЕЙ (Как в Телеграме)
-    announcements: [{
-        text: String,
-        image: String,
-        date: { type: Date, default: Date.now }
-    }],
+    regLink: { type: String, default: '' },
+    rulesLink: { type: String, default: '' },
+    rulesEnLink: { type: String, default: '' },
+    discordLink: { type: String, default: '' },
+    telegramLink: { type: String, default: '' },
+    bracketLink: { type: String, default: '' },
 
-    visibleUntil: { type: Date },
-    isLive: { type: Boolean, default: true }
+    // Матчи (для твоих турниров)
+    // Формат: [{ stage: "Final", title: "P1 vs P2", roomId: "ABCD" }]
+    matches: { type: Array, default: [] },
+    
+    createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('Tournament', tournamentSchema);
