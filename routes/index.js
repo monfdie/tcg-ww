@@ -8,23 +8,24 @@ const Match = require('../models/Match');
 const Tournament = require('../models/Tournament');
 const CHARACTERS_BY_ELEMENT = require('../characters.json');
 
-// --- 1. НАСТРОЙКА ПАПКИ ДЛЯ КАРТИНОК ---
 const uploadDir = path.join(__dirname, '../public/uploads');
 if (!fs.existsSync(uploadDir)){
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) { 
-        cb(null, uploadDir); 
-    },
-    filename: function(req, file, cb) { 
-        cb(null, 'post-' + Date.now() + path.extname(file.originalname)); 
-    }
+    destination: function (req, file, cb) { cb(null, uploadDir); },
+    filename: function(req, file, cb) { cb(null, 'post-' + Date.now() + path.extname(file.originalname)); }
 });
 
 const upload = multer({ storage: storage, limits: { fileSize: 5000000 } });
 const urlencodedParser = express.urlencoded({ extended: false });
+
+// Middleware для проверки админа
+function isAdmin(req, res, next) {
+    if (req.isAuthenticated() && req.user.discordId === process.env.ADMIN_DISCORD_ID) return next();
+    res.redirect('/');
+}
 
 router.use((req, res, next) => {
     res.locals.user = req.user || null;
@@ -41,11 +42,7 @@ router.get('/', async (req, res) => {
         const today = new Date();
         const news = await Tournament.find({
             isLive: true,
-            $or: [ 
-                { visibleUntil: { $exists: false } }, 
-                { visibleUntil: { $eq: null } }, 
-                { visibleUntil: { $gt: today } } 
-            ]
+            $or: [ { visibleUntil: { $exists: false } }, { visibleUntil: { $eq: null } }, { visibleUntil: { $gt: today } } ]
         }).sort({ date: 1 });
         res.render('pages/home', { title: 'Home', news });
     } catch (e) {
@@ -53,30 +50,13 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/create', (req, res) => {
-    res.render('pages/create', { title: 'Create Game' });
-});
+router.get('/create', (req, res) => { res.render('pages/create', { title: 'Create Game' }); });
 
 router.get('/tournaments', async (req, res) => {
     try {
         const currentDate = new Date();
-        const activeTournaments = await Tournament.find({ 
-            type: 'tournament', 
-            isLive: true,
-            $or: [ 
-                { visibleUntil: { $exists: false } }, 
-                { visibleUntil: { $eq: null } }, 
-                { visibleUntil: { $gt: currentDate } } 
-            ]
-        }).sort({ date: -1 });
-
-        const archivedTournaments = await Tournament.find({
-            type: 'tournament',
-            $or: [ 
-                { isLive: false }, 
-                { visibleUntil: { $lte: currentDate } } 
-            ]
-        }).sort({ date: -1 });
+        const activeTournaments = await Tournament.find({ type: 'tournament', isLive: true }).sort({ createdAt: -1 });
+        const archivedTournaments = await Tournament.find({ type: 'tournament', isLive: false }).sort({ createdAt: -1 });
         
         res.render('pages/tournaments', { title: 'Tournaments', tournaments: activeTournaments, archive: archivedTournaments });
     } catch (e) {
@@ -89,9 +69,28 @@ router.get('/tournament/:slug', async (req, res) => {
         const tour = await Tournament.findOne({ slug: req.params.slug });
         if (!tour) return res.status(404).send('Tournament not found');
         
-        const matches = await Match.find({ tournamentSlug: tour.slug }).sort({ date: -1 });
-        res.render('pages/tournament_view', { title: tour.title, tour: tour, matches: matches });
-    } catch (e) {
+        // ЕСЛИ ЭТО ЧУЖОЙ ТУРНИР - НЕ ПУСКАЕМ НА ЭТУ СТРАНИЦУ
+        if (tour.isMine === false) {
+            return res.redirect('/tournaments');
+        }
+
+        const roomIds = tour.matches ? tour.matches.map(m => m.roomId) : [];
+        const dbMatches = await Match.find({ roomId: { $in: roomIds } });
+
+        const enrichedMatches = (tour.matches || []).map(tm => {
+            const found = dbMatches.find(m => m.roomId === tm.roomId);
+            return {
+                ...tm,
+                score: found ? found.score : null,
+                blueName: found ? found.blueName : 'P1',
+                redName: found ? found.redName : 'P2',
+                date: found ? found.date : null
+            };
+        });
+
+        res.render('pages/tournament_view', { title: tour.title, tour: tour, matches: enrichedMatches });
+    } catch (err) {
+        console.error(err);
         res.redirect('/tournaments');
     }
 });
@@ -100,120 +99,76 @@ router.get('/history', async (req, res) => {
     try {
         let matches = [];
         if (req.user) {
-            matches = await Match.find({ 
-                $or: [ 
-                    { blueDiscordId: req.user.discordId }, 
-                    { redDiscordId: req.user.discordId } 
-                ] 
-            }).sort({ date: -1 });
+            matches = await Match.find({ $or: [ { blueDiscordId: req.user.discordId }, { redDiscordId: req.user.discordId } ] }).sort({ date: -1 });
         }
         res.render('pages/history', { title: 'My History', matches });
-    } catch (e) {
-        res.render('pages/history', { title: 'History', matches: [] });
-    }
+    } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
 });
+
 
 // ==========================================
 //           АДМИН-ПАНЕЛЬ
 // ==========================================
 
-router.get('/admin/dashboard', async (req, res) => {
-    const tournaments = await Tournament.find().sort({ date: -1 });
+router.get('/admin/dashboard', isAdmin, async (req, res) => {
+    const tournaments = await Tournament.find().sort({ createdAt: -1 });
     res.render('pages/admin_dashboard', { tournaments });
 });
 
-// --- 1. ДОБАВЛЕНИЕ ТУРНИРА ---
-router.get('/admin/add-tournament', (req, res) => {
+router.get('/admin/add-tournament', isAdmin, (req, res) => {
     res.render('pages/admin_add_tournament', { title: 'Add Tournament' });
 });
 
-router.post('/admin/add-tournament', upload.single('image'), async (req, res) => {
+router.post('/admin/add-tournament', isAdmin, upload.single('image'), async (req, res) => {
     try {
         const { title, slug, date, prize, isMine, region, format, description, regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink } = req.body;
         const image = req.file ? req.file.filename : '';
-        
         await Tournament.create({ 
-            type: 'tournament',
-            title, slug, date, prize, image,
-            isMine: isMine === 'on',
-            region, format, description,
-            regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink,
-            isLive: true
+            type: 'tournament', title, slug, date, prize, image,
+            isMine: isMine === 'on', region, format, description,
+            regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink, isLive: true
         });
         res.redirect('/admin/dashboard');
-    } catch (err) { 
-        console.error(err); 
-        res.status(500).send(`
-            <h2 style="color:red; font-family:sans-serif;">Error adding tournament!</h2>
-            <p style="font-family:sans-serif;">${err.message}</p>
-            <p style="font-family:sans-serif;"><b>Tip:</b> Make sure the "URL Slug" is completely unique and no other tournament uses it!</p>
-            <a href="/admin/add-tournament">Go back</a>
-        `); 
-    }
+    } catch (err) { res.status(500).send(`Error: ${err.message}`); }
 });
 
-// --- 2. ДОБАВЛЕНИЕ ОБЪЯВЛЕНИЯ (НОВОСТИ) ---
-router.get('/admin/add-announcement', (req, res) => {
+router.get('/admin/add-announcement', isAdmin, (req, res) => {
     res.render('pages/admin_add_announcement', { title: 'Add Announcement' });
 });
 
-router.post('/admin/add-announcement', upload.single('image'), async (req, res) => {
+router.post('/admin/add-announcement', isAdmin, upload.single('image'), async (req, res) => {
     try {
         const { title, description, slug, regLink } = req.body;
-        // Если слаг не указан, генерируем уникальный автоматически
         let finalSlug = slug && slug.trim() !== '' ? slug : 'news-' + Date.now();
         let imageFilename = req.file ? req.file.filename : '';
-
         await Tournament.create({
-            type: 'announcement', 
-            slug: finalSlug, 
-            title: title, 
-            image: imageFilename,
-            description: description, 
-            regLink: regLink, 
-            isLive: true, 
-            date: new Date().toLocaleDateString()
+            type: 'announcement', slug: finalSlug, title: title, image: imageFilename,
+            description: description, regLink: regLink, isLive: true, date: new Date().toLocaleDateString()
         });
-        
         res.redirect('/admin/dashboard');
-    } catch (err) { 
-        console.error(err);
-        res.status(500).send(`
-            <h2 style="color:red; font-family:sans-serif;">Error adding announcement!</h2>
-            <p style="font-family:sans-serif;">${err.message}</p>
-            <a href="/admin/add-announcement">Go back</a>
-        `); 
-    }
+    } catch (err) { res.status(500).send(`Error: ${err.message}`); }
 });
 
-// --- 3. УДАЛЕНИЕ И РЕДАКТИРОВАНИЕ ---
-router.post('/admin/delete/:id', async (req, res) => {
-    try { 
-        await Tournament.findByIdAndDelete(req.params.id); 
-        res.redirect('/admin/dashboard'); 
-    } catch (e) { 
-        res.send("Error: " + e.message); 
-    }
+router.post('/admin/delete/:id', isAdmin, async (req, res) => {
+    try { await Tournament.findByIdAndDelete(req.params.id); res.redirect('/admin/dashboard'); } 
+    catch (e) { res.send("Error: " + e.message); }
 });
 
-router.get('/admin/manage/:slug', async (req, res) => {
+router.get('/admin/manage/:slug', isAdmin, async (req, res) => {
     const tour = await Tournament.findOne({ slug: req.params.slug });
     if(!tour) return res.send("Tournament not found");
     res.render('pages/admin_manage', { tour: tour });
 });
 
-router.post('/admin/edit/:id', upload.single('image'), async (req, res) => {
+router.post('/admin/edit/:id', isAdmin, upload.single('image'), async (req, res) => {
     try {
         const { title, slug, date, prize, isMine, region, format, description, regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink } = req.body;
         const updateData = { 
-            title, slug, date, prize,
-            isMine: isMine === 'on',
-            region, format, description,
+            title, slug, date, prize, isMine: isMine === 'on', region, format, description,
             regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink
         };
         if (req.file) updateData.image = req.file.filename;
 
-        // Обработка ручного добавления матчей
         let newMatches = [];
         if (req.body.matchStage) {
             let stages = Array.isArray(req.body.matchStage) ? req.body.matchStage : [req.body.matchStage];
@@ -226,13 +181,10 @@ router.post('/admin/edit/:id', upload.single('image'), async (req, res) => {
             }
         }
         updateData.matches = newMatches;
-
         await Tournament.findByIdAndUpdate(req.params.id, updateData);
         res.redirect('/admin/dashboard');
-    } catch (err) { console.error(err); res.status(500).send('Error'); }
+    } catch (err) { res.status(500).send('Error: ' + err.message); }
 });
-
-
 
 // ==========================================
 //           ИГРА И АВТОРИЗАЦИЯ
@@ -241,35 +193,12 @@ router.post('/admin/edit/:id', upload.single('image'), async (req, res) => {
 router.get('/game/:id', async (req, res) => {
     try {
         const match = await Match.findOne({ roomId: req.params.id });
-        res.render('pages/game', { 
-            title: `Room ${req.params.id}`, 
-            roomId: req.params.id, 
-            savedData: match || null, 
-            chars: CHARACTERS_BY_ELEMENT, 
-            hideSidebar: true 
-        });
-    } catch (e) { 
-        res.render('pages/game', { 
-            title: "Error", 
-            roomId: req.params.id, 
-            savedData: null, 
-            chars: CHARACTERS_BY_ELEMENT, 
-            hideSidebar: true 
-        }); 
-    }
+        res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id, savedData: match || null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true });
+    } catch (e) { res.render('pages/game', { title: "Error", roomId: req.params.id, savedData: null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true }); }
 });
 
 router.get('/auth/discord', passport.authenticate('discord'));
-
-router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => {
-    res.redirect('/');
-});
-
-router.get('/logout', (req, res, next) => { 
-    req.logout((err) => { 
-        if (err) return next(err); 
-        res.redirect('/'); 
-    }); 
-});
+router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => { res.redirect('/'); });
+router.get('/logout', (req, res, next) => { req.logout((err) => { if (err) return next(err); res.redirect('/'); }); });
 
 module.exports = router;
