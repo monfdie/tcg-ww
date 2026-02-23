@@ -23,22 +23,32 @@
     .info-group span { color: #fff; font-size: 0.95em; font-weight: 500; }
     .prize-text { color: #d4af37; font-weight: bold; }
 
-    /* МОДАЛКА */
+    /* МОДАЛКА В СТИЛЕ TONAMEL */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-    .modal-box { background: #161c30; border: 1px solid #4facfe; width: 90%; max-width: 500px; padding: 30px; border-radius: 8px; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .modal-close { position: absolute; top: 15px; right: 20px; color: #888; font-size: 24px; cursor: pointer; transition: 0.2s; }
+    .modal-box { background: #111526; border: 1px solid #2a3454; width: 90%; max-width: 450px; padding: 30px; border-radius: 12px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column; }
+    .modal-close { position: absolute; top: 15px; right: 20px; color: #556; font-size: 28px; cursor: pointer; transition: 0.2s; line-height: 1; }
     .modal-close:hover { color: #fff; }
-    .m-title { margin: 0; font-family: 'Cinzel', serif; color: #fff; border-bottom: 1px solid #2a3454; padding-bottom: 10px; font-size: 1.8em; }
-    .m-desc { color: #ccc; font-size: 0.95em; line-height: 1.5; margin: 0; }
     
-    .link-btn { padding: 12px; background: #2a3454; color: #fff; text-align: center; text-decoration: none; border-radius: 4px; font-weight: bold; transition: 0.2s; border: 1px solid transparent; font-family: 'Segoe UI', sans-serif; }
-    .link-btn:hover { background: #3c4566; border-color: #4facfe; }
-    .btn-reg { background: #d4af37; color: #000; }
-    .btn-reg:hover { background: #f2d06b; border-color: #fff; color: #000; }
+    .m-title { margin: 0 0 20px 0; font-family: 'Segoe UI', sans-serif; color: #fff; font-size: 1.8em; font-weight: bold; }
+    .m-info-card { background: rgba(26, 31, 51, 0.8); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .m-info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .m-info-row:last-child { margin-bottom: 0; }
+    .m-label { color: #556; font-size: 0.9em; font-weight: bold; }
+    .m-value { color: #fff; font-weight: bold; }
+    .m-prize-val { color: #d4af37; font-weight: bold; font-size: 1.1em; }
+    
+    .m-tags { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+    .m-tag { background: rgba(79, 172, 254, 0.1); color: #4facfe; padding: 5px 15px; border-radius: 20px; font-size: 0.85em; font-weight: bold; }
+    .m-tag-gold { background: rgba(212, 175, 55, 0.1); color: #d4af37; }
+    
+    .main-reg-btn { display: block; width: 100%; padding: 15px; border-radius: 30px; border: 2px solid #4facfe; color: #4facfe; text-align: center; text-decoration: none; font-weight: bold; transition: 0.2s; text-transform: uppercase; margin-bottom: 15px; font-family: 'Segoe UI', sans-serif;}
+    .main-reg-btn:hover { background: #4facfe; color: #000; box-shadow: 0 0 20px rgba(79,172,254,0.4); }
+    
+    .secondary-link { display: block; width: 100%; padding: 12px; border-radius: 8px; background: #1a1f33; color: #fff; text-align: center; text-decoration: none; font-size: 0.9em; transition: 0.2s; font-weight: bold; margin-bottom: 8px; }
+    .secondary-link:hover { background: #2a3454; }
 </style>
 
 <div class="page-container">
-
     <div class="section-header">
         <div class="live-indicator"></div>
         <h2>Live Events</h2>
@@ -48,12 +58,11 @@
         <% if (tournaments && tournaments.length > 0) { %>
             <% tournaments.forEach(tour => { %>
                 
-                <% if (tour.isMine !== false) { %>
+                <% if (tour.isMine) { %>
                     <a href="/tournament/<%= tour.slug %>" class="tour-rect-card">
                 <% } else { %>
                     <div class="tour-rect-card" onclick="openModal('<%= tour._id %>')">
                 <% } %>
-                    
                     <div class="card-center">
                         <div class="card-title"><%= tour.title %></div>
                         <div class="card-hashtags">
@@ -62,25 +71,29 @@
                             <span><%= tour.format || 'Standard' %></span>
                         </div>
                     </div>
-
                     <div class="card-right">
                         <div class="info-group">
                             <label>Prize</label>
                             <span class="prize-text">🏆 <%= tour.prize || 'TBA' %></span>
                         </div>
                     </div>
+                <% if (tour.isMine) { %> </a> <% } else { %> </div> <% } %>
 
-                <% if (tour.isMine !== false) { %> </a> <% } else { %> </div> <% } %>
-
-                <% if (tour.isMine === false) { %>
+                <% if (!tour.isMine) { %>
                     <div id="data-<%= tour._id %>" style="display:none;" 
-                        data-title="<%= tour.title %>" data-desc="<%= tour.description %>"
-                        data-reg="<%= tour.regLink %>" data-rules="<%= tour.rulesLink %>"
-                        data-rulesen="<%= tour.rulesEnLink %>" data-discord="<%= tour.discordLink %>"
-                        data-telegram="<%= tour.telegramLink %>" data-bracket="<%= tour.bracketLink %>">
+                        data-title="<%= tour.title %>" 
+                        data-date="<%= tour.date %>"
+                        data-prize="<%= tour.prize %>"
+                        data-region="<%= tour.region %>"
+                        data-format="<%= tour.format %>"
+                        data-reg="<%= tour.regLink %>" 
+                        data-rules="<%= tour.rulesLink %>"
+                        data-rulesen="<%= tour.rulesEnLink %>" 
+                        data-discord="<%= tour.discordLink %>"
+                        data-telegram="<%= tour.telegramLink %>" 
+                        data-bracket="<%= tour.bracketLink %>">
                     </div>
                 <% } %>
-
             <% }); %>
         <% } else { %>
             <div style="color: #556; padding: 20px; font-style: italic;">No active tournaments.</div>
@@ -94,13 +107,11 @@
     <div class="tournament-list" id="list-archive">
         <% if (archive && archive.length > 0) { %>
             <% archive.forEach(tour => { %>
-                
-                <% if (tour.isMine !== false) { %>
+                <% if (tour.isMine) { %>
                     <a href="/tournament/<%= tour.slug %>" class="tour-rect-card archive-style">
                 <% } else { %>
                     <div class="tour-rect-card archive-style" onclick="openModal('<%= tour._id %>')">
                 <% } %>
-                    
                     <div class="card-center">
                         <div class="card-title"><%= tour.title %></div>
                         <div class="card-hashtags">
@@ -115,34 +126,48 @@
                             <span class="prize-text" style="color:#aaa;">🏆 <%= tour.prize || 'TBA' %></span>
                         </div>
                     </div>
+                <% if (tour.isMine) { %> </a> <% } else { %> </div> <% } %>
 
-                <% if (tour.isMine !== false) { %> </a> <% } else { %> </div> <% } %>
-
-                <% if (tour.isMine === false) { %>
+                <% if (!tour.isMine) { %>
                     <div id="data-<%= tour._id %>" style="display:none;" 
-                        data-title="<%= tour.title %>" data-desc="<%= tour.description %>"
-                        data-reg="<%= tour.regLink %>" data-rules="<%= tour.rulesLink %>"
-                        data-rulesen="<%= tour.rulesEnLink %>" data-discord="<%= tour.discordLink %>"
-                        data-telegram="<%= tour.telegramLink %>" data-bracket="<%= tour.bracketLink %>">
+                        data-title="<%= tour.title %>" 
+                        data-date="<%= tour.date %>"
+                        data-prize="<%= tour.prize %>"
+                        data-region="<%= tour.region %>"
+                        data-format="<%= tour.format %>"
+                        data-reg="<%= tour.regLink %>" 
+                        data-rules="<%= tour.rulesLink %>"
+                        data-rulesen="<%= tour.rulesEnLink %>" 
+                        data-discord="<%= tour.discordLink %>"
+                        data-telegram="<%= tour.telegramLink %>" 
+                        data-bracket="<%= tour.bracketLink %>">
                     </div>
                 <% } %>
-
             <% }); %>
         <% } else { %>
             <div style="color: #556; padding: 20px; font-style: italic;">Archive is empty.</div>
         <% } %>
     </div>
-
 </div>
 
 <div id="tModal" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-box" id="modalBox">
         <span class="modal-close" onclick="closeModalDirect()">×</span>
         <h2 id="m-title" class="m-title">Title</h2>
-        <p id="m-desc" class="m-desc"></p>
         
-        <div id="m-links" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+        <div class="m-info-card">
+            <div class="m-info-row">
+                <span class="m-label">Date:</span>
+                <span id="m-date" class="m-value">-</span>
             </div>
+            <div class="m-info-row">
+                <span class="m-label">Prize Pool:</span>
+                <span id="m-prize" class="m-prize-val">-</span>
+            </div>
+        </div>
+
+        <div id="m-tags" class="m-tags"></div>
+        <div id="m-links"></div>
     </div>
 </div>
 
@@ -151,27 +176,38 @@
         const data = document.getElementById('data-' + id);
         document.getElementById('m-title').innerText = data.getAttribute('data-title');
         
-        const desc = data.getAttribute('data-desc');
-        document.getElementById('m-desc').innerText = desc ? desc : '';
-        document.getElementById('m-desc').style.display = desc ? 'block' : 'none';
+        const date = data.getAttribute('data-date');
+        document.getElementById('m-date').innerText = date ? date : 'TBA';
         
+        const prize = data.getAttribute('data-prize');
+        document.getElementById('m-prize').innerText = prize ? prize : '-';
+
+        const region = data.getAttribute('data-region');
+        const format = data.getAttribute('data-format');
+        const tagsDiv = document.getElementById('m-tags');
+        tagsDiv.innerHTML = '';
+        if(region) tagsDiv.innerHTML += `<div class="m-tag m-tag-gold">${region}</div>`;
+        if(format) tagsDiv.innerHTML += `<div class="m-tag">${format}</div>`;
+
         const linksDiv = document.getElementById('m-links');
-        linksDiv.innerHTML = ''; 
+        linksDiv.innerHTML = '';
         
-        const addBtn = (link, text, cls = 'link-btn') => {
+        const regLink = data.getAttribute('data-reg');
+        if(regLink) {
+            linksDiv.innerHTML += `<a href="${regLink}" target="_blank" class="main-reg-btn">REGISTER</a>`;
+        }
+
+        const addBtn = (link, text) => {
             if(link && link.trim() !== '') {
-                linksDiv.innerHTML += `<a href="${link}" target="_blank" class="${cls}">${text}</a>`;
+                linksDiv.innerHTML += `<a href="${link}" target="_blank" class="secondary-link">${text}</a>`;
             }
         };
 
-        addBtn(data.getAttribute('data-reg'), '📝 Register', 'link-btn btn-reg');
         addBtn(data.getAttribute('data-bracket'), '🏆 Bracket');
         addBtn(data.getAttribute('data-rules'), '📜 Rules (RU)');
         addBtn(data.getAttribute('data-rulesen'), '📜 Rules (EN)');
         addBtn(data.getAttribute('data-discord'), '💬 Discord');
         addBtn(data.getAttribute('data-telegram'), '✈️ Telegram');
-
-        if(linksDiv.innerHTML === '') linksDiv.innerHTML = '<span style="color:#666; text-align:center; padding: 10px;">No links provided</span>';
 
         document.getElementById('tModal').style.display = 'flex';
     }
