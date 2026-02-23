@@ -2,15 +2,29 @@
 
 <style>
 
-body {
-        /* Сделали фильтр намного светлее (0.4 вместо 0.85) */
-        background: linear-gradient(rgba(10, 12, 20, 0.4), rgba(10, 12, 20, 0.4)), url('/bg.jpg');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        min-height: 100vh;
-    }
+/* 1. ГЛАВНЫЙ ФОН */
+body, html {
+    /* Затемнение 0.85 — делает картинку достаточно темной для интерфейса */
+    background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* 2. ПРОЗРАЧНОСТЬ КОНТЕЙНЕРОВ (чтобы фон было видно везде) */
+.page-container, #game-screen, .char-pool {
+    background: transparent !important;
+}
+
+/* 3. ЭФФЕКТ МАТОВОГО СТЕКЛА ДЛЯ ПАНЕЛЕЙ */
+.team-side, .center-axis, .ladder-container {
+    background: rgba(16, 20, 31, 0.4) !important;
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+}
 
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
     .player-header { height: auto !important; min-height: 70px; }
