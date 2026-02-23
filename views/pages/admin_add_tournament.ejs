@@ -1,19 +1,43 @@
 <%- include('../partials/header') %>
 <div class="page-container" style="max-width: 800px;">
-    <h2 style="color: #d4af37;">📢 Create Announcement</h2>
-    <form action="/admin/add-announcement" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
+    <h2 style="color: #4facfe;">🎯 Create Tournament</h2>
+    <form action="/admin/add-tournament" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
         
-        <input type="text" name="title" placeholder="Announcement Title" required class="form-input">
-        <input type="text" name="slug" placeholder="URL Slug (Optional)" class="form-input">
+        <label style="color: #fff; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; border: 1px dashed #4facfe;">
+            <input type="checkbox" name="isMine" checked> <b>Is this "My" Tournament?</b> (Uncheck if it's a Community Tournament)
+        </label>
         
-        <textarea name="description" placeholder="Short text for the card..." required class="form-input" rows="5"></textarea>
+        <input type="text" name="title" placeholder="Tournament Title" required class="form-input">
+        <input type="text" name="slug" placeholder="URL Slug (e.g., gitcg-cup-2)" required class="form-input">
         
-        <input type="text" name="regLink" placeholder="Link (Where the 'Read More' button leads)" class="form-input">
+        <div style="display: flex; gap: 15px;">
+            <input type="text" name="date" placeholder="Date (e.g., 20.10.2024)" class="form-input" style="flex: 1;">
+            <input type="text" name="prize" placeholder="Prize (e.g., $500)" class="form-input" style="flex: 1;">
+        </div>
 
-        <label style="color: #8da4c4;">Banner Image (Recommended):</label>
+        <div style="display: flex; gap: 15px;">
+            <input type="text" name="region" placeholder="Region (e.g., Global)" class="form-input" style="flex: 1;">
+            <input type="text" name="format" placeholder="Format (e.g., Bo3 / Conquest)" class="form-input" style="flex: 1;">
+        </div>
+
+        <textarea name="description" placeholder="Description (Optional)" class="form-input" rows="4"></textarea>
+
+        <h4 style="margin-bottom: 0; color: #d4af37;">Links (Leave empty if none)</h4>
+        <input type="text" name="regLink" placeholder="Registration Link" class="form-input">
+        <input type="text" name="bracketLink" placeholder="Bracket Link" class="form-input">
+        <div style="display: flex; gap: 15px;">
+            <input type="text" name="rulesLink" placeholder="Rules (RU) Link" class="form-input" style="flex: 1;">
+            <input type="text" name="rulesEnLink" placeholder="Rules (EN) Link" class="form-input" style="flex: 1;">
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <input type="text" name="discordLink" placeholder="Discord Link" class="form-input" style="flex: 1;">
+            <input type="text" name="telegramLink" placeholder="Telegram Link" class="form-input" style="flex: 1;">
+        </div>
+
+        <label style="color: #8da4c4;">Banner Image:</label>
         <input type="file" name="image" class="form-input" style="color: #fff;">
         
-        <button type="submit" style="background: #d4af37; border: none; padding: 15px; color: #000; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; transition: 0.2s;">PUBLISH ANNOUNCEMENT</button>
+        <button type="submit" style="background: #4facfe; border: none; padding: 15px; color: #000; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; transition: 0.2s;">CREATE TOURNAMENT</button>
     </form>
 </div>
 <style> .form-input { padding: 12px; border-radius: 4px; border: 1px solid #3c4566; background: rgba(0,0,0,0.3); color: #fff; font-family: 'Segoe UI', sans-serif; } </style>
