@@ -141,7 +141,15 @@ router.post('/admin/add-tournament', upload.single('image'), async (req, res) =>
             isLive: true
         });
         res.redirect('/admin/dashboard');
-    } catch (err) { console.error(err); res.status(500).send('Error'); }
+    } catch (err) { 
+        console.error(err); 
+        res.status(500).send(`
+            <h2 style="color:red; font-family:sans-serif;">Error adding tournament!</h2>
+            <p style="font-family:sans-serif;">${err.message}</p>
+            <p style="font-family:sans-serif;"><b>Tip:</b> Make sure the "URL Slug" is completely unique and no other tournament uses it!</p>
+            <a href="/admin/add-tournament">Go back</a>
+        `); 
+    }
 });
 
 // --- 2. ДОБАВЛЕНИЕ ОБЪЯВЛЕНИЯ (НОВОСТИ) ---
@@ -152,8 +160,9 @@ router.get('/admin/add-announcement', (req, res) => {
 router.post('/admin/add-announcement', upload.single('image'), async (req, res) => {
     try {
         const { title, description, slug, regLink } = req.body;
+        // Если слаг не указан, генерируем уникальный автоматически
         let finalSlug = slug && slug.trim() !== '' ? slug : 'news-' + Date.now();
-        let imageFilename = req.file ? req.file.filename : null;
+        let imageFilename = req.file ? req.file.filename : '';
 
         await Tournament.create({
             type: 'announcement', 
@@ -167,8 +176,13 @@ router.post('/admin/add-announcement', upload.single('image'), async (req, res) 
         });
         
         res.redirect('/admin/dashboard');
-    } catch (e) { 
-        res.send(`Error: ${e.message}`); 
+    } catch (err) { 
+        console.error(err);
+        res.status(500).send(`
+            <h2 style="color:red; font-family:sans-serif;">Error adding announcement!</h2>
+            <p style="font-family:sans-serif;">${err.message}</p>
+            <a href="/admin/add-announcement">Go back</a>
+        `); 
     }
 });
 
