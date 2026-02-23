@@ -25,8 +25,8 @@
             <a href="/tournaments" class="<%= locals.path === '/tournaments' ? 'active' : '' %>">Tournaments</a>
             <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">History</a>
             
-            <% if (locals.user && locals.user.role === 'admin') { %>
-                <a href="/admin/secret-add" class="<%= locals.path === '/admin/secret-add' ? 'active' : '' %>" style="color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3);">
+            <% if (locals.isAdmin) { %>
+                <a href="/admin/dashboard" class="<%= locals.path.startsWith('/admin') ? 'active' : '' %>" style="color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3);">
                     ADMIN PANEL
                 </a>
             <% } %>
