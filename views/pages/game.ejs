@@ -14,16 +14,29 @@ body, html {
     margin: 0;
 }
 
-/* 2. ПРОЗРАЧНОСТЬ КОНТЕЙНЕРОВ (чтобы фон было видно везде) */
-.page-container, #game-screen, .char-pool {
+/* Убираем серый фон у верхней панели (код комнаты, статус) */
+.game-header {
     background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Опционально: тонкая линия для разделения */
 }
 
-/* 3. ЭФФЕКТ МАТОВОГО СТЕКЛА ДЛЯ ПАНЕЛЕЙ */
-.team-side, .center-axis, .ladder-container {
-    background: rgba(16, 20, 31, 0.4) !important;
-    backdrop-filter: blur(8px);
-    border-radius: 12px;
+/* Убираем серые прямоугольники над игроками (где таймеры и имена) */
+.player-header {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Делаем прозрачными блоки резервного времени по бокам */
+.reserve-timer {
+    background: rgba(10, 12, 20, 0.4) !important; /* Легкое затемнение для читаемости цифр */
+    backdrop-filter: blur(4px);
+    border-radius: 8px;
+}
+
+/* Если серый прямоугольник остался вокруг кода комнаты */
+#room-container {
+    background: transparent !important;
 }
 
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
