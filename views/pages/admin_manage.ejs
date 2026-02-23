@@ -1,67 +1,84 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Manage: <%= tour.title %></title>
-    <link rel="stylesheet" href="/style.css">
-    <style>
-        body { padding: 40px; background: #0b0d17; max-width: 800px; margin: 0 auto; }
-        h1 { color: #d4af37; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .section { background: #161c30; padding: 25px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #2a3454; }
-        label { display: block; color: #8da4c4; margin-bottom: 5px; margin-top: 15px; }
-        input, textarea { width: 100%; padding: 10px; background: #0a0c14; border: 1px solid #333; color: #fff; border-radius: 4px; box-sizing: border-box; }
-        button { margin-top: 15px; padding: 12px 25px; cursor: pointer; border: none; font-weight: bold; border-radius: 4px; }
-        .btn-save { background: #4facfe; color: #000; }
-        .btn-post { background: #d4af37; color: #000; }
-    </style>
-</head>
-<body>
+<%- include('../partials/header') %>
+<div class="page-container" style="max-width: 800px;">
+    <h2>Edit Tournament</h2>
+    <form action="/admin/edit/<%= tour._id %>" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
+        
+        <label style="color: #fff;"><input type="checkbox" name="isMine" <%= tour.isMine ? 'checked' : '' %>> Is this "My" Tournament?</label>
 
-    <a href="/admin/dashboard" style="color: #666; text-decoration: none;">← Back to Dashboard</a>
-    <h1>Manage: <%= tour.title %></h1>
+        <input type="text" name="title" value="<%= tour.title %>" placeholder="Title" required class="form-input">
+        <input type="text" name="slug" value="<%= tour.slug %>" placeholder="Slug" required class="form-input">
+        
+        <div style="display: flex; gap: 15px;">
+            <input type="text" name="date" value="<%= tour.date %>" placeholder="Date" class="form-input" style="flex: 1;">
+            <input type="text" name="prize" value="<%= tour.prize %>" placeholder="Prize Pool" class="form-input" style="flex: 1;">
+        </div>
 
-    <div class="section">
-        <h2 style="color:#fff; margin-top:0;">🔗 Links & Rules</h2>
-        <form action="/admin/update-links" method="POST">
-            <input type="hidden" name="slug" value="<%= tour.slug %>">
-            
-            <label>Registration Link:</label>
-            <input name="regLink" value="<%= tour.regLink %>" placeholder="https://...">
+        <div style="display: flex; gap: 15px;">
+            <select name="region" class="form-input" style="flex: 1;">
+                <option value="Europe" <%= tour.region === 'Europe' ? 'selected' : '' %>>Europe</option>
+                <option value="America" <%= tour.region === 'America' ? 'selected' : '' %>>America</option>
+                <option value="Asia" <%= tour.region === 'Asia' ? 'selected' : '' %>>Asia</option>
+                <option value="Global" <%= tour.region === 'Global' ? 'selected' : '' %>>Global</option>
+            </select>
+            <select name="format" class="form-input" style="flex: 1;">
+                <option value="Standard" <%= tour.format === 'Standard' ? 'selected' : '' %>>Standard</option>
+                <option value="Conquest" <%= tour.format === 'Conquest' ? 'selected' : '' %>>Conquest</option>
+            </select>
+        </div>
 
-            <label>Rules Link (RU):</label>
-            <input name="rulesLinkRu" value="<%= tour.rulesLinkRu %>" placeholder="https://...">
+        <textarea name="description" placeholder="Description" class="form-input" rows="4"><%= tour.description || '' %></textarea>
 
-            <label>Rules Link (EN):</label>
-            <input name="rulesLinkEn" value="<%= tour.rulesLinkEn %>" placeholder="https://...">
+        <h4 style="margin-bottom: 0; color: #4facfe;">Links</h4>
+        <input type="text" name="regLink" value="<%= tour.regLink || '' %>" placeholder="Registration Link" class="form-input">
+        <input type="text" name="bracketLink" value="<%= tour.bracketLink || '' %>" placeholder="Bracket Link" class="form-input">
+        <div style="display: flex; gap: 15px;">
+            <input type="text" name="rulesLink" value="<%= tour.rulesLink || '' %>" placeholder="Rules (RU) Link" class="form-input" style="flex: 1;">
+            <input type="text" name="rulesEnLink" value="<%= tour.rulesEnLink || '' %>" placeholder="Rules (EN) Link" class="form-input" style="flex: 1;">
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <input type="text" name="discordLink" value="<%= tour.discordLink || '' %>" placeholder="Discord" class="form-input" style="flex: 1;">
+            <input type="text" name="telegramLink" value="<%= tour.telegramLink || '' %>" placeholder="Telegram" class="form-input" style="flex: 1;">
+        </div>
 
-            <button type="submit" class="btn-save">Update Links</button>
-        </form>
-    </div>
+        <label style="color: #8da4c4;">New Banner Image (Leave empty to keep current):</label>
+        <input type="file" name="image" class="form-input" style="color: #fff;">
 
-    <div class="section">
-        <h2 style="color:#fff; margin-top:0;">📢 Post Announcement (Telegram Style)</h2>
-        <form action="/admin/announce" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="slug" value="<%= tour.slug %>">
-            
-            <label>Message Text:</label>
-            <textarea name="text" rows="6" placeholder="Write your post here..." required></textarea>
+        <hr style="border-color: #333; margin: 20px 0;">
+        
+        <h3 style="color: #d4af37;">Matches (For "My" Tournaments)</h3>
+        <div id="matches-container" style="display: flex; flex-direction: column; gap: 10px;">
+            <% if(tour.matches && tour.matches.length > 0) { %>
+                <% tour.matches.forEach((m, idx) => { %>
+                    <div class="match-row" style="display: flex; gap: 10px;">
+                        <input type="text" name="matchStage" value="<%= m.stage %>" placeholder="Stage (e.g. 1/8)" class="form-input" style="width: 100px;" required>
+                        <input type="text" name="matchTitle" value="<%= m.title %>" placeholder="Match Title (P1 vs P2)" class="form-input" style="flex: 1;" required>
+                        <input type="text" name="matchRoomId" value="<%= m.roomId %>" placeholder="Room ID" class="form-input" style="width: 150px;" required>
+                        <button type="button" onclick="this.parentElement.remove()" style="background: #ff4444; color: white; border: none; padding: 0 15px; border-radius: 4px; cursor:pointer;">X</button>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+        <button type="button" onclick="addMatchRow()" style="background: #2a3454; border: 1px dashed #4facfe; padding: 10px; color: #4facfe; cursor: pointer; border-radius: 4px; margin-top: 10px;">+ Add Match</button>
 
-            <label>Image (Optional):</label>
-            <input type="file" name="image" accept="image/*">
+        <button type="submit" style="background: #4facfe; border: none; padding: 15px; color: #000; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 30px;">SAVE CHANGES</button>
+    </form>
+</div>
 
-            <button type="submit" class="btn-post">Publish Post</button>
-        </form>
-    </div>
+<script>
+    function addMatchRow() {
+        const container = document.getElementById('matches-container');
+        const row = document.createElement('div');
+        row.className = 'match-row';
+        row.style.cssText = 'display: flex; gap: 10px;';
+        row.innerHTML = `
+            <input type="text" name="matchStage" placeholder="Stage (1/8, Final)" class="form-input" style="width: 100px;" required>
+            <input type="text" name="matchTitle" placeholder="Title (P1 vs P2)" class="form-input" style="flex: 1;" required>
+            <input type="text" name="matchRoomId" placeholder="Room ID" class="form-input" style="width: 150px;" required>
+            <button type="button" onclick="this.parentElement.remove()" style="background: #ff4444; color: white; border: none; padding: 0 15px; border-radius: 4px; cursor:pointer;">X</button>
+        `;
+        container.appendChild(row);
+    }
+</script>
 
-    <div class="section">
-        <h2 style="color:#fff; margin-top:0;">🎮 Link Match to Tournament</h2>
-        <form action="/admin/link-match" method="POST">
-            <input type="hidden" name="slug" value="<%= tour.slug %>">
-            <label>Room Code (e.g. A1B2):</label>
-            <input name="roomId" required placeholder="XXXX">
-            <button type="submit" style="background:#333; color:#fff;">Link Match</button>
-        </form>
-    </div>
-
-</body>
-</html>
+<style> .form-input { padding: 12px; border-radius: 4px; border: 1px solid #3c4566; background: rgba(0,0,0,0.3); color: #fff; font-family: 'Segoe UI', sans-serif; } </style>
+<%- include('../partials/footer') %>
