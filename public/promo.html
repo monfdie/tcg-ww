@@ -137,21 +137,21 @@
 
         .player:focus { border-color: #d4af37; background: #000; }
 
-        /* Время матча */
+        /* Время матча - без рамок, другой шрифт */
         .time {
-            font-size: 2.5em;
+            font-size: 2.6em;
             font-weight: bold;
-            color: #fff;
-            background: #0b0d17;
-            padding: 10px 25px;
-            border-radius: 8px;
-            border: 2px solid #4facfe;
-            box-shadow: 0 0 15px rgba(79, 172, 254, 0.3);
+            color: #e0e6ed;
+            /* Фон сливается с карточкой, чтобы визуально "перерезать" соединительную линию */
+            background: #101420; 
+            padding: 0 20px;
             z-index: 2;
             outline: none;
-            font-family: 'Cinzel', serif;
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', sans-serif; /* Более строгий шрифт, отличающийся от никнеймов */
+            letter-spacing: 2px;
+            transition: color 0.2s;
         }
-        .time:focus { border-color: #d4af37; }
+        .time:focus { color: #d4af37; }
 
         /* Логотип внизу */
         .footer-logo {
@@ -161,7 +161,7 @@
             filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
         }
 
-        /* Скрываем кнопки при скриншоте */
+        /* Скрываем инструкции при скриншоте */
         .instruction {
             position: absolute;
             top: 20px;
