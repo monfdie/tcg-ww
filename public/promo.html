@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Promo Schedule Maker</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* Сброс стилей и центрирование */
         body {
@@ -99,18 +100,6 @@
             position: relative;
         }
 
-        /* Линия за временем */
-        .match-row::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: rgba(60, 69, 102, 0.5);
-            z-index: 1;
-        }
-
         /* Блоки игроков */
         .player {
             background: rgba(16, 20, 32, 0.9);
@@ -137,7 +126,7 @@
 
         .player:focus { border-color: #d4af37; background: #000; }
 
-        /* Время матча - без фона, старый шрифт Cinzel */
+        /* Время матча (линию убрали) */
         .time {
             font-size: 2.5em;
             font-weight: bold;
@@ -148,7 +137,7 @@
             outline: none;
             font-family: 'Cinzel', serif;
             letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8); /* Легкая тень, чтобы линия сзади не мешала читать */
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
             transition: color 0.2s;
         }
         .time:focus { color: #d4af37; }
@@ -161,25 +150,73 @@
             filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
         }
 
-        /* Скрываем инструкции при скриншоте */
-        .instruction {
+        /* --- ПАНЕЛЬ УПРАВЛЕНИЯ СЛЕВА --- */
+        .side-panel {
             position: absolute;
-            top: 20px;
-            left: -350px;
-            width: 300px;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 320px;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(16, 20, 32, 0.8);
+            color: #4facfe;
+            text-decoration: none;
+            font-weight: bold;
+            border: 1px solid #2a3454;
+            transition: 0.2s;
+        }
+        .back-link:hover { background: #2a3454; color: #fff; border-color: #4facfe; }
+        
+        .instruction {
+            background: rgba(16, 20, 32, 0.8);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #2a3454;
             color: #8da4c4;
-            font-size: 1.2em;
+            font-size: 1.1em;
             line-height: 1.5;
+        }
+        .instruction h3 { margin-top: 0; color: #fff; margin-bottom: 15px; }
+
+        .download-btn {
+            background: linear-gradient(90deg, #b28dff, #8250f5);
+            color: #fff;
+            border: none;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Segoe UI', sans-serif;
+            box-shadow: 0 0 20px rgba(178, 141, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(178, 141, 255, 0.6);
         }
     </style>
 </head>
 <body>
 
-    <div class="instruction">
-        <h3>Как использовать:</h3>
-        <p>1. Кликни на любой текст (Имена, время, дату), чтобы изменить его.</p>
-        <p>2. Удали лишние строчки матчей, если их меньше 3 (просто сотри текст внутри).</p>
-        <p>3. Сделай скриншот квадратной области (например, через Win+Shift+S).</p>
+    <div class="side-panel">
+        <a href="/" class="back-link">← BACK TO SITE</a>
+        <div class="instruction">
+            <h3>Как использовать:</h3>
+            <p>1. Кликни на любой текст (Имена, время, дату), чтобы изменить его.</p>
+            <p>2. Чтобы удалить лишний матч — просто сотри весь текст внутри его рамок.</p>
+        </div>
+        <button class="download-btn" onclick="downloadPromo()" id="dl-btn">Download High-Res</button>
     </div>
 
     <div class="promo-card" id="capture-area">
@@ -213,8 +250,35 @@
             </div>
         </div>
 
-        <img src="/logo.png" alt="Logo" class="footer-logo">
+        <img src="/logo.png" alt="Logo" class="footer-logo" crossorigin="anonymous">
     </div>
 
+    <script>
+        function downloadPromo() {
+            const btn = document.getElementById('dl-btn');
+            btn.innerText = 'GENERATING...';
+            btn.style.opacity = '0.7';
+
+            const captureArea = document.getElementById('capture-area');
+            
+            // Убираем обводку при фокусе, чтобы она не попала на фото
+            document.querySelectorAll('[contenteditable]').forEach(el => el.blur());
+
+            // Создаем картинку в высоком разрешении (scale: 2)
+            html2canvas(captureArea, { 
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: null 
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'gitcg_schedule.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                btn.innerText = 'Download High-Res';
+                btn.style.opacity = '1';
+            });
+        }
+    </script>
 </body>
 </html>
