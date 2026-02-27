@@ -34,16 +34,6 @@
             overflow: hidden;
         }
 
-        /* Декоративные углы в стиле кибер-фэнтези */
-        .promo-card::before, .promo-card::after {
-            content: '';
-            position: absolute;
-            width: 80px; height: 80px;
-            pointer-events: none;
-        }
-        .promo-card::before { top: 40px; left: 40px; border-top: 4px solid #4facfe; border-left: 4px solid #4facfe; opacity: 0.8; }
-        .promo-card::after { bottom: 40px; right: 40px; border-bottom: 4px solid #4facfe; border-right: 4px solid #4facfe; opacity: 0.8; }
-
         /* Заголовки */
         .header-group { text-align: center; margin-bottom: 70px; width: 100%; }
         
@@ -72,12 +62,16 @@
         .date-group { text-align: center; margin-bottom: 60px; outline: none; }
         .date {
             font-size: 4em;
-            color: #d4af37; /* Золотой цвет как на сайте */
             font-weight: bold;
-            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
             margin: 0;
             font-family: 'Cinzel', serif;
             outline: none;
+            /* Фиолетовый градиент */
+            background: linear-gradient(90deg, #b28dff 0%, #e0c8ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            /* Свечение для текста с background-clip */
+            filter: drop-shadow(0 0 15px rgba(178, 141, 255, 0.5));
         }
         .timezone {
             font-size: 1.6em;
@@ -137,9 +131,9 @@
             transition: border-color 0.2s;
         }
 
-        /* Цвета сторон */
-        .player.blue { border-left: 6px solid #4facfe; box-shadow: -10px 0 20px rgba(79, 172, 254, 0.1); }
-        .player.red { border-right: 6px solid #ff6b6b; box-shadow: 10px 0 20px rgba(255, 107, 107, 0.1); }
+        /* Нейтральные цвета сторон */
+        .player.left-player { border-left: 6px solid #aebcd0; box-shadow: -10px 0 20px rgba(174, 188, 208, 0.15); }
+        .player.right-player { border-right: 6px solid #aebcd0; box-shadow: 10px 0 20px rgba(174, 188, 208, 0.15); }
 
         .player:focus { border-color: #d4af37; background: #000; }
 
@@ -167,7 +161,7 @@
             filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
         }
 
-        /* Скрываем кнопки при скриншоте (если делать через JS, но мы сделаем проще) */
+        /* Скрываем кнопки при скриншоте */
         .instruction {
             position: absolute;
             top: 20px;
@@ -201,21 +195,21 @@
 
         <div class="matches">
             <div class="match-row">
-                <div class="player blue" contenteditable="true">Player 1</div>
+                <div class="player left-player" contenteditable="true">Player 1</div>
                 <div class="time" contenteditable="true">19:00</div>
-                <div class="player red" contenteditable="true">Player 2</div>
+                <div class="player right-player" contenteditable="true">Player 2</div>
             </div>
             
             <div class="match-row">
-                <div class="player blue" contenteditable="true">Smertikk</div>
+                <div class="player left-player" contenteditable="true">Smertikk</div>
                 <div class="time" contenteditable="true">21:00</div>
-                <div class="player red" contenteditable="true">Northwar</div>
+                <div class="player right-player" contenteditable="true">Northwar</div>
             </div>
 
             <div class="match-row">
-                <div class="player blue" contenteditable="true">Nickname</div>
+                <div class="player left-player" contenteditable="true">Nickname</div>
                 <div class="time" contenteditable="true">22:30</div>
-                <div class="player red" contenteditable="true">Opponent</div>
+                <div class="player right-player" contenteditable="true">Opponent</div>
             </div>
         </div>
 
