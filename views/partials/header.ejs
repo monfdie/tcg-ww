@@ -3,54 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= locals.title || 'GITCG' %></title>
-    
-    <link rel="icon" type="image/png" href="/logo.png">
-
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap" rel="stylesheet">
+    <title><%= locals.title || 'Genshin TCG Draft' %></title>
     <link rel="stylesheet" href="/style.css">
-    <meta name="referrer" content="no-referrer">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap" rel="stylesheet">
+    <style>
+        .sidebar {
+            width: 250px;
+            background: rgba(16, 20, 32, 0.95);
+            border-right: 1px solid #2a3454;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            padding-top: 30px;
+            z-index: 100;
+        }
+        .sidebar-logo {
+            color: #fff;
+            font-family: 'Cinzel', serif;
+            font-size: 2em;
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+        .sidebar a {
+            color: #8da4c4;
+            text-decoration: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-family: 'Segoe UI', sans-serif;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            border-left: 3px solid transparent;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .sidebar a:hover {
+            background: rgba(42, 52, 84, 0.5);
+            color: #fff;
+            border-left: 3px solid #4facfe;
+        }
+        .sidebar a.active {
+            background: rgba(79, 172, 254, 0.1);
+            color: #4facfe;
+            border-left: 3px solid #4facfe;
+        }
+        .nav-icon {
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+        .main-content {
+            margin-left: 250px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.95)), url('/bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .user-widget {
+            margin-top: auto;
+            padding: 20px;
+            border-top: 1px solid #2a3454;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #4facfe;
+        }
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .user-name {
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .user-logout {
+            color: #ff6b6b;
+            font-size: 0.8em;
+            text-decoration: none;
+            margin-top: 2px;
+        }
+        .user-logout:hover {
+            text-decoration: underline;
+        }
+        .login-btn {
+            margin: auto 20px 20px 20px;
+            background: #4facfe;
+            color: #000;
+            text-align: center;
+            padding: 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .login-btn:hover {
+            box-shadow: 0 0 15px rgba(79, 172, 254, 0.5);
+        }
+    </style>
 </head>
 <body>
 
-<div class="app-container">
-    
-    <% if (!locals.hideSidebar) { %>
-    <aside class="sidebar">
-        <div class="sidebar-brand">GITCG</div>
+<% if (!locals.hideSidebar) { %>
+    <div class="sidebar">
+        <div class="sidebar-logo">GITCG</div>
         
-        <div class="sidebar-links">
-            <a href="/" class="<%= locals.path === '/' ? 'active' : '' %>">HOME</a>
-            <a href="/create" class="<%= locals.path === '/create' ? 'active' : '' %>">Create Game</a>
-            <a href="/tournaments" class="<%= locals.path === '/tournaments' ? 'active' : '' %>">Tournaments</a>
-            <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">History</a>
-            
-            <% if (locals.isAdmin) { %>
-                <a href="/admin/dashboard" class="<%= locals.path.startsWith('/admin') ? 'active' : '' %>" style="color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3);">
-                    ADMIN PANEL
-                </a>
-            <% } %>
-        </div>
-        
-        <div class="sidebar-user">
-            <% if (locals.user) { %>
-                <div class="user-profile">
-                    <% if (locals.user.avatar) { %>
-                        <img src="https://cdn.discordapp.com/avatars/<%= locals.user.discordId %>/<%= locals.user.avatar %>.png" alt="Avatar">
-                    <% } else { %>
-                        <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
-                    <% } %>
-                    <div class="user-info">
-                        <span class="user-name"><%= locals.user.username %></span>
-                        <a href="/logout" class="logout-link">Logout</a>
-                    </div>
-                </div>
-            <% } else { %>
-                <a href="/auth/discord" class="login-btn">Discord Login</a>
-            <% } %>
-        </div>
-    </aside>
-    <% } %>
+        <a href="/" class="<%= locals.path === '/' ? 'active' : '' %>">
+            <span class="nav-icon">🏠</span> HOME
+        </a>
+        <a href="/create" class="<%= locals.path === '/create' ? 'active' : '' %>">
+            <span class="nav-icon">⚔️</span> CREATE GAME
+        </a>
+        <a href="/tournaments" class="<%= locals.path === '/tournaments' || locals.path && locals.path.startsWith('/tournament/') ? 'active' : '' %>">
+            <span class="nav-icon">🏆</span> TOURNAMENTS
+        </a>
+        <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">
+            <span class="nav-icon">📜</span> HISTORY
+        </a>
 
-    <main class="main-content">
-        <div class="page-container">
+        <% if (locals.isAdmin) { %>
+            <div style="margin: 20px 20px 10px 20px; border-top: 1px solid #2a3454;"></div>
+            
+            <a href="/admin/dashboard" class="<%= locals.path && locals.path.startsWith('/admin') ? 'active' : '' %>" style="color: #4facfe;">
+                <span class="nav-icon">⚙️</span> ADMIN PANEL
+            </a>
+            
+            <a href="/promo.html" style="color: #b28dff;">
+                <span class="nav-icon">📸</span> PROMO MAKER
+            </a>
+        <% } %>
+
+        <% if (locals.user) { %>
+            <div class="user-widget">
+                <img src="https://cdn.discordapp.com/avatars/<%= user.discordId %>/<%= user.avatar %>.png" class="user-avatar" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+                <div class="user-info">
+                    <span class="user-name"><%= user.username %></span>
+                    <a href="/logout" class="user-logout">Logout</a>
+                </div>
+            </div>
+        <% } else { %>
+            <a href="/auth/discord" class="login-btn">Login via Discord</a>
+        <% } %>
+    </div>
+<% } %>
+
+<div class="<%= locals.hideSidebar ? '' : 'main-content' %>">
