@@ -17,6 +17,15 @@
             background-image: radial-gradient(circle at 50% 30%, #2b3452 0%, #080a12 85%);
             font-family: 'Segoe UI', sans-serif;
             color: #fff;
+            padding: 50px;
+            box-sizing: border-box;
+        }
+
+        /* Главный контейнер для выравнивания боковой панели и карточки */
+        .main-container {
+            display: flex;
+            align-items: center;
+            gap: 60px; /* Отступ между меню и карточкой */
         }
 
         /* Квадратный холст под пост (1080x1080) */
@@ -33,6 +42,8 @@
             border: 2px solid #2a3454;
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
             overflow: hidden;
+            /* Важно для корректного масштабирования при скачивании */
+            transform-origin: top center;
         }
 
         /* Заголовки */
@@ -71,6 +82,8 @@
             background: linear-gradient(90deg, #b28dff 0%, #e0c8ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            /* Важно: inline-block помогает html2canvas корректно обрезать градиент по тексту */
+            display: inline-block;
             /* Свечение для текста с background-clip */
             filter: drop-shadow(0 0 15px rgba(178, 141, 255, 0.5));
         }
@@ -152,14 +165,12 @@
 
         /* --- ПАНЕЛЬ УПРАВЛЕНИЯ СЛЕВА --- */
         .side-panel {
-            position: absolute;
-            left: 40px;
-            top: 50%;
-            transform: translateY(-50%);
+            /* Убрано абсолютное позиционирование */
             display: flex;
             flex-direction: column;
             gap: 20px;
             width: 320px;
+            flex-shrink: 0; /* Чтобы панель не сжималась */
         }
         .back-link {
             display: block;
@@ -174,17 +185,6 @@
             transition: 0.2s;
         }
         .back-link:hover { background: #2a3454; color: #fff; border-color: #4facfe; }
-        
-        .instruction {
-            background: rgba(16, 20, 32, 0.8);
-            padding: 25px;
-            border-radius: 12px;
-            border: 1px solid #2a3454;
-            color: #8da4c4;
-            font-size: 1.1em;
-            line-height: 1.5;
-        }
-        .instruction h3 { margin-top: 0; color: #fff; margin-bottom: 15px; }
 
         .download-btn {
             background: linear-gradient(90deg, #b28dff, #8250f5);
@@ -209,48 +209,45 @@
 </head>
 <body>
 
-    <div class="side-panel">
-        <a href="/" class="back-link">← BACK TO SITE</a>
-        <div class="instruction">
-            <h3>Как использовать:</h3>
-            <p>1. Кликни на любой текст (Имена, время, дату), чтобы изменить его.</p>
-            <p>2. Чтобы удалить лишний матч — просто сотри весь текст внутри его рамок.</p>
-        </div>
-        <button class="download-btn" onclick="downloadPromo()" id="dl-btn">Download High-Res</button>
-    </div>
-
-    <div class="promo-card" id="capture-area">
-        <div class="header-group">
-            <h1 class="title" contenteditable="true">GITCG CUP 2</h1>
-            <div class="subtitle" contenteditable="true">MATCH SCHEDULE FOR</div>
+    <div class="main-container">
+        <div class="side-panel">
+            <a href="/" class="back-link">← BACK TO SITE</a>
+            <button class="download-btn" onclick="downloadPromo()" id="dl-btn">Download High-Res</button>
         </div>
 
-        <div class="date-group">
-            <div class="date" contenteditable="true">15 FEBRUARY</div>
-            <div class="timezone" contenteditable="true">GMT+3 (MOSCOW TIME)</div>
-        </div>
-
-        <div class="matches">
-            <div class="match-row">
-                <div class="player left-player" contenteditable="true">Player 1</div>
-                <div class="time" contenteditable="true">19:00</div>
-                <div class="player right-player" contenteditable="true">Player 2</div>
-            </div>
-            
-            <div class="match-row">
-                <div class="player left-player" contenteditable="true">Smertikk</div>
-                <div class="time" contenteditable="true">21:00</div>
-                <div class="player right-player" contenteditable="true">Northwar</div>
+        <div class="promo-card" id="capture-area">
+            <div class="header-group">
+                <h1 class="title" contenteditable="true">GITCG CUP 2</h1>
+                <div class="subtitle" contenteditable="true">MATCH SCHEDULE FOR</div>
             </div>
 
-            <div class="match-row">
-                <div class="player left-player" contenteditable="true">Nickname</div>
-                <div class="time" contenteditable="true">22:30</div>
-                <div class="player right-player" contenteditable="true">Opponent</div>
+            <div class="date-group">
+                <div class="date" contenteditable="true">15 FEBRUARY</div>
+                <div class="timezone" contenteditable="true">GMT+3 (MOSCOW TIME)</div>
             </div>
-        </div>
 
-        <img src="/logo.png" alt="Logo" class="footer-logo" crossorigin="anonymous">
+            <div class="matches">
+                <div class="match-row">
+                    <div class="player left-player" contenteditable="true">Player 1</div>
+                    <div class="time" contenteditable="true">19:00</div>
+                    <div class="player right-player" contenteditable="true">Player 2</div>
+                </div>
+                
+                <div class="match-row">
+                    <div class="player left-player" contenteditable="true">Smertikk</div>
+                    <div class="time" contenteditable="true">21:00</div>
+                    <div class="player right-player" contenteditable="true">Northwar</div>
+                </div>
+
+                <div class="match-row">
+                    <div class="player left-player" contenteditable="true">Nickname</div>
+                    <div class="time" contenteditable="true">22:30</div>
+                    <div class="player right-player" contenteditable="true">Opponent</div>
+                </div>
+            </div>
+
+            <img src="/logo.png" alt="Logo" class="footer-logo" crossorigin="anonymous">
+        </div>
     </div>
 
     <script>
@@ -261,14 +258,22 @@
 
             const captureArea = document.getElementById('capture-area');
             
-            // Убираем обводку при фокусе, чтобы она не попала на фото
+            // Убираем фокус с элементов перед скачиванием
             document.querySelectorAll('[contenteditable]').forEach(el => el.blur());
 
             // Создаем картинку в высоком разрешении (scale: 2)
             html2canvas(captureArea, { 
                 scale: 2, 
                 useCORS: true, 
-                backgroundColor: null 
+                backgroundColor: null,
+                // Важные настройки для корректного рендера градиентного текста
+                onclone: (clonedDoc) => {
+                    const clonedDate = clonedDoc.querySelector('.date');
+                    // Принудительно обновляем стиль для клона, чтобы html2canvas точно его подхватил
+                    if(clonedDate) {
+                         clonedDate.style.display = 'inline-block';
+                    }
+                }
             }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = 'gitcg_schedule.png';
