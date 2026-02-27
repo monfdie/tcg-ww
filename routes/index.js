@@ -152,11 +152,16 @@ router.get('/admin/manage/:slug', isAdmin, async (req, res) => {
 
 router.post('/admin/edit/:id', isAdmin, upload.single('image'), async (req, res) => {
     try {
-        const { title, slug, date, prize, isMine, region, format, description, regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink } = req.body;
+        const { title, slug, date, prize, isMine, isLive, region, format, description, regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink } = req.body;
+        
         const updateData = { 
-            title, slug, date, prize, isMine: isMine === 'on', region, format, description,
+            title, slug, date, prize, 
+            isMine: isMine === 'on', 
+            isLive: isLive === 'on',
+            region, format, description,
             regLink, rulesLink, rulesEnLink, discordLink, telegramLink, bracketLink
         };
+        
         if (req.file) updateData.image = req.file.filename;
 
         let newMatches = [];
