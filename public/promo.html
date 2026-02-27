@@ -42,7 +42,6 @@
             border: 2px solid #2a3454;
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
             overflow: hidden;
-            /* Важно для корректного масштабирования при скачивании */
             transform-origin: top center;
         }
 
@@ -78,14 +77,9 @@
             margin: 0;
             font-family: 'Cinzel', serif;
             outline: none;
-            /* Фиолетовый градиент */
-            background: linear-gradient(90deg, #b28dff 0%, #e0c8ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            /* Важно: inline-block помогает html2canvas корректно обрезать градиент по тексту */
-            display: inline-block;
-            /* Свечение для текста с background-clip */
-            filter: drop-shadow(0 0 15px rgba(178, 141, 255, 0.5));
+            /* Сплошной фиолетовый цвет с красивым неоновым свечением (работает в html2canvas) */
+            color: #d8b8ff;
+            text-shadow: 0 0 25px rgba(178, 141, 255, 0.8), 0 0 10px rgba(178, 141, 255, 0.5);
         }
         .timezone {
             font-size: 1.6em;
@@ -139,7 +133,7 @@
 
         .player:focus { border-color: #d4af37; background: #000; }
 
-        /* Время матча (линию убрали) */
+        /* Время матча */
         .time {
             font-size: 2.5em;
             font-weight: bold;
@@ -165,12 +159,11 @@
 
         /* --- ПАНЕЛЬ УПРАВЛЕНИЯ СЛЕВА --- */
         .side-panel {
-            /* Убрано абсолютное позиционирование */
             display: flex;
             flex-direction: column;
             gap: 20px;
             width: 320px;
-            flex-shrink: 0; /* Чтобы панель не сжималась */
+            flex-shrink: 0;
         }
         .back-link {
             display: block;
@@ -261,19 +254,10 @@
             // Убираем фокус с элементов перед скачиванием
             document.querySelectorAll('[contenteditable]').forEach(el => el.blur());
 
-            // Создаем картинку в высоком разрешении (scale: 2)
             html2canvas(captureArea, { 
                 scale: 2, 
                 useCORS: true, 
-                backgroundColor: null,
-                // Важные настройки для корректного рендера градиентного текста
-                onclone: (clonedDoc) => {
-                    const clonedDate = clonedDoc.querySelector('.date');
-                    // Принудительно обновляем стиль для клона, чтобы html2canvas точно его подхватил
-                    if(clonedDate) {
-                         clonedDate.style.display = 'inline-block';
-                    }
-                }
+                backgroundColor: null
             }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = 'gitcg_schedule.png';
