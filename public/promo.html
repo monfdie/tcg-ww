@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Promo Schedule Maker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap" rel="stylesheet">
+    <style>
+        /* Сброс стилей и центрирование */
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #0b0d17;
+            background-image: radial-gradient(circle at 50% 30%, #2b3452 0%, #080a12 85%);
+            font-family: 'Segoe UI', sans-serif;
+            color: #fff;
+        }
+
+        /* Квадратный холст под пост (1080x1080) */
+        .promo-card {
+            width: 1080px;
+            height: 1080px;
+            background: linear-gradient(rgba(10, 12, 20, 0.8), rgba(10, 12, 20, 0.95)), url('/bg.jpg') center/cover;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 80px 100px;
+            box-sizing: border-box;
+            border: 2px solid #2a3454;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        /* Декоративные углы в стиле кибер-фэнтези */
+        .promo-card::before, .promo-card::after {
+            content: '';
+            position: absolute;
+            width: 80px; height: 80px;
+            pointer-events: none;
+        }
+        .promo-card::before { top: 40px; left: 40px; border-top: 4px solid #4facfe; border-left: 4px solid #4facfe; opacity: 0.8; }
+        .promo-card::after { bottom: 40px; right: 40px; border-bottom: 4px solid #4facfe; border-right: 4px solid #4facfe; opacity: 0.8; }
+
+        /* Заголовки */
+        .header-group { text-align: center; margin-bottom: 70px; width: 100%; }
+        
+        .title {
+            font-family: 'Cinzel', serif;
+            font-size: 5.5em;
+            color: #fff;
+            margin: 0;
+            text-shadow: 0 0 30px rgba(79, 172, 254, 0.6);
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            outline: none;
+        }
+
+        .subtitle {
+            font-size: 1.8em;
+            color: #8da4c4;
+            letter-spacing: 6px;
+            margin-top: 15px;
+            text-transform: uppercase;
+            font-weight: bold;
+            outline: none;
+        }
+
+        /* Блок с датой */
+        .date-group { text-align: center; margin-bottom: 60px; outline: none; }
+        .date {
+            font-size: 4em;
+            color: #d4af37; /* Золотой цвет как на сайте */
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            outline: none;
+        }
+        .timezone {
+            font-size: 1.6em;
+            color: #6a7b9c;
+            letter-spacing: 2px;
+            margin-top: 5px;
+            outline: none;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        /* Список матчей */
+        .matches {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .match-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Линия за временем */
+        .match-row::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(60, 69, 102, 0.5);
+            z-index: 1;
+        }
+
+        /* Блоки игроков */
+        .player {
+            background: rgba(16, 20, 32, 0.9);
+            border: 2px solid #3c4566;
+            padding: 20px 30px;
+            border-radius: 8px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 2em;
+            font-weight: bold;
+            width: 350px;
+            text-align: center;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            outline: none;
+            z-index: 2;
+            transition: border-color 0.2s;
+        }
+
+        /* Цвета сторон */
+        .player.blue { border-left: 6px solid #4facfe; box-shadow: -10px 0 20px rgba(79, 172, 254, 0.1); }
+        .player.red { border-right: 6px solid #ff6b6b; box-shadow: 10px 0 20px rgba(255, 107, 107, 0.1); }
+
+        .player:focus { border-color: #d4af37; background: #000; }
+
+        /* Время матча */
+        .time {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #fff;
+            background: #0b0d17;
+            padding: 10px 25px;
+            border-radius: 8px;
+            border: 2px solid #4facfe;
+            box-shadow: 0 0 15px rgba(79, 172, 254, 0.3);
+            z-index: 2;
+            outline: none;
+            font-family: 'Cinzel', serif;
+        }
+        .time:focus { border-color: #d4af37; }
+
+        /* Логотип внизу */
+        .footer-logo {
+            margin-top: auto;
+            width: 140px;
+            opacity: 0.9;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+        }
+
+        /* Скрываем кнопки при скриншоте (если делать через JS, но мы сделаем проще) */
+        .instruction {
+            position: absolute;
+            top: 20px;
+            left: -350px;
+            width: 300px;
+            color: #8da4c4;
+            font-size: 1.2em;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="instruction">
+        <h3>Как использовать:</h3>
+        <p>1. Кликни на любой текст (Имена, время, дату), чтобы изменить его.</p>
+        <p>2. Удали лишние строчки матчей, если их меньше 3 (просто сотри текст внутри).</p>
+        <p>3. Сделай скриншот квадратной области (например, через Win+Shift+S).</p>
+    </div>
+
+    <div class="promo-card" id="capture-area">
+        <div class="header-group">
+            <h1 class="title" contenteditable="true">GITCG CUP 2</h1>
+            <div class="subtitle" contenteditable="true">MATCH SCHEDULE FOR</div>
+        </div>
+
+        <div class="date-group">
+            <div class="date" contenteditable="true">15 FEBRUARY</div>
+            <div class="timezone" contenteditable="true">GMT+3 (MOSCOW TIME)</div>
+        </div>
+
+        <div class="matches">
+            <div class="match-row">
+                <div class="player blue" contenteditable="true">Player 1</div>
+                <div class="time" contenteditable="true">19:00</div>
+                <div class="player red" contenteditable="true">Player 2</div>
+            </div>
+            
+            <div class="match-row">
+                <div class="player blue" contenteditable="true">Smertikk</div>
+                <div class="time" contenteditable="true">21:00</div>
+                <div class="player red" contenteditable="true">Northwar</div>
+            </div>
+
+            <div class="match-row">
+                <div class="player blue" contenteditable="true">Nickname</div>
+                <div class="time" contenteditable="true">22:30</div>
+                <div class="player red" contenteditable="true">Opponent</div>
+            </div>
+        </div>
+
+        <img src="/logo.png" alt="Logo" class="footer-logo">
+    </div>
+
+</body>
+</html>
