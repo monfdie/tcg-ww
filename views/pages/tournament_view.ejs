@@ -76,7 +76,6 @@
     .match-item { background: rgba(16, 20, 32, 0.8); border: 1px solid #2a3454; padding: 20px 30px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; text-decoration: none; }
     .match-item:hover { border-color: #4facfe; background: rgba(26, 31, 51, 1); transform: translateX(5px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
     .m-title { font-family: 'Cinzel', serif; font-size: 1.3em; color: #fff; display: flex; align-items: center; gap: 15px; }
-    .m-score { font-size: 1.5em; font-weight: bold; color: #d4af37; margin: 0 25px; letter-spacing: 2px; }
     .m-replay { background: #2a3454; color: #fff; padding: 8px 20px; border-radius: 4px; font-size: 0.85em; text-transform: uppercase; font-weight: bold; border: 1px solid #3c4566; transition: 0.2s; }
     .match-item:hover .m-replay { background: #4facfe; color: #000; border-color: #4facfe; }
 </style>
@@ -137,9 +136,6 @@
                     </div>
                     
                     <div style="display: flex; align-items: center;">
-                        <span class="m-score">
-                            <%= m.score ? `${m.score.blue} : ${m.score.red}` : '- : -' %>
-                        </span>
                         <div class="m-replay">▶ Replay</div>
                     </div>
                 </a>
