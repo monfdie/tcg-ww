@@ -183,7 +183,6 @@ io.on('connection', (socket) => {
         const isBlue = session.currentTeam === 'blue';
         if ((isBlue && socket.id !== session.bluePlayer) || (!isBlue && socket.id !== session.redPlayer)) return;
 
-        // 1. ФАЗА ИММУНИТЕТА
         if (session.immunityPhaseActive) {
             if (session.immunityBans.includes(charId) || session.immunityPool.includes(charId)) return;
             if (session.currentAction === 'immunity_ban') session.immunityBans.push(charId);
@@ -192,7 +191,6 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // 2. ОБЫЧНЫЙ ДРАФТ
         const isImmune = session.immunityPool.filter(id => id !== 'skipped').includes(charId);
         const currentStepData = session.draftOrder[session.stepIndex];
         const isImmuneStep = currentStepData && currentStepData.immunity === true;
@@ -200,10 +198,10 @@ io.on('connection', (socket) => {
         if (session.bans.some(b => b.id === charId)) return;
 
         if (session.currentAction === 'ban') {
-            if (isImmune) return; // Иммунных банить нельзя
+            if (isImmune) return; 
             session.bans.push({ id: charId, team: session.currentTeam });
         } else {
-            if (isImmune && !isImmuneStep) return; // ИММУННЫХ берем только в иммунный шаг
+            if (isImmune && !isImmuneStep) return; 
             
             const iHaveIt = isBlue ? session.bluePicks.includes(charId) : session.redPicks.includes(charId);
             if (iHaveIt) return; 
@@ -236,7 +234,7 @@ function nextStep(roomId) {
         clearInterval(s.timerInterval);
         s.draftFinished = true;
         s.finishedAt = Date.now();
-        saveMatchImmediately(s); // Сохраняем сразу, независимо от режима!
+        saveMatchImmediately(s);
         return;
     }
     const c = s.draftOrder[s.stepIndex]; s.currentTeam = c.team; s.currentAction = c.type;
@@ -327,7 +325,7 @@ function autoPick(roomId) {
 }
 
 async function saveMatchImmediately(s) {
-    io.to(s.id).emit('update_state', getPublicState(s)); // Отправляем финал перед завершением
+    io.to(s.id).emit('update_state', getPublicState(s)); 
     io.to(s.id).emit('game_over', getPublicState(s)); 
     try {
         await Match.create({
@@ -340,10 +338,10 @@ async function saveMatchImmediately(s) {
         if (s.blueDiscordId) await User.updateOne({ discordId: s.blueDiscordId }, { $inc: { gamesPlayed: 1 } });
         if (s.redDiscordId) await User.updateOne({ discordId: s.redDiscordId }, { $inc: { gamesPlayed: 1 } });
 
-        // Чистка старых матчей, если их больше 50
+        // Чистка старых матчей, если их больше 10000
         const count = await Match.countDocuments();
-        if (count > 10 000) {
-            const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 10 000);
+        if (count > 10000) {
+            const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 10000);
             await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
         }
     } catch (e) { console.error(e); }
