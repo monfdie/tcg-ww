@@ -3,7 +3,14 @@
     <h2>Edit Tournament</h2>
     <form action="/admin/edit/<%= tour._id %>" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
         
-        <label style="color: #fff;"><input type="checkbox" name="isMine" <%= tour.isMine ? 'checked' : '' %>> Is this "My" Tournament?</label>
+        <div style="display: flex; gap: 20px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 4px; border: 1px dashed #4facfe; flex-wrap: wrap;">
+            <label style="color: #fff; cursor: pointer; flex: 1;">
+                <input type="checkbox" name="isMine" <%= tour.isMine ? 'checked' : '' %>> <b>Is this "My" Tournament?</b>
+            </label>
+            <label style="color: #fff; cursor: pointer; flex: 1;">
+                <input type="checkbox" name="isLive" <%= tour.isLive ? 'checked' : '' %>> <b>Active / Live</b> (Uncheck to move to Archive)
+            </label>
+        </div>
 
         <input type="text" name="title" value="<%= tour.title %>" placeholder="Title" required class="form-input">
         <input type="text" name="slug" value="<%= tour.slug %>" placeholder="Slug" required class="form-input">
