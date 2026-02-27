@@ -342,8 +342,8 @@ async function saveMatchImmediately(s) {
 
         // Чистка старых матчей, если их больше 50
         const count = await Match.countDocuments();
-        if (count > 50) {
-            const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 50);
+        if (count > 10 000) {
+            const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 10 000);
             await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
         }
     } catch (e) { console.error(e); }
