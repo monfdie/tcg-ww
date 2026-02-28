@@ -17,81 +17,81 @@
 
         /* --- КАРТОЧКА СЕТКИ --- */
         .bracket-board {
-            width: 1200px; height: 800px;
+            width: 1500px; height: 900px; /* Идеальный размер для стрима */
             background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.95)), url('/bg.jpg') center/cover;
             border: 2px solid #2a3454; box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            border-radius: 12px; padding: 60px 40px; box-sizing: border-box;
+            border-radius: 12px; padding: 50px; box-sizing: border-box;
             position: relative; display: flex; flex-direction: column;
             transform-origin: top center;
         }
 
-        .b-header { text-align: center; margin-bottom: 50px; }
+        .b-header { text-align: center; margin-bottom: 40px; }
         .b-title { font-family: 'Cinzel', serif; font-size: 3.5em; margin: 0; color: #fff; text-shadow: 0 0 20px rgba(212, 175, 55, 0.6); text-transform: uppercase; outline: none; letter-spacing: 2px; }
         .b-subtitle { font-size: 1.2em; color: #8da4c4; letter-spacing: 4px; text-transform: uppercase; font-weight: bold; outline: none; margin-top: 10px; }
 
-        /* --- СТРУКТУРА СЕТКИ --- */
-        .bracket-container {
-            display: flex; flex-grow: 1; align-items: stretch; justify-content: space-between;
+        /* --- ДИНАМИЧЕСКАЯ СЕТКА FLEXBOX --- */
+        .bracket-layout {
+            display: flex; flex-grow: 1; width: 100%; gap: 0;
         }
+        
         .b-col {
-            display: flex; flex-direction: column; justify-content: space-around; position: relative; z-index: 10;
-        }
-
-        /* --- СОЕДИНИТЕЛЬНЫЕ ЛИНИИ --- */
-        .match-group { position: relative; display: flex; flex-direction: column; gap: 30px; }
-        
-        .connector {
-            position: absolute; right: -30px; top: 35px; bottom: 35px; width: 30px;
-            border: 2px solid #3c4566; border-left: none; border-radius: 0 6px 6px 0; z-index: 1;
-        }
-        .connector::after {
-            content: ''; position: absolute; right: -30px; top: calc(50% - 1px); width: 30px; height: 2px; background: #3c4566;
+            flex: 1; display: flex; flex-direction: column;
         }
         
-        .final-connector {
-            position: absolute; right: -30px; top: 50%; width: 30px; height: 2px; background: #3c4566; z-index: 1;
+        .b-cell {
+            flex: 1; display: flex; align-items: center; justify-content: center; position: relative;
         }
 
         /* --- КАРТОЧКА МАТЧА --- */
         .match-card {
-            width: 220px; background: rgba(16, 20, 32, 0.95);
+            width: 240px; background: rgba(16, 20, 32, 0.95);
             border: 1px solid #3c4566; border-radius: 6px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             display: flex; flex-direction: column; position: relative; z-index: 10;
         }
         .p-row {
-            display: flex; align-items: center; height: 35px; border-bottom: 1px solid #2a3454; position: relative;
+            display: flex; align-items: center; height: 38px; border-bottom: 1px solid #2a3454; position: relative;
         }
         .p-row:last-child { border-bottom: none; }
         
         .p-name {
-            flex-grow: 1; padding: 0 12px; font-weight: bold; font-size: 0.9em;
+            flex-grow: 1; padding: 0 12px; font-weight: bold; font-size: 0.95em;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; outline: none;
+            transition: 0.3s;
         }
         .p-score {
-            width: 35px; height: 100%; display: flex; align-items: center; justify-content: center;
+            width: 40px; height: 100%; display: flex; align-items: center; justify-content: center;
             background: rgba(0,0,0,0.5); border-left: 1px solid #2a3454;
             font-family: 'Cinzel', serif; font-weight: bold; outline: none; color: #fff;
         }
-        /* Золотой счетчик для красоты */
         .p-score:focus { color: #d4af37; background: #000; }
 
         /* --- КНОПКА ADVANCE (>) --- */
         .btn-adv {
-            position: absolute; right: 35px; top: 0; height: 100%; width: 25px;
+            position: absolute; right: 40px; top: 0; height: 100%; width: 25px;
             background: linear-gradient(90deg, transparent, #4facfe); border: none; color: #fff;
             font-weight: bold; cursor: pointer; opacity: 0; transition: 0.2s; font-size: 1.1em;
         }
         .p-row:hover .btn-adv { opacity: 1; }
         .btn-adv:hover { background: #4facfe; color: #000; }
 
-        /* --- ЧЕМПИОН --- */
-        .champion-card {
-            width: 240px; background: rgba(212, 175, 55, 0.15);
-            border: 2px solid #d4af37; border-radius: 8px; box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+        /* --- ИДЕАЛЬНЫЕ СОЕДИНИТЕЛЬНЫЕ ЛИНИИ --- */
+        /* Исходящие линии (вправо) */
+        .b-col:not(:last-child) .b-cell:nth-child(odd)::before {
+            content: ''; position: absolute;
+            left: calc(50% + 120px); right: 0; top: 50%; bottom: 0;
+            border-top: 2px solid #3c4566; border-right: 2px solid #3c4566; border-top-right-radius: 6px; z-index: 1;
         }
-        .champ-label { font-family: 'Cinzel', serif; color: #d4af37; font-size: 1.2em; font-weight: bold; margin-bottom: 10px; letter-spacing: 2px;}
-        .champ-name { font-size: 1.5em; font-weight: bold; outline: none; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); text-align: center; width: 100%;}
+        .b-col:not(:last-child) .b-cell:nth-child(even)::before {
+            content: ''; position: absolute;
+            left: calc(50% + 120px); right: 0; top: 0; bottom: 50%;
+            border-bottom: 2px solid #3c4566; border-right: 2px solid #3c4566; border-bottom-right-radius: 6px; z-index: 1;
+        }
+        /* Входящие линии (влево) */
+        .b-col:not(:first-child) .b-cell::after {
+            content: ''; position: absolute;
+            left: 0; width: calc(50% - 120px); top: 50%; height: 2px;
+            background: #3c4566; z-index: 1;
+        }
 
         /* --- ПАНЕЛЬ УПРАВЛЕНИЯ --- */
         .side-panel { display: flex; flex-direction: column; gap: 20px; width: 300px; flex-shrink: 0; }
@@ -101,11 +101,21 @@
         }
         .back-link:hover { background: #2a3454; color: #fff; border-color: #d4af37; }
         
-        .instruction {
-            background: rgba(16, 20, 32, 0.8); padding: 25px; border-radius: 12px;
-            border: 1px solid #3c4566; color: #8da4c4; font-size: 1em; line-height: 1.6;
+        .controls-box {
+            background: rgba(16, 20, 32, 0.8); padding: 20px; border-radius: 12px; border: 1px solid #3c4566;
         }
-        .instruction h3 { margin-top: 0; color: #fff; margin-bottom: 10px; }
+        .controls-title { margin: 0 0 15px 0; color: #fff; text-transform: uppercase; font-size: 1em; text-align: center; }
+        .action-btn {
+            flex: 1; background: rgba(42, 52, 84, 0.5); color: #d4af37; border: 1px solid #3c4566;
+            padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .action-btn:hover { background: #d4af37; color: #000; border-color: #d4af37; }
+        .action-btn.active { background: #d4af37; color: #000; }
+
+        .instruction {
+            background: rgba(16, 20, 32, 0.8); padding: 20px; border-radius: 12px;
+            border: 1px solid #3c4566; color: #8da4c4; font-size: 0.95em; line-height: 1.5;
+        }
 
         .download-btn {
             background: linear-gradient(45deg, #d4af37, #f2d06b); color: #000; border: none;
@@ -124,163 +134,132 @@
         
         <div class="side-panel">
             <a href="/" class="back-link">← BACK TO SITE</a>
-            <div class="instruction">
-                <h3>Как использовать:</h3>
-                <p>1. Впиши ники игроков в первый столбик.</p>
-                <p>2. Наведи мышку на ник и нажми появившуюся кнопку <b>></b>, чтобы игрок мгновенно прошел в следующий раунд.</p>
-                <p>3. Впиши счет в маленькие окошки справа от ников.</p>
+            
+            <div class="controls-box">
+                <h4 class="controls-title">Bracket Size</h4>
+                <div style="display: flex; gap: 10px;">
+                    <button class="action-btn" id="btn-4" onclick="renderBracket(4)">4</button>
+                    <button class="action-btn active" id="btn-8" onclick="renderBracket(8)">8</button>
+                    <button class="action-btn" id="btn-16" onclick="renderBracket(16)">16</button>
+                </div>
             </div>
+
+            <div class="instruction">
+                <p>1. Впиши ники игроков.</p>
+                <p>2. Нажми <b>></b> рядом с ником, чтобы игрок прошел дальше.</p>
+                <p>3. Нажатие <b>></b> в Финале сделает ник победителя золотым.</p>
+            </div>
+            
             <button class="download-btn" onclick="downloadBracket()" id="dl-btn">Download Bracket</button>
         </div>
 
         <div class="bracket-board" id="capture-area">
             <div class="b-header">
-                <h1 class="b-title" contenteditable="true">PLAYOFF STAGE</h1>
-                <div class="b-subtitle" contenteditable="true">TOP 8 FINALISTS</div>
+                <h1 class="b-title" id="tour-title" contenteditable="true">PLAYOFF STAGE</h1>
+                <div class="b-subtitle" id="tour-subtitle" contenteditable="true">TOP 8 FINALISTS</div>
             </div>
 
-            <div class="bracket-container">
-                
-                <div class="b-col r1">
-                    <div class="match-group">
-                        <div class="match-card">
-                            <div class="p-row">
-                                <div class="p-name" id="m1-p1" contenteditable="true">Player 1</div>
-                                <button class="btn-adv" onclick="adv('m1-p1', 'm5-p1')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                            <div class="p-row">
-                                <div class="p-name" id="m1-p2" contenteditable="true">Player 2</div>
-                                <button class="btn-adv" onclick="adv('m1-p2', 'm5-p1')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                        </div>
-                        <div class="match-card">
-                            <div class="p-row">
-                                <div class="p-name" id="m2-p1" contenteditable="true">Player 3</div>
-                                <button class="btn-adv" onclick="adv('m2-p1', 'm5-p2')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                            <div class="p-row">
-                                <div class="p-name" id="m2-p2" contenteditable="true">Player 4</div>
-                                <button class="btn-adv" onclick="adv('m2-p2', 'm5-p2')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                        </div>
-                        <div class="connector"></div>
-                    </div>
-                    
-                    <div class="match-group">
-                        <div class="match-card">
-                            <div class="p-row">
-                                <div class="p-name" id="m3-p1" contenteditable="true">Player 5</div>
-                                <button class="btn-adv" onclick="adv('m3-p1', 'm6-p1')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                            <div class="p-row">
-                                <div class="p-name" id="m3-p2" contenteditable="true">Player 6</div>
-                                <button class="btn-adv" onclick="adv('m3-p2', 'm6-p1')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                        </div>
-                        <div class="match-card">
-                            <div class="p-row">
-                                <div class="p-name" id="m4-p1" contenteditable="true">Player 7</div>
-                                <button class="btn-adv" onclick="adv('m4-p1', 'm6-p2')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                            <div class="p-row">
-                                <div class="p-name" id="m4-p2" contenteditable="true">Player 8</div>
-                                <button class="btn-adv" onclick="adv('m4-p2', 'm6-p2')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                        </div>
-                        <div class="connector"></div>
-                    </div>
+            <div class="bracket-layout" id="bracket-layout">
                 </div>
-
-                <div class="b-col r2">
-                    <div class="match-group">
-                        <div class="match-card">
-                            <div class="p-row">
-                                <div class="p-name" id="m5-p1" contenteditable="true">TBD</div>
-                                <button class="btn-adv" onclick="adv('m5-p1', 'm7-p1')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                            <div class="p-row">
-                                <div class="p-name" id="m5-p2" contenteditable="true">TBD</div>
-                                <button class="btn-adv" onclick="adv('m5-p2', 'm7-p1')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                        </div>
-                        <div class="match-card">
-                            <div class="p-row">
-                                <div class="p-name" id="m6-p1" contenteditable="true">TBD</div>
-                                <button class="btn-adv" onclick="adv('m6-p1', 'm7-p2')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                            <div class="p-row">
-                                <div class="p-name" id="m6-p2" contenteditable="true">TBD</div>
-                                <button class="btn-adv" onclick="adv('m6-p2', 'm7-p2')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
-                            </div>
-                        </div>
-                        <div class="connector"></div>
-                    </div>
-                </div>
-
-                <div class="b-col r3">
-                    <div class="match-card" style="border-color: #d4af37;">
-                        <div class="p-row">
-                            <div class="p-name" id="m7-p1" contenteditable="true">TBD</div>
-                            <button class="btn-adv" onclick="adv('m7-p1', 'champ-id')" title="Winner!">></button>
-                            <div class="p-score" contenteditable="true">-</div>
-                        </div>
-                        <div class="p-row">
-                            <div class="p-name" id="m7-p2" contenteditable="true">TBD</div>
-                            <button class="btn-adv" onclick="adv('m7-p2', 'champ-id')" title="Winner!">></button>
-                            <div class="p-score" contenteditable="true">-</div>
-                        </div>
-                        <div class="final-connector"></div>
-                    </div>
-                </div>
-
-                <div class="b-col r4">
-                    <div class="champion-card">
-                        <div class="champ-label">CHAMPION</div>
-                        <div class="champ-name" id="champ-id" contenteditable="true">👑 TBD</div>
-                    </div>
-                </div>
-
-            </div>
 
             <img src="/logo.png" alt="Logo" class="footer-logo" crossorigin="anonymous">
         </div>
     </div>
 
     <script>
-        // Функция продвижения игрока по сетке
-        function adv(fromId, toId) {
-            const name = document.getElementById(fromId).innerText;
-            const target = document.getElementById(toId);
+        // Функция генерации сетки нужного размера (4, 8, 16)
+        function renderBracket(size) {
+            document.querySelectorAll('.action-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + size).classList.add('active');
+            document.getElementById('tour-subtitle').innerText = `TOP ${size} FINALISTS`;
+
+            const container = document.getElementById('bracket-layout');
+            let html = '';
             
-            // Если продвигаем в финал, добавим корону
-            if (toId === 'champ-id') {
-                target.innerText = "👑 " + name;
+            const rounds = Math.log2(size);
+            let globalMatchId = 1;
+            
+            let matchIds = [];
+            let numMatches = size / 2;
+            for(let r=0; r<rounds; r++) {
+                matchIds[r] = [];
+                for(let m=0; m<numMatches; m++) {
+                    matchIds[r].push(globalMatchId++);
+                }
+                numMatches /= 2;
+            }
+            
+            for(let r=0; r<rounds; r++) {
+                html += `<div class="b-col r${r+1}">`;
+                const mIds = matchIds[r];
+                
+                for(let m=0; m<mIds.length; m++) {
+                    const id = mIds[m];
+                    const isFinal = (r === rounds - 1);
+                    
+                    let nextTarget = 'winner';
+                    if (!isFinal) {
+                        const nextGlobalId = matchIds[r+1][Math.floor(m/2)];
+                        const slot = (m % 2 === 0) ? 'p1' : 'p2';
+                        nextTarget = `m${nextGlobalId}-${slot}`;
+                    }
+                    
+                    html += `
+                    <div class="b-cell">
+                        <div class="match-card" ${isFinal ? 'style="border-color: #d4af37; box-shadow: 0 0 20px rgba(212,175,55,0.3);"' : ''}>
+                            <div class="p-row">
+                                <div class="p-name" id="m${id}-p1" contenteditable="true">TBD</div>
+                                <button class="btn-adv" onclick="adv(this, 'm${id}-p1', '${nextTarget}')" title="Advance">></button>
+                                <div class="p-score" contenteditable="true">-</div>
+                            </div>
+                            <div class="p-row">
+                                <div class="p-name" id="m${id}-p2" contenteditable="true">TBD</div>
+                                <button class="btn-adv" onclick="adv(this, 'm${id}-p2', '${nextTarget}')" title="Advance">></button>
+                                <div class="p-score" contenteditable="true">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }
+                html += `</div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // Продвижение игрока
+        function adv(btnElement, fromId, toId) {
+            const nameNode = document.getElementById(fromId);
+            if (!nameNode) return;
+            const name = nameNode.innerText;
+            
+            if (toId === 'winner') {
+                const parentCard = nameNode.closest('.match-card');
+                parentCard.querySelectorAll('.p-name').forEach(el => {
+                    el.style.color = '#fff';
+                    el.style.textShadow = 'none';
+                });
+                nameNode.style.color = '#d4af37';
+                nameNode.style.textShadow = '0 0 15px rgba(212,175,55,0.8)';
             } else {
-                target.innerText = name;
+                const target = document.getElementById(toId);
+                if (target) {
+                    target.innerText = name;
+                    target.style.color = '#fff';
+                    target.style.textShadow = 'none';
+                }
             }
         }
 
         // Скачивание скриншота
         function downloadBracket() {
+            window.scrollTo(0, 0); // Чтобы избежать обрезки, если страница прокручена
             const btn = document.getElementById('dl-btn');
             btn.innerText = 'GENERATING...';
             btn.style.opacity = '0.7';
 
             const captureArea = document.getElementById('capture-area');
             
-            // Убираем курсоры перед скрином
+            // Убираем фокус и выделение с текста, чтобы курсор не попал на скриншот
             document.querySelectorAll('[contenteditable]').forEach(el => el.blur());
 
             html2canvas(captureArea, { 
@@ -297,6 +276,11 @@
                 btn.style.opacity = '1';
             });
         }
+
+        // Запуск (по умолчанию 8 игроков)
+        document.addEventListener("DOMContentLoaded", () => {
+            renderBracket(8);
+        });
     </script>
 </body>
 </html>
