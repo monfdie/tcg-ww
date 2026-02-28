@@ -26,12 +26,18 @@
             <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">History</a>
             
             <% if (locals.isAdmin) { %>
+                <div style="margin: 15px 15px 5px 15px; border-top: 1px solid #2a3454;"></div>
+                
                 <a href="/admin/dashboard" class="<%= locals.path && locals.path.startsWith('/admin') ? 'active' : '' %>" style="color: #4facfe; border-color: rgba(79, 172, 254, 0.3);">
                     ADMIN PANEL
                 </a>
                 
                 <a href="/promo.html" style="color: #b28dff; border-color: rgba(178, 141, 255, 0.3);">
                     PROMO MAKER
+                </a>
+
+                <a href="/bracket.html" style="color: #d4af37; border-color: rgba(212, 175, 55, 0.3);">
+                    BRACKET MAKER
                 </a>
             <% } %>
         </div>
