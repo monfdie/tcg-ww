@@ -20,18 +20,19 @@
             width: 1500px; height: 900px; /* Идеальный размер для стрима */
             background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.95)), url('/bg.jpg') center/cover;
             border: 2px solid #2a3454; box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            border-radius: 12px; padding: 50px; box-sizing: border-box;
+            border-radius: 12px; padding: 50px 50px 20px 50px; box-sizing: border-box;
             position: relative; display: flex; flex-direction: column;
             transform-origin: top center;
         }
 
-        .b-header { text-align: center; margin-bottom: 40px; }
+        .b-header { text-align: center; margin-bottom: 30px; }
         .b-title { font-family: 'Cinzel', serif; font-size: 3.5em; margin: 0; color: #fff; text-shadow: 0 0 20px rgba(212, 175, 55, 0.6); text-transform: uppercase; outline: none; letter-spacing: 2px; }
         .b-subtitle { font-size: 1.2em; color: #8da4c4; letter-spacing: 4px; text-transform: uppercase; font-weight: bold; outline: none; margin-top: 10px; }
 
         /* --- ДИНАМИЧЕСКАЯ СЕТКА FLEXBOX --- */
         .bracket-layout {
             display: flex; flex-grow: 1; width: 100%; gap: 0;
+            margin-bottom: 70px; /* Отодвигает сетку вверх, освобождая место для логотипа */
         }
         
         .b-col {
@@ -42,34 +43,36 @@
             flex: 1; display: flex; align-items: center; justify-content: center; position: relative;
         }
 
-        /* --- КАРТОЧКА МАТЧА --- */
+        /* --- КАРТОЧКА МАТЧА (Уменьшена для дистанции между парами) --- */
         .match-card {
-            width: 240px; background: rgba(16, 20, 32, 0.95);
+            width: 200px; /* Уменьшили ширину */
+            background: rgba(16, 20, 32, 0.95);
             border: 1px solid #3c4566; border-radius: 6px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             display: flex; flex-direction: column; position: relative; z-index: 10;
         }
         .p-row {
-            display: flex; align-items: center; height: 38px; border-bottom: 1px solid #2a3454; position: relative;
+            display: flex; align-items: center; height: 32px; /* Уменьшили высоту, теперь блоки компактнее */
+            border-bottom: 1px solid #2a3454; position: relative;
         }
         .p-row:last-child { border-bottom: none; }
         
         .p-name {
-            flex-grow: 1; padding: 0 12px; font-weight: bold; font-size: 0.95em;
+            flex-grow: 1; padding: 0 10px; font-weight: bold; font-size: 0.85em;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; outline: none;
             transition: 0.3s;
         }
         .p-score {
-            width: 40px; height: 100%; display: flex; align-items: center; justify-content: center;
+            width: 35px; height: 100%; display: flex; align-items: center; justify-content: center;
             background: rgba(0,0,0,0.5); border-left: 1px solid #2a3454;
-            font-family: 'Cinzel', serif; font-weight: bold; outline: none; color: #fff;
+            font-family: 'Cinzel', serif; font-weight: bold; font-size: 0.9em; outline: none; color: #fff;
         }
         .p-score:focus { color: #d4af37; background: #000; }
 
         /* --- КНОПКА ADVANCE (>) --- */
         .btn-adv {
-            position: absolute; right: 40px; top: 0; height: 100%; width: 25px;
+            position: absolute; right: 35px; top: 0; height: 100%; width: 20px;
             background: linear-gradient(90deg, transparent, #4facfe); border: none; color: #fff;
-            font-weight: bold; cursor: pointer; opacity: 0; transition: 0.2s; font-size: 1.1em;
+            font-weight: bold; cursor: pointer; opacity: 0; transition: 0.2s; font-size: 1em; padding: 0;
         }
         .p-row:hover .btn-adv { opacity: 1; }
         .btn-adv:hover { background: #4facfe; color: #000; }
@@ -78,18 +81,18 @@
         /* Исходящие линии (вправо) */
         .b-col:not(:last-child) .b-cell:nth-child(odd)::before {
             content: ''; position: absolute;
-            left: calc(50% + 120px); right: 0; top: 50%; bottom: 0;
+            left: calc(50% + 100px); right: 0; top: 50%; bottom: 0;
             border-top: 2px solid #3c4566; border-right: 2px solid #3c4566; border-top-right-radius: 6px; z-index: 1;
         }
         .b-col:not(:last-child) .b-cell:nth-child(even)::before {
             content: ''; position: absolute;
-            left: calc(50% + 120px); right: 0; top: 0; bottom: 50%;
+            left: calc(50% + 100px); right: 0; top: 0; bottom: 50%;
             border-bottom: 2px solid #3c4566; border-right: 2px solid #3c4566; border-bottom-right-radius: 6px; z-index: 1;
         }
         /* Входящие линии (влево) */
         .b-col:not(:first-child) .b-cell::after {
             content: ''; position: absolute;
-            left: 0; width: calc(50% - 120px); top: 50%; height: 2px;
+            left: 0; width: calc(50% - 100px); top: 50%; height: 2px;
             background: #3c4566; z-index: 1;
         }
 
@@ -144,10 +147,18 @@
                 </div>
             </div>
 
+            <div class="controls-box">
+                <h4 class="controls-title" style="color: #4facfe;">Save / Load</h4>
+                <div style="display: flex; gap: 10px;">
+                    <button class="action-btn" id="save-btn" style="color: #4facfe; border-color: rgba(79, 172, 254, 0.5);" onclick="saveBracket()">SAVE</button>
+                    <button class="action-btn" id="load-btn" style="color: #4facfe; border-color: rgba(79, 172, 254, 0.5);" onclick="loadBracket()">LOAD</button>
+                </div>
+            </div>
+
             <div class="instruction">
-                <p>1. Впиши ники игроков.</p>
+                <p>1. Впиши ники и счет.</p>
                 <p>2. Нажми <b>></b> рядом с ником, чтобы игрок прошел дальше.</p>
-                <p>3. Нажатие <b>></b> в Финале сделает ник победителя золотым.</p>
+                <p>3. Нажми <b>SAVE</b>, чтобы сохранить сетку в браузере.</p>
             </div>
             
             <button class="download-btn" onclick="downloadBracket()" id="dl-btn">Download Bracket</button>
@@ -167,8 +178,11 @@
     </div>
 
     <script>
+        let currentSize = 8;
+
         // Функция генерации сетки нужного размера (4, 8, 16)
         function renderBracket(size) {
+            currentSize = size;
             document.querySelectorAll('.action-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('btn-' + size).classList.add('active');
             document.getElementById('tour-subtitle').innerText = `TOP ${size} FINALISTS`;
@@ -210,12 +224,12 @@
                             <div class="p-row">
                                 <div class="p-name" id="m${id}-p1" contenteditable="true">TBD</div>
                                 <button class="btn-adv" onclick="adv(this, 'm${id}-p1', '${nextTarget}')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
+                                <div class="p-score" id="m${id}-p1-score" contenteditable="true">-</div>
                             </div>
                             <div class="p-row">
                                 <div class="p-name" id="m${id}-p2" contenteditable="true">TBD</div>
                                 <button class="btn-adv" onclick="adv(this, 'm${id}-p2', '${nextTarget}')" title="Advance">></button>
-                                <div class="p-score" contenteditable="true">-</div>
+                                <div class="p-score" id="m${id}-p2-score" contenteditable="true">-</div>
                             </div>
                         </div>
                     </div>
@@ -250,16 +264,105 @@
             }
         }
 
+        // Сохранение сетки
+        function saveBracket() {
+            const data = {
+                size: currentSize,
+                title: document.getElementById('tour-title').innerText,
+                subtitle: document.getElementById('tour-subtitle').innerText,
+                names: {},
+                scores: {},
+                golds: []
+            };
+
+            document.querySelectorAll('.p-name').forEach(el => {
+                data.names[el.id] = el.innerText;
+                // Проверяем, золотой ли ник (победитель)
+                if (el.style.color === 'rgb(212, 175, 55)' || el.style.color === '#d4af37') {
+                    data.golds.push(el.id);
+                }
+            });
+
+            document.querySelectorAll('.p-score').forEach(el => {
+                data.scores[el.id] = el.innerText;
+            });
+
+            localStorage.setItem('gitcg_bracket', JSON.stringify(data));
+
+            const btn = document.getElementById('save-btn');
+            const originalText = btn.innerText;
+            btn.innerText = 'SAVED!';
+            btn.style.background = 'rgba(79, 172, 254, 0.5)';
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = 'rgba(42, 52, 84, 0.5)';
+            }, 1500);
+        }
+
+        // Загрузка сетки
+        function loadBracket() {
+            const savedData = localStorage.getItem('gitcg_bracket');
+            if (!savedData) {
+                alert('No saved bracket found!');
+                return;
+            }
+
+            const data = JSON.parse(savedData);
+            
+            // 1. Отрисовываем нужный размер
+            renderBracket(data.size);
+
+            // 2. Восстанавливаем заголовки
+            document.getElementById('tour-title').innerText = data.title || 'PLAYOFF STAGE';
+            document.getElementById('tour-subtitle').innerText = data.subtitle || `TOP ${data.size} FINALISTS`;
+
+            // 3. Восстанавливаем ники и снимаем золото
+            for (const [id, value] of Object.entries(data.names)) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerText = value;
+                    el.style.color = '#fff';
+                    el.style.textShadow = 'none';
+                }
+            }
+
+            // 4. Возвращаем золото победителям
+            if (data.golds) {
+                data.golds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.style.color = '#d4af37';
+                        el.style.textShadow = '0 0 15px rgba(212,175,55,0.8)';
+                    }
+                });
+            }
+
+            // 5. Восстанавливаем счет
+            for (const [id, value] of Object.entries(data.scores)) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerText = value;
+                }
+            }
+
+            const btn = document.getElementById('load-btn');
+            const originalText = btn.innerText;
+            btn.innerText = 'LOADED!';
+            btn.style.background = 'rgba(79, 172, 254, 0.5)';
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = 'rgba(42, 52, 84, 0.5)';
+            }, 1500);
+        }
+
         // Скачивание скриншота
         function downloadBracket() {
-            window.scrollTo(0, 0); // Чтобы избежать обрезки, если страница прокручена
+            window.scrollTo(0, 0); 
             const btn = document.getElementById('dl-btn');
             btn.innerText = 'GENERATING...';
             btn.style.opacity = '0.7';
 
             const captureArea = document.getElementById('capture-area');
-            
-            // Убираем фокус и выделение с текста, чтобы курсор не попал на скриншот
             document.querySelectorAll('[contenteditable]').forEach(el => el.blur());
 
             html2canvas(captureArea, { 
