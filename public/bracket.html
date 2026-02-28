@@ -7,22 +7,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
-            margin: 0; display: flex; align-items: center; justify-content: center;
+            margin: 0; display: flex; align-items: flex-start; justify-content: center;
             min-height: 100vh; background: #0b0d17;
             background-image: radial-gradient(circle at 50% 30%, #2b3452 0%, #080a12 85%);
             font-family: 'Segoe UI', sans-serif; color: #fff; padding: 40px; box-sizing: border-box;
+            overflow-x: auto;
         }
         
         .main-container { display: flex; align-items: flex-start; gap: 40px; }
 
-        /* --- КАРТОЧКА СЕТКИ --- */
+        /* --- КАРТОЧКА СЕТКИ (размеры меняются через JS) --- */
         .bracket-board {
-            width: 1500px; height: 900px; /* Идеальный размер для стрима */
             background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.95)), url('/bg.jpg') center/cover;
             border: 2px solid #2a3454; box-shadow: 0 0 50px rgba(0,0,0,0.8);
             border-radius: 12px; padding: 50px 50px 20px 50px; box-sizing: border-box;
             position: relative; display: flex; flex-direction: column;
-            transform-origin: top center;
+            transform-origin: top left; transition: all 0.3s ease;
         }
 
         .b-header { text-align: center; margin-bottom: 30px; }
@@ -43,15 +43,15 @@
             flex: 1; display: flex; align-items: center; justify-content: center; position: relative;
         }
 
-        /* --- КАРТОЧКА МАТЧА (Уменьшена для дистанции между парами) --- */
+        /* --- КАРТОЧКА МАТЧА --- */
         .match-card {
-            width: 200px; /* Уменьшили ширину */
+            width: 200px;
             background: rgba(16, 20, 32, 0.95);
             border: 1px solid #3c4566; border-radius: 6px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             display: flex; flex-direction: column; position: relative; z-index: 10;
         }
         .p-row {
-            display: flex; align-items: center; height: 32px; /* Уменьшили высоту, теперь блоки компактнее */
+            display: flex; align-items: center; height: 32px;
             border-bottom: 1px solid #2a3454; position: relative;
         }
         .p-row:last-child { border-bottom: none; }
@@ -78,7 +78,6 @@
         .btn-adv:hover { background: #4facfe; color: #000; }
 
         /* --- ИДЕАЛЬНЫЕ СОЕДИНИТЕЛЬНЫЕ ЛИНИИ --- */
-        /* Исходящие линии (вправо) */
         .b-col:not(:last-child) .b-cell:nth-child(odd)::before {
             content: ''; position: absolute;
             left: calc(50% + 100px); right: 0; top: 50%; bottom: 0;
@@ -89,7 +88,6 @@
             left: calc(50% + 100px); right: 0; top: 0; bottom: 50%;
             border-bottom: 2px solid #3c4566; border-right: 2px solid #3c4566; border-bottom-right-radius: 6px; z-index: 1;
         }
-        /* Входящие линии (влево) */
         .b-col:not(:first-child) .b-cell::after {
             content: ''; position: absolute;
             left: 0; width: calc(50% - 100px); top: 50%; height: 2px;
@@ -97,7 +95,7 @@
         }
 
         /* --- ПАНЕЛЬ УПРАВЛЕНИЯ --- */
-        .side-panel { display: flex; flex-direction: column; gap: 20px; width: 300px; flex-shrink: 0; }
+        .side-panel { display: flex; flex-direction: column; gap: 20px; width: 300px; flex-shrink: 0; position: sticky; top: 40px; }
         .back-link {
             display: block; text-align: center; padding: 15px; border-radius: 12px; background: rgba(16, 20, 32, 0.8);
             color: #d4af37; text-decoration: none; font-weight: bold; border: 1px solid #3c4566; transition: 0.2s;
@@ -108,8 +106,11 @@
             background: rgba(16, 20, 32, 0.8); padding: 20px; border-radius: 12px; border: 1px solid #3c4566;
         }
         .controls-title { margin: 0 0 15px 0; color: #fff; text-transform: uppercase; font-size: 1em; text-align: center; }
+        
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
         .action-btn {
-            flex: 1; background: rgba(42, 52, 84, 0.5); color: #d4af37; border: 1px solid #3c4566;
+            background: rgba(42, 52, 84, 0.5); color: #d4af37; border: 1px solid #3c4566;
             padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
         .action-btn:hover { background: #d4af37; color: #000; border-color: #d4af37; }
@@ -140,25 +141,27 @@
             
             <div class="controls-box">
                 <h4 class="controls-title">Bracket Size</h4>
-                <div style="display: flex; gap: 10px;">
-                    <button class="action-btn" id="btn-4" onclick="renderBracket(4)">4</button>
-                    <button class="action-btn active" id="btn-8" onclick="renderBracket(8)">8</button>
-                    <button class="action-btn" id="btn-16" onclick="renderBracket(16)">16</button>
+                <div class="btn-grid">
+                    <button class="action-btn" id="btn-4" onclick="renderBracket(4)">4 Players</button>
+                    <button class="action-btn active" id="btn-8" onclick="renderBracket(8)">8 Players</button>
+                    <button class="action-btn" id="btn-16" onclick="renderBracket(16)">16 Players</button>
+                    <button class="action-btn" id="btn-32" onclick="renderBracket(32)">32 Players</button>
                 </div>
             </div>
 
             <div class="controls-box">
                 <h4 class="controls-title" style="color: #4facfe;">Save / Load</h4>
                 <div style="display: flex; gap: 10px;">
-                    <button class="action-btn" id="save-btn" style="color: #4facfe; border-color: rgba(79, 172, 254, 0.5);" onclick="saveBracket()">SAVE</button>
-                    <button class="action-btn" id="load-btn" style="color: #4facfe; border-color: rgba(79, 172, 254, 0.5);" onclick="loadBracket()">LOAD</button>
+                    <button class="action-btn" id="save-btn" style="color: #4facfe; border-color: rgba(79, 172, 254, 0.5); flex: 1;" onclick="saveBracket()">SAVE</button>
+                    <button class="action-btn" id="load-btn" style="color: #4facfe; border-color: rgba(79, 172, 254, 0.5); flex: 1;" onclick="loadBracket()">LOAD</button>
                 </div>
             </div>
 
             <div class="instruction">
                 <p>1. Впиши ники и счет.</p>
                 <p>2. Нажми <b>></b> рядом с ником, чтобы игрок прошел дальше.</p>
-                <p>3. Нажми <b>SAVE</b>, чтобы сохранить сетку в браузере.</p>
+                <p>3. Нажатие <b>></b> в финале сделает ник победителя золотым.</p>
+                <p>4. Не забывай нажимать <b>SAVE</b>.</p>
             </div>
             
             <button class="download-btn" onclick="downloadBracket()" id="dl-btn">Download Bracket</button>
@@ -180,9 +183,23 @@
     <script>
         let currentSize = 8;
 
-        // Функция генерации сетки нужного размера (4, 8, 16)
+        // Функция генерации сетки нужного размера (4, 8, 16, 32)
         function renderBracket(size) {
             currentSize = size;
+            
+            // Динамически меняем размер холста
+            const captureArea = document.getElementById('capture-area');
+            if (size === 32) {
+                captureArea.style.width = '1800px';
+                captureArea.style.height = '1450px';
+            } else if (size === 16) {
+                captureArea.style.width = '1500px';
+                captureArea.style.height = '1000px';
+            } else {
+                captureArea.style.width = '1200px';
+                captureArea.style.height = '800px';
+            }
+
             document.querySelectorAll('.action-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('btn-' + size).classList.add('active');
             document.getElementById('tour-subtitle').innerText = `TOP ${size} FINALISTS`;
@@ -220,7 +237,7 @@
                     
                     html += `
                     <div class="b-cell">
-                        <div class="match-card" ${isFinal ? 'style="border-color: #d4af37; box-shadow: 0 0 20px rgba(212,175,55,0.3);"' : ''}>
+                        <div class="match-card">
                             <div class="p-row">
                                 <div class="p-name" id="m${id}-p1" contenteditable="true">TBD</div>
                                 <button class="btn-adv" onclick="adv(this, 'm${id}-p1', '${nextTarget}')" title="Advance">></button>
@@ -277,7 +294,6 @@
 
             document.querySelectorAll('.p-name').forEach(el => {
                 data.names[el.id] = el.innerText;
-                // Проверяем, золотой ли ник (победитель)
                 if (el.style.color === 'rgb(212, 175, 55)' || el.style.color === '#d4af37') {
                     data.golds.push(el.id);
                 }
@@ -309,14 +325,11 @@
 
             const data = JSON.parse(savedData);
             
-            // 1. Отрисовываем нужный размер
             renderBracket(data.size);
 
-            // 2. Восстанавливаем заголовки
             document.getElementById('tour-title').innerText = data.title || 'PLAYOFF STAGE';
             document.getElementById('tour-subtitle').innerText = data.subtitle || `TOP ${data.size} FINALISTS`;
 
-            // 3. Восстанавливаем ники и снимаем золото
             for (const [id, value] of Object.entries(data.names)) {
                 const el = document.getElementById(id);
                 if (el) {
@@ -326,9 +339,16 @@
                 }
             }
 
-            // 4. Возвращаем золото победителям
-            
-            // 5. Восстанавливаем счет
+            if (data.golds) {
+                data.golds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.style.color = '#d4af37';
+                        el.style.textShadow = '0 0 15px rgba(212,175,55,0.8)';
+                    }
+                });
+            }
+
             for (const [id, value] of Object.entries(data.scores)) {
                 const el = document.getElementById(id);
                 if (el) {
