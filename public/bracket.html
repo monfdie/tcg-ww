@@ -327,16 +327,7 @@
             }
 
             // 4. Возвращаем золото победителям
-            if (data.golds) {
-                data.golds.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.style.color = '#d4af37';
-                        el.style.textShadow = '0 0 15px rgba(212,175,55,0.8)';
-                    }
-                });
-            }
-
+            
             // 5. Восстанавливаем счет
             for (const [id, value] of Object.entries(data.scores)) {
                 const el = document.getElementById(id);
