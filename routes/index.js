@@ -94,7 +94,9 @@ router.get('/history', async (req, res) => {
     try {
         let matches = [];
         if (req.user) {
-            matches = await Match.find({ $or: [ { blueDiscordId: req.user.discordId }, { redDiscordId: req.user.discordId } ] }).sort({ date: -1 });
+            matches = await Match.find({ $or: [ { blueDiscordId: req.user.discordId }, { redDiscordId: req.user.discordId } ] })
+                .sort({ date: -1 })
+                .limit(9); // <--- ИМЕННО ЭТА СТРОЧКА ОТВЕЧАЕТ ЗА 9 ПОСЛЕДНИХ ИГР
         }
         res.render('pages/history', { title: 'My History', matches });
     } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
