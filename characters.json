@@ -19,7 +19,8 @@
         { "id": "signora", "name": "Signora", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/b1d1ba210006f42643b1253075833460.png" },
         { "id": "cryocicin", "name": "Cryo Cicin", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/ef93623039310c4cf3b7d1f4a4d9341b.png" },
         { "id": "cryohypo", "name": "Cryo Hypostasis", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/4128f76400da6790a5228196a260528f.png" },
-        { "id": "operative", "name": "Operative", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/0175ca1c46848cdfd9dda7ba1dd73e59.png" }
+        { "id": "operative", "name": "Operative", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/0175ca1c46848cdfd9dda7ba1dd73e59.png" },
+        { "id": "mika", "name": "Mika", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3484/0526b0bbfce91a818f1e583375e13111.png" }
     ],
     "hydro": [
         { "id": "barbara", "name": "Barbara", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/302b2c185f63cad48736c627a1551afe.png" },
@@ -64,7 +65,8 @@
         { "id": "pyrolector", "name": "Abyss Lector", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/932ad4f881d1d169d1eecf49a13a0648.png" },
         { "id": "babel", "name": "Babel", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/f5035d249f2d455aa8175401349c757f.png" },
         { "id": "crab", "name": "Emperor Crab", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/60ad49d54e31fbae312e19bb1a7993ce.png" },
-        { "id": "gosoytot", "name": "Gosoytot", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b4/2aa84d81075016be2b56bc7963fbc99d.png" }
+        { "id": "gosoytot", "name": "Gosoytot", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b4/2aa84d81075016be2b56bc7963fbc99d.png" },
+        { "id": "ququzaur", "name": "Ququzaur", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3484/f17ef867ac6f52eefce8077d38b1c0d1.png" }
     ],
     "electro": [
         { "id": "fischl", "name": "Fischl", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/c2732a74d3c6fdceaf0129ac656203aa.png" },
@@ -88,7 +90,8 @@
         { "id": "seahorse", "name": "Seahorse", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/c2405feac10e8bdf1459639768fa401e.png" },
         { "id": "electrocicin", "name": "Electro Cicin", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/aa6534f6c54109541cdf0c0f1fc76bad.png" },
         { "id": "scorpion", "name": "Scorpion", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/403b0a8fffc96fd4404a5111d57d340d.png" },
-        { "id": "electrolector", "name": "Abyss Lector Electro", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/8d15794c4fae8f7d41acbff1e7d6fddd.png" }
+        { "id": "electrolector", "name": "Abyss Lector Electro", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/8d15794c4fae8f7d41acbff1e7d6fddd.png" },
+        { "id": "ineffa", "name": "Ineffa", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3484/92b2f1481ebbf678390fa1ad25ea5f6c.png" }
     ],
     "anemo": [
         { "id": "sucrose", "name": "Sucrose", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/dc1fe918f69265b0adc4cac191e96765.png" },
