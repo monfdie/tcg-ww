@@ -90,6 +90,7 @@ io.on('connection', (socket) => {
             redPlayer: null, redUserId: null, redDiscordId: null, redAvatar: null,
             spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
+            tossActive: false, // Флаг для анимации монетки
             immunityPhaseActive: false, immunityStepIndex: 0, immunityPool: [], immunityBans: [],
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
@@ -100,7 +101,6 @@ io.on('connection', (socket) => {
         socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    // Измененная функция реконнекта, которая принимает флаг asSpectator
     socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar, asSpectator }) => { 
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Session expired');
@@ -113,12 +113,10 @@ io.on('connection', (socket) => {
         } else if (session.redUserId === userId) { 
             session.redPlayer = socket.id; session.redDiscordId = discordId || session.redDiscordId; session.redAvatar = avatar || session.redAvatar; role = 'red'; 
         } else if (!session.redUserId && !asSpectator) {
-            // Если место 2го игрока свободно и галочка Спектатора НЕ нажата - занимаем место
             session.redUserId = userId; session.redPlayer = socket.id;
             session.redName = nickname || 'Player 2'; session.redDiscordId = discordId; session.redAvatar = avatar; role = 'red';
             io.to(roomId).emit('update_state', getPublicState(session));
         } else {
-            // В противном случае (если галочка нажата) — кидаем в зрители
             session.spectators.push(socket.id);
         }
         socket.join(roomId);
@@ -134,19 +132,43 @@ io.on('connection', (socket) => {
         if (socket.id === session.redPlayer) session.ready.red = true;
         io.to(roomId).emit('update_state', getPublicState(session));
         
-        if (session.ready.blue && session.ready.red && !session.gameStarted) {
-            session.gameStarted = true;
-            if (session.draftType === 'gitcg_cup_2') {
-                session.immunityPhaseActive = true;
-                session.currentTeam = IMMUNITY_ORDER[0].team;
-                session.currentAction = IMMUNITY_ORDER[0].type;
-            } else {
-                session.currentTeam = session.draftOrder[0].team;
-                session.currentAction = session.draftOrder[0].type;
+        if (session.ready.blue && session.ready.red && !session.gameStarted && !session.tossActive) {
+            session.tossActive = true;
+            
+            // RANDOM COIN TOSS (50% шанс поменяться местами)
+            if (Math.random() > 0.5) {
+                const tempP = session.bluePlayer; session.bluePlayer = session.redPlayer; session.redPlayer = tempP;
+                const tempU = session.blueUserId; session.blueUserId = session.redUserId; session.redUserId = tempU;
+                const tempD = session.blueDiscordId; session.blueDiscordId = session.redDiscordId; session.redDiscordId = tempD;
+                const tempA = session.blueAvatar; session.blueAvatar = session.redAvatar; session.redAvatar = tempA;
+                const tempN = session.blueName; session.blueName = session.redName; session.redName = tempN;
+                
+                // Обновляем роли клиентам, чтобы они могли нажимать свои кнопки
+                io.to(session.bluePlayer).emit('role_update', 'blue');
+                io.to(session.redPlayer).emit('role_update', 'red');
             }
-            startTimer(roomId); 
-            io.to(roomId).emit('game_started'); 
-            io.to(roomId).emit('update_state', getPublicState(session));
+
+            // Отправляем всем команду запустить красивую анимацию
+            io.to(roomId).emit('start_coin_toss', { 
+                winnerName: session.blueName // Blue всегда First Pick
+            });
+
+            // Ждем 4 секунды (пока идет анимация), затем стартуем игру
+            setTimeout(() => {
+                session.gameStarted = true;
+                session.tossActive = false;
+                if (session.draftType === 'gitcg_cup_2') {
+                    session.immunityPhaseActive = true;
+                    session.currentTeam = IMMUNITY_ORDER[0].team;
+                    session.currentAction = IMMUNITY_ORDER[0].type;
+                } else {
+                    session.currentTeam = session.draftOrder[0].team;
+                    session.currentAction = session.draftOrder[0].type;
+                }
+                startTimer(roomId); 
+                io.to(roomId).emit('game_started'); 
+                io.to(roomId).emit('update_state', getPublicState(session));
+            }, 4000);
         }
     });
 
