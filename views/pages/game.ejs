@@ -236,7 +236,7 @@ body, html {
         isDraftFinishedLocal = state.draftFinished;
         const isMyTurn = (myRole === state.currentTeam);
 
-        // ОБНОВЛЕНИЕ ЛЕСЕНКИ
+        // ОБНОВЛЕНИЕ ЛЕСЕНКИ ПРИ КАЖДОМ ШАГЕ
         document.querySelectorAll('.ladder-step').forEach((el, idx) => {
             el.classList.remove('step-active', 'step-done');
             const stepNum = idx + 1;
@@ -244,6 +244,7 @@ body, html {
                 el.classList.add('step-done');
             } else if (stepNum === state.stepIndex && !state.draftFinished) {
                 el.classList.add('step-active');
+                // Плавная прокрутка к активному шагу
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         });
@@ -326,11 +327,12 @@ body, html {
         const container = document.getElementById('char-pool-container');
         container.innerHTML = '';
         
-        // СОЗДАНИЕ ЛЕСЕНКИ
+        // 1. СОЗДАНИЕ И НАПОЛНЕНИЕ ЛЕСЕНКИ
         const ladder = document.createElement('div'); 
         ladder.className = 'ladder-container'; 
         container.appendChild(ladder);
 
+        // Генерируем элементы лесенки на основе правил драфта
         const schema = DRAFT_RULES[currentDraftType];
         if (schema) {
             schema.forEach((step, idx) => {
@@ -344,6 +346,7 @@ body, html {
             });
         }
 
+        // 2. ОТРИСОВКА ПЕРСОНАЖЕЙ ПО СТОРОНАМ
         ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
             const row = document.createElement('div'); row.className = `element-row row-${elem}`;
             const chars = charsData[elem], mid = Math.ceil(chars.length/2);
