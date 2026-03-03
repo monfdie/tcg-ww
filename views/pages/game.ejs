@@ -25,18 +25,21 @@ body, html {
 .turn-timer { transition: opacity 0.3s ease; }
 .draft-area { display: flex; justify-content: center; gap: 60px; }
 
-/* --- ЛОГОТИП ДОМОЙ В ШАПКЕ --- */
-.header-left-group {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+/* --- РАЗДЕЛЕНИЕ ЛОГОТИПА И КОДА ПО КРАЯМ --- */
+.game-header {
+    position: relative;
 }
 .home-logo-link {
+    position: absolute;
+    left: 30px;
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
     outline: none;
+    z-index: 100;
 }
 .home-logo-link img {
     height: 42px;
@@ -46,6 +49,16 @@ body, html {
 .home-logo-link:hover img {
     transform: scale(1.1);
     filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.6));
+}
+
+#room-container {
+    position: absolute !important;
+    left: auto !important;
+    right: 30px !important; /* Прибиваем к правому краю */
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    z-index: 100;
 }
 
 /* --- TOSS OVERLAY ANIMATION --- */
@@ -143,19 +156,18 @@ body, html {
 
 <div id="game-screen">
     <div class="game-header">
-         <div class="header-left-group">
-             <a href="/" class="home-logo-link" title="Back to Home">
-                 <img src="/logo.png" alt="GITCG Logo">
-             </a>
-             <div id="room-container">
-                 <div id="room-display" onclick="copyRoomCode()">CODE: <%= roomId %></div>
-                 <span id="copy-toast">Code Copied!</span>
-             </div>
-         </div>
+         <a href="/" class="home-logo-link" title="Back to Home">
+             <img src="/logo.png" alt="GITCG Logo">
+         </a>
          
          <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
          <div id="status">Waiting...</div>
          <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
+
+         <div id="room-container">
+             <div id="room-display" onclick="copyRoomCode()">CODE: <%= roomId %></div>
+             <span id="copy-toast">Code Copied!</span>
+         </div>
     </div>
 
      <div class="draft-area">
