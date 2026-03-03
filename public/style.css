@@ -1,4 +1,5 @@
-/* G E N S H I N   S T Y L E   C S S */
+/* G E N S H I N   S T Y L E   C S S - FIXED SIDEBAR RESTORED */
+
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap');
 
 body { 
@@ -13,25 +14,80 @@ body {
 }
 
 /* --- ЛЕЙАУТ (FIXED SIDEBAR) --- */
-.app-container { display: flex; height: 100vh; width: 100vw; }
 
-.sidebar {
-    width: 250px; background: rgba(16, 20, 32, 0.95);
-    border-right: 1px solid #2a3454; display: flex; flex-direction: column;
-    padding: 30px 20px; box-shadow: 2px 0 20px rgba(0,0,0,0.6);
-    z-index: 100; flex-shrink: 0; box-sizing: border-box;
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
 }
 
-.sidebar-brand { font-family: 'Cinzel', serif; font-size: 1.8em; font-weight: bold; color: #fff; letter-spacing: 2px; margin-bottom: 50px; text-align: center; }
+/* Сайдбар фиксированной ширины */
+.sidebar {
+    width: 250px;
+    background: rgba(16, 20, 32, 0.95);
+    border-right: 1px solid #2a3454;
+    display: flex;
+    flex-direction: column;
+    padding: 30px 20px;
+    box-shadow: 2px 0 20px rgba(0,0,0,0.6);
+    z-index: 100;
+    flex-shrink: 0; /* Не сжиматься */
+    box-sizing: border-box;
+}
+
+.sidebar-brand {
+    font-family: 'Cinzel', serif;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 2px;
+    margin-bottom: 50px;
+    text-align: center;
+}
 .sidebar-brand span { color: #4facfe; }
 
-.sidebar-links { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
-.sidebar-links a { color: #8da4c4; text-decoration: none; font-family: 'Segoe UI', sans-serif; font-size: 1.1em; text-transform: uppercase; padding: 12px 15px; border-radius: 4px; transition: 0.3s; border-left: 3px solid transparent; }
-.sidebar-links a:hover { background: rgba(79, 172, 254, 0.05); color: #fff; }
-.sidebar-links a.active { background: rgba(79, 172, 254, 0.1); color: #fff; border-left-color: #4facfe; text-shadow: 0 0 10px rgba(79, 172, 254, 0.5); }
+.sidebar-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+}
 
-.sidebar-user { margin-top: auto; padding-top: 20px; border-top: 1px solid #2a3454; }
-.login-btn { display: block; width: 100%; text-align: center; background: transparent; border: 1px solid #7289da; color: #7289da; padding: 10px 0; border-radius: 4px; font-family: 'Segoe UI', sans-serif; cursor: pointer; transition: 0.3s; text-decoration: none; box-sizing: border-box; }
+.sidebar-links a {
+    color: #8da4c4;
+    text-decoration: none;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1.1em;
+    text-transform: uppercase;
+    padding: 12px 15px;
+    border-radius: 4px;
+    transition: 0.3s;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-links a:hover {
+    background: rgba(79, 172, 254, 0.05);
+    color: #fff;
+}
+.sidebar-links a.active {
+    background: rgba(79, 172, 254, 0.1);
+    color: #fff;
+    border-left-color: #4facfe;
+    text-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+}
+
+.sidebar-user {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid #2a3454;
+}
+
+.login-btn {
+    display: block; width: 100%; text-align: center;
+    background: transparent; border: 1px solid #7289da; color: #7289da;
+    padding: 10px 0; border-radius: 4px; font-family: 'Segoe UI', sans-serif;
+    cursor: pointer; transition: 0.3s; text-decoration: none; box-sizing: border-box;
+}
 .login-btn:hover { background: rgba(114, 137, 218, 0.15); box-shadow: 0 0 15px rgba(114, 137, 218, 0.3); color: #fff; }
 
 .user-profile { display: flex; align-items: center; gap: 12px; }
@@ -41,19 +97,46 @@ body {
 .logout-link { color: #ff6b6b; font-size: 0.8em; text-decoration: none; font-family: 'Segoe UI', sans-serif; transition: 0.2s; }
 .logout-link:hover { text-shadow: 0 0 8px #ff6b6b; }
 
-.main-content { flex-grow: 1; height: 100vh; overflow-y: auto; position: relative; }
-.page-container { padding: 40px; max-width: 1200px; margin: 0 auto; }
+/* Основной контент */
+.main-content {
+    flex-grow: 1;
+    height: 100vh;
+    overflow-y: auto;
+    position: relative;
+}
 
-/* --- ЛОББИ --- */
-#lobby-screen { display: flex; align-items: center; justify-content: center; height: 100%; background: transparent; }
-.lobby-card { background: rgba(22, 28, 48, 0.95); border: 1px solid #3c4566; border-top: 2px solid #4facfe; box-shadow: 0 0 40px rgba(0, 0, 0, 0.6); padding: 40px; width: 350px; display: flex; flex-direction: column; gap: 15px; position: relative; }
-.lobby-card::before { content: ''; position: absolute; bottom: -1px; right: -1px; width: 20px; height: 20px; border-bottom: 2px solid #4facfe; border-right: 2px solid #4facfe; }
+.page-container {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* --- СТИЛИ ЛОББИ И ДРУГИХ СТРАНИЦ --- */
+#lobby-screen { 
+    display: flex; align-items: center; justify-content: center;
+    height: 100%; background: transparent; 
+}
+.lobby-card {
+    background: rgba(22, 28, 48, 0.95); border: 1px solid #3c4566; border-top: 2px solid #4facfe;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6); padding: 40px; width: 350px;
+    display: flex; flex-direction: column; gap: 15px; position: relative;
+}
+.lobby-card::before {
+    content: ''; position: absolute; bottom: -1px; right: -1px; width: 20px; height: 20px;
+    border-bottom: 2px solid #4facfe; border-right: 2px solid #4facfe;
+}
 .lobby-card h1 { margin: 0 0 20px 0; font-size: 2.2em; color: #fff; text-shadow: 0 0 10px #4facfe; text-align: center; }
 .input-group { display: flex; flex-direction: column; text-align: left; }
 .input-group label { font-size: 0.8em; color: #8da4c4; margin-bottom: 5px; font-weight: bold; letter-spacing: 1px; }
-input, select { padding: 12px; font-size: 1em; border-radius: 2px; border: 1px solid #3c4566; background: #0f131f; color: #4facfe; outline: none; transition: 0.3s; width: 100%; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+input, select { 
+    padding: 12px; font-size: 1em; border-radius: 2px; border: 1px solid #3c4566; background: #0f131f; 
+    color: #4facfe; outline: none; transition: 0.3s; width: 100%; box-sizing: border-box; font-family: 'Segoe UI', sans-serif;
+}
 input:focus, select:focus { border-color: #4facfe; box-shadow: 0 0 10px rgba(79, 172, 254, 0.3); background: #141a2b; }
-button { padding: 12px; font-size: 1.1em; cursor: pointer; border: 1px solid transparent; border-radius: 2px; color: #fff; font-weight: bold; margin: 5px 0; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+button { 
+    padding: 12px; font-size: 1.1em; cursor: pointer; border: 1px solid transparent; border-radius: 2px;
+    color: #fff; font-weight: bold; margin: 5px 0; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
+}
 .btn-primary { background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%); border: 1px solid #4facfe; }
 .btn-primary:hover { box-shadow: 0 0 20px #4facfe; }
 .btn-secondary { background: transparent; border: 1px solid #ff6b6b; color: #ff6b6b; }
@@ -62,9 +145,14 @@ button { padding: 12px; font-size: 1.1em; cursor: pointer; border: 1px solid tra
 .separator span { background: #161c30; padding: 0 10px; color: #555; font-size: 0.8em; position: relative; z-index: 1; }
 .separator::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #3c4566; z-index: 0; }
 
-/* --- ДРАФТ --- */
+/* --- СТИЛИ ДРАФТА (ИГРЫ) --- */
 #game-screen { display: flex; flex-direction: column; height: 100%; width: 100%; }
-.game-header { height: 6vh; display: flex; gap: 30px; align-items: center; justify-content: center; background: rgba(10, 12, 20, 0.95); border-bottom: 2px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 30; flex-shrink: 0; width: 100%; }
+
+.game-header { 
+    height: 6vh; display: flex; gap: 30px; align-items: center; justify-content: center; 
+    background: rgba(10, 12, 20, 0.95); border-bottom: 2px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+    z-index: 30; flex-shrink: 0; width: 100%;
+}
 .reserve-timer { font-size: 18px; font-weight: bold; font-family: 'Cinzel', serif; }
 .blue-res { color: #4facfe; } .red-res { color: #ff6b6b; }
 #status { font-size: 16px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; }
@@ -73,8 +161,14 @@ button { padding: 12px; font-size: 1.1em; cursor: pointer; border: 1px solid tra
 #copy-toast { visibility: hidden; background-color: #28a745; color: #fff; padding: 4px 8px; font-size: 12px; border-radius: 4px; }
 #copy-toast.show { visibility: visible; }
 
-.draft-area { height: 38vh; display: flex; justify-content: center; gap: 80px; padding: 10px 50px; align-items: center; flex-shrink: 0; position: relative; background: radial-gradient(ellipse at center, rgba(60, 80, 120, 0.15) 0%, transparent 70%); }
+.draft-area { 
+    height: 38vh; display: flex; justify-content: center; gap: 80px; padding: 10px 50px; 
+    align-items: center; flex-shrink: 0; position: relative; 
+    background: radial-gradient(ellipse at center, rgba(60, 80, 120, 0.15) 0%, transparent 70%);
+}
 .team-side { width: 45%; display: flex; flex-direction: column; align-items: center; }
+.center-axis { width: 10%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 15px; gap: 80px; opacity: 0.6; }
+.mid-label { font-family: 'Cinzel', serif; font-size: 1.2em; color: #7a8aa3; letter-spacing: 3px; border-bottom: 1px solid #444; padding-bottom: 5px; }
 .player-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; height: 40px; }
 .turn-timer { font-family: 'Cinzel', serif; font-size: 28px; font-weight: bold; min-width: 60px; text-align: center; }
 #blue-timer { color: #4facfe; text-shadow: 0 0 10px rgba(79, 172, 254, 0.4); }
@@ -91,27 +185,57 @@ button { padding: 12px; font-size: 1.1em; cursor: pointer; border: 1px solid tra
 .blue-side .ban-row, .blue-side .pick-row, .blue-side .pick-row-small { flex-direction: row-reverse; justify-content: flex-start; }
 .red-side .ban-row, .red-side .pick-row, .red-side .pick-row-small { flex-direction: row; justify-content: flex-start; }
 
-.slot-circle { width: 60px; height: 60px; border-radius: 50%; background: rgba(0, 0, 0, 0.3); border: 2px solid #ccc; overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center; transition: all 0.3s; }
+.slot-circle { 
+    width: 60px; height: 60px; border-radius: 50%; background: rgba(0, 0, 0, 0.3); 
+    border: 2px solid #ccc; overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center; transition: all 0.3s; 
+}
 .blue-side .slot-circle { border-color: #d3d3d3; }
 .red-side .slot-circle { border-color: #d3d3d3; }
 .slot-ban { border-color: #8b0000 !important; background: rgba(40, 5, 5, 0.4) !important; }
-.active-slot { border-color: #ffd700 !important; background: rgba(255, 215, 0, 0.1) !important; box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); transform: scale(1.1); z-index: 5; }
+.active-slot { 
+    border-color: #ffd700 !important; background: rgba(255, 215, 0, 0.1) !important; 
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); transform: scale(1.1); z-index: 5;
+}
 .slot-circle img { width: 100%; height: 100%; object-fit: cover; }
 .step-number { font-family: 'Cinzel', serif; font-size: 20px; color: rgba(255, 255, 255, 0.2); }
+/* Базовый вид слота иммунитета */
+.slot-immunity-pick { 
+    border-color: #50b36b !important; 
+    background: rgba(80, 179, 107, 0.1) !important; 
+}
 
-/* --- ФИКС ПОДСВЕТКИ ИММУНИТЕТА --- */
-.slot-immunity-pick { border-color: #50b36b !important; background: rgba(80, 179, 107, 0.1) !important; }
-.slot-immunity-pick.active-slot { border-color: #50b36b !important; background: rgba(80, 179, 107, 0.2) !important; box-shadow: 0 0 20px rgba(80, 179, 107, 0.8) !important; transform: scale(1.1); z-index: 5; }
+/* Красивое зеленое свечение, когда наступает очередь этого пика */
+.slot-immunity-pick.active-slot {
+    border-color: #50b36b !important;
+    background: rgba(80, 179, 107, 0.2) !important;
+    box-shadow: 0 0 20px rgba(80, 179, 107, 0.8) !important;
+    transform: scale(1.1);
+    z-index: 5;
+}
 
-.controls-area { display: flex; justify-content: center; align-items: center; height: 40px; position: relative; z-index: 20; margin-top: -20px; margin-bottom: 10px; }
-.round-btn { font-family: 'Cinzel', serif; font-weight: bold; font-size: 1.1em; padding: 8px 30px; border-radius: 50px; border: 1px solid #555; background: #222; color: #999; cursor: default; transition: all 0.2s; letter-spacing: 2px; }
-.confirm-btn:not(:disabled) { background: #d4af37; border-color: #fff; color: #000; box-shadow: 0 0 20px rgba(212, 175, 55, 0.5); cursor: pointer; transform: scale(1.05); }
+.controls-area { 
+    display: flex; justify-content: center; align-items: center; 
+    height: 40px; position: relative; z-index: 20; 
+    margin-top: -20px; margin-bottom: 10px; 
+}
+.round-btn {
+    font-family: 'Cinzel', serif; font-weight: bold; font-size: 1.1em;
+    padding: 8px 30px; border-radius: 50px; border: 1px solid #555;
+    background: #222; color: #999; cursor: default; transition: all 0.2s; letter-spacing: 2px;
+}
+.confirm-btn:not(:disabled) { 
+    background: #d4af37; border-color: #fff; color: #000; 
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5); cursor: pointer; transform: scale(1.05); 
+}
 #skip-btn { position: absolute; background: #444; color: #fff; border: 1px solid #777; cursor: pointer; display: none; }
 #skip-btn:hover { background: #666; border-color: #aaa; transform: scale(1.05); }
 .skip-left { right: 50%; margin-right: 120px; }
 .skip-right { left: 50%; margin-left: 120px; }
 
-.immunity-top-container { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 50; gap: 5px; }
+.immunity-top-container {
+    position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; z-index: 50; gap: 5px;
+}
 .im-label { font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: bold; color: #888; letter-spacing: 2px; }
 .im-row { display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 20px; border: 1px solid #333; }
 .im-icon { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #000; }
@@ -121,13 +245,25 @@ button { padding: 12px; font-size: 1.1em; cursor: pointer; border: 1px solid tra
 .im-empty { background: rgba(255,255,255,0.05); } 
 .im-icon img { width: 100%; height: 100%; object-fit: cover; }
 
-/* ПУЛ ПЕРСОНАЖЕЙ И ЛЕСЕНКА */
-.char-pool { flex-grow: 1; background: rgba(10, 12, 20, 0.95); border-top: 1px solid #333; display: flex; flex-direction: column; justify-content: flex-start; padding: 20px 0; padding-bottom: 40px; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); position: relative; overflow-y: auto; scrollbar-width: none; width: 100%; }
+.char-pool { 
+    flex-grow: 1; background: rgba(10, 12, 20, 0.95); border-top: 1px solid #333; 
+    display: flex; flex-direction: column; justify-content: flex-start; padding: 20px 0; padding-bottom: 40px; 
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.8); position: relative; overflow-y: auto; scrollbar-width: none; width: 100%;
+}
 .char-pool::-webkit-scrollbar { display: none; }
 
-.ladder-container { position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 100px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 20px; padding-bottom: 40px; overflow-y: auto; z-index: 10; scrollbar-width: none; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent); }
+.ladder-container {
+    position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 100px; 
+    display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 20px; padding-bottom: 40px; 
+    overflow-y: auto; z-index: 10; scrollbar-width: none; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+}
 .ladder-container::-webkit-scrollbar { display: none; }
-.ladder-step { font-family: 'Segoe UI', sans-serif; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 2px; text-transform: uppercase; opacity: 0.3; width: 100%; box-sizing: border-box; transition: 0.3s; border: 1px solid transparent; }
+.ladder-step { 
+    font-family: 'Segoe UI', sans-serif; font-size: 11px; font-weight: bold; 
+    padding: 2px 6px; border-radius: 2px; text-transform: uppercase; 
+    opacity: 0.3; width: 100%; box-sizing: border-box; transition: 0.3s; 
+    border: 1px solid transparent;
+}
 .step-left { text-align: left; border-left: 2px solid; border-right: none; }
 .step-right { text-align: right; border-right: 2px solid; border-left: none; }
 .step-pick { color: #4facfe; border-color: rgba(79, 172, 254, 0.3); }
@@ -156,49 +292,154 @@ button { padding: 12px; font-size: 1.1em; cursor: pointer; border: 1px solid tra
 /* ========================================= */
 
 @media (max-width: 768px) {
-    * { box-sizing: border-box !important; }
-    html, body, .app-container, .main-content { width: 100vw !important; max-width: 100% !important; overflow-x: hidden !important; }
+    /* 1. ГЛОБАЛЬНЫЙ ФИКС ГРАНИЦ (чтобы ничего не вылезало за края) */
+    * {
+        box-sizing: border-box !important;
+    }
+    html, body, .app-container, .main-content {
+        width: 100vw !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important; /* Жестко обрезаем всё, что пытается вылезти вправо */
+    }
 
-    .app-container { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; flex-direction: row; padding: 10px 10px; align-items: center; justify-content: space-between; border-right: none; border-bottom: 1px solid #2a3454; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    /* 2. ПЕРЕСТРОЕНИЕ МАКЕТА И МЕНЮ */
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        padding: 10px 10px;
+        align-items: center;
+        justify-content: space-between;
+        border-right: none;
+        border-bottom: 1px solid #2a3454;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
     .sidebar-brand { margin-bottom: 0; font-size: 1.1em; }
-    .sidebar-links { flex-direction: row; overflow-x: auto; scrollbar-width: none; gap: 5px; margin: 0 5px; }
+
+    .sidebar-links {
+        flex-direction: row;
+        overflow-x: auto;
+        scrollbar-width: none;
+        gap: 5px;
+        margin: 0 5px;
+    }
     .sidebar-links::-webkit-scrollbar { display: none; }
-    .sidebar-links a { padding: 6px 8px; font-size: 0.8em; border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; }
-    .sidebar-links a.active { border-left-color: transparent; border-bottom-color: #4facfe; }
+
+    .sidebar-links a {
+        padding: 6px 8px;
+        font-size: 0.8em;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+        white-space: nowrap;
+    }
+
+    .sidebar-links a.active {
+        border-left-color: transparent;
+        border-bottom-color: #4facfe;
+    }
 
     .sidebar-user { margin-top: 0; padding-top: 0; border-top: none; }
     .user-profile img { width: 30px; height: 30px; }
     .user-info { display: none; }
 
     .page-container { padding: 15px 10px; width: 100%; }
-    .lobby-card { width: 100%; padding: 20px 15px; }
+
+    .lobby-card {
+        width: 100%;
+        padding: 20px 15px;
+    }
     .lobby-card h1 { font-size: 1.5em; }
 
-    .game-header { width: 100%; padding: 0; gap: 5px; justify-content: center; }
+    /* 3. ШАПКА ДРАФТА */
+    .game-header {
+        width: 100%;
+        padding: 0;
+        gap: 5px;
+        justify-content: center; /* Таймеры в центре */
+    }
+    
     .home-logo-link { position: absolute; left: 5px; top: 50%; transform: translateY(-50%); z-index: 100; }
     .home-logo-link img { height: 24px; }
+    
     #room-container { position: absolute !important; right: 5px !important; left: auto !important; top: 50% !important; transform: translateY(-50%) !important; z-index: 100; }
     #room-display { font-size: 9px; padding: 3px 5px; }
+
     .reserve-timer { font-size: 12px; }
     #status { font-size: 9px; letter-spacing: 1px; white-space: nowrap; }
 
-    .draft-area { width: 100%; gap: 2%; padding: 10px 2px; height: auto; min-height: 20vh; }
-    .team-side { width: 49%; padding: 0; }
-    .player-header { gap: 5px; margin-bottom: 5px; flex-direction: column; }
+    /* 4. ЗОНА ДРАФТА (ИГРОКИ) */
+    .draft-area {
+        width: 100%;
+        gap: 2%; /* Задаем отступ в процентах, чтобы не ломать ширину экрана */
+        padding: 10px 2px;
+        height: auto;
+        min-height: 20vh;
+    }
+
+    .team-side {
+        width: 49%; /* 49% + 49% + 2% gap = ровно 100% экрана! */
+        padding: 0;
+    }
+
+    .player-header {
+        gap: 5px;
+        margin-bottom: 5px;
+        flex-direction: column;
+    }
+
     .turn-timer { font-size: 20px; min-width: 30px; }
     .player-header h2 { font-size: 0.75em; text-align: center; word-break: break-word; margin-top: 2px; line-height: 1.1; }
     .player-avatar { width: 30px; height: 30px; }
-    .ban-row, .pick-row, .pick-row-small { gap: 3px; margin-bottom: 5px; justify-content: center !important; flex-wrap: wrap; }
-    .slot-circle { width: 30px; height: 30px; border-width: 1px; }
+
+    .ban-row, .pick-row, .pick-row-small {
+        gap: 3px;
+        margin-bottom: 5px;
+        justify-content: center !important;
+        flex-wrap: wrap; 
+    }
+
+    .slot-circle {
+        width: 30px; /* Еще чуть меньше, чтобы влезло идеальным рядом */
+        height: 30px;
+        border-width: 1px;
+    }
+
     .step-number { font-size: 12px; }
 
-    .char-pool { width: 100%; padding: 10px 2px 30px 2px; }
-    .ladder-container, .row-gap { display: none !important; }
-    .element-row { flex-wrap: wrap; justify-content: center; gap: 3px; margin-bottom: 6px; min-height: auto; }
-    .row-half { width: 100%; justify-content: center; padding: 0; gap: 3px; }
-    .char-option { width: 34px; height: 34px; }
+    /* 5. ПУЛ ПЕРСОНАЖЕЙ (СОТЫ) */
+    .char-pool {
+        width: 100%;
+        padding: 10px 2px 30px 2px;
+    }
 
+    .ladder-container, .row-gap { display: none !important; }
+
+    .element-row {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 3px;
+        margin-bottom: 6px;
+        min-height: auto;
+    }
+
+    .row-half {
+        width: 100%; /* Занимают всю ширину, сливаясь в одну кучу */
+        justify-content: center;
+        padding: 0;
+        gap: 3px;
+    }
+
+    .char-option {
+        width: 34px; /* Компактные кнопки героев */
+        height: 34px;
+    }
+
+    /* 6. МИНИАТЮРИЗАЦИЯ ИММУНИТЕТА И МОНЕТКИ */
     .immunity-top-container { top: 2px; }
     .im-icon { width: 22px; height: 22px; }
     .im-label { font-size: 8px; margin-bottom: 2px; }
@@ -206,6 +447,7 @@ button { padding: 12px; font-size: 1.1em; cursor: pointer; border: 1px solid tra
 
     .cards-container { transform: scale(0.6); }
     .toss-title { font-size: 1.3em; text-align: center; margin-bottom: 10px; }
+    
     .controls-area { margin-top: 0; }
     .round-btn { padding: 6px 15px; font-size: 0.85em; }
 }
