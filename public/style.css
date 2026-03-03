@@ -198,7 +198,20 @@ button {
 }
 .slot-circle img { width: 100%; height: 100%; object-fit: cover; }
 .step-number { font-family: 'Cinzel', serif; font-size: 20px; color: rgba(255, 255, 255, 0.2); }
-.slot-immunity-pick { border-color: #50b36b !important; background: transparent !important; box-shadow: none; }
+/* Базовый вид слота иммунитета */
+.slot-immunity-pick { 
+    border-color: #50b36b !important; 
+    background: rgba(80, 179, 107, 0.1) !important; 
+}
+
+/* Красивое зеленое свечение, когда наступает очередь этого пика */
+.slot-immunity-pick.active-slot {
+    border-color: #50b36b !important;
+    background: rgba(80, 179, 107, 0.2) !important;
+    box-shadow: 0 0 20px rgba(80, 179, 107, 0.8) !important;
+    transform: scale(1.1);
+    z-index: 5;
+}
 
 .controls-area { 
     display: flex; justify-content: center; align-items: center; 
