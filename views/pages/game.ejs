@@ -25,78 +25,86 @@ body, html {
 .turn-timer { transition: opacity 0.3s ease; }
 .draft-area { display: flex; justify-content: center; gap: 60px; }
 
-/* --- TOSS OVERLAY ANIMATION --- */
+/* --- TOSS OVERLAY ANIMATION (Строгий дизайн) --- */
 #toss-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(10, 12, 20, 0.95); z-index: 9999;
     display: none; flex-direction: column; align-items: center; justify-content: center;
-    backdrop-filter: blur(10px);
-}
-.toss-title {
-    font-family: 'Cinzel', serif; color: #4facfe; font-size: 2.5em;
-    letter-spacing: 4px; text-shadow: 0 0 20px rgba(79, 172, 254, 0.5); margin-bottom: 50px;
+    backdrop-filter: blur(8px);
 }
 .cards-container {
-    position: relative; width: 280px; height: 200px; display: flex; justify-content: space-between;
+    position: relative; width: 300px; height: 240px; display: flex; justify-content: space-between;
 }
 .tcg-card {
-    width: 130px; height: 200px; perspective: 1000px;
-    position: absolute; top: 0; transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    width: 140px; height: 240px; /* Увеличен размер под пропорции рубашки */
+    perspective: 1000px;
+    position: absolute; top: 0; transition: all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 #card-1 { left: 0; z-index: 2; }
 #card-2 { right: 0; z-index: 1; }
 
 .card-inner {
-    width: 100%; height: 100%; transition: transform 0.6s;
+    width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
     transform-style: preserve-3d; position: relative;
 }
 .tcg-card.flipped .card-inner { transform: rotateY(180deg); }
 .card-front, .card-back {
     width: 100%; height: 100%; position: absolute; backface-visibility: hidden;
-    border-radius: 8px; border: 2px solid #3c4566; box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
 .card-back {
-    background: repeating-linear-gradient(45deg, #161c30, #161c30 10px, #101420 10px, #101420 20px);
-    border-color: #4facfe; box-shadow: 0 0 15px rgba(79, 172, 254, 0.3);
+    /* Используем твою картинку рубашки */
+    background: url('/cardback.png') center/cover no-repeat;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 .card-front {
-    background: linear-gradient(135deg, #2b3452, #0b0d17); transform: rotateY(180deg);
+    background: linear-gradient(135deg, #1a2035, #0b0d17); transform: rotateY(180deg);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    border-color: #d4af37; box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+    border: 2px solid #d4af37; box-shadow: 0 0 40px rgba(212, 175, 55, 0.2);
+    padding: 15px; text-align: center;
 }
 
-/* Анимация тасования */
+/* Строгие шрифты для лица карты */
+.first-pick-label {
+    font-family: 'Segoe UI', sans-serif; font-size: 0.75em; color: #8da4c4;
+    letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px;
+}
+.winner-name-display {
+    font-family: 'Cinzel', serif; font-size: 1.6em; font-weight: bold;
+    color: #d4af37; text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+    word-break: break-word; line-height: 1.2;
+}
+
+/* Плавная и медленная анимация тасования */
 @keyframes shuffleLeft {
     0% { transform: translate(0, 0) scale(1); z-index: 2; }
-    25% { transform: translate(75px, -15px) scale(0.9); z-index: 1; }
-    50% { transform: translate(150px, 0) scale(1); z-index: 1; }
-    75% { transform: translate(75px, 15px) scale(1.1); z-index: 2; }
+    25% { transform: translate(80px, -15px) scale(0.95); z-index: 1; }
+    50% { transform: translate(160px, 0) scale(1); z-index: 1; }
+    75% { transform: translate(80px, 15px) scale(1.05); z-index: 2; }
     100% { transform: translate(0, 0) scale(1); z-index: 2; }
 }
 @keyframes shuffleRight {
     0% { transform: translate(0, 0) scale(1); z-index: 1; }
-    25% { transform: translate(-75px, 15px) scale(1.1); z-index: 2; }
-    50% { transform: translate(-150px, 0) scale(1); z-index: 2; }
-    75% { transform: translate(-75px, -15px) scale(0.9); z-index: 1; }
+    25% { transform: translate(-80px, 15px) scale(1.05); z-index: 2; }
+    50% { transform: translate(-160px, 0) scale(1); z-index: 2; }
+    75% { transform: translate(-80px, -15px) scale(0.95); z-index: 1; }
     100% { transform: translate(0, 0) scale(1); z-index: 1; }
 }
-.shuffling #card-1 { animation: shuffleLeft 0.4s linear infinite; }
-.shuffling #card-2 { animation: shuffleRight 0.4s linear infinite; }
+.shuffling #card-1 { animation: shuffleLeft 0.8s ease-in-out infinite; }
+.shuffling #card-2 { animation: shuffleRight 0.8s ease-in-out infinite; }
 
-.winner-card { left: 75px !important; transform: scale(1.3) !important; z-index: 10 !important; }
-.loser-card { opacity: 0; transform: scale(0.5) !important; }
+.winner-card { left: 80px !important; transform: scale(1.3) !important; z-index: 10 !important; }
+.loser-card { opacity: 0; transform: scale(0.7) !important; transition: 0.5s ease-out; }
 </style>
 
 <div id="toss-overlay">
-    <h2 class="toss-title" id="toss-title">SHUFFLING CARDS...</h2>
     <div id="cards-container" class="cards-container">
         <div class="tcg-card" id="card-1">
             <div class="card-inner">
                 <div class="card-back"></div>
                 <div class="card-front">
-                    <div style="font-size: 3em; margin-bottom: 10px;">👑</div>
-                    <div style="font-family: 'Cinzel', serif; font-weight: bold; font-size: 1.2em; color: #d4af37;">FIRST PICK</div>
-                    <div id="winner-name-text" style="font-size: 1.5em; font-weight: bold; margin-top: 15px; color: #fff;"></div>
+                    <div class="first-pick-label">FIRST PICK</div>
+                    <div id="winner-name-text" class="winner-name-display"></div>
                 </div>
             </div>
         </div>
@@ -221,23 +229,20 @@ body, html {
             renderRows(); updateUI(data.state);
         });
         
-        // Слушатель для обновления роли (если мы поменялись местами при броске монетки)
         socket.on('role_update', (newRole) => {
             myRole = newRole;
         });
 
-        // Запуск анимации карт
+        // Запуск анимации монетки (Строгий стиль)
         socket.on('start_coin_toss', (data) => {
             const overlay = document.getElementById('toss-overlay');
-            const title = document.getElementById('toss-title');
             const card1 = document.getElementById('card-1');
             const card2 = document.getElementById('card-2');
             const container = document.getElementById('cards-container');
             
             document.getElementById('winner-name-text').innerText = data.winnerName;
-            title.innerText = "SHUFFLING CARDS...";
             
-            // Сброс старых классов (если игра переигрывается)
+            // Сброс старых классов
             card1.className = 'tcg-card';
             card2.className = 'tcg-card';
             container.classList.add('shuffling');
@@ -246,22 +251,21 @@ body, html {
             setTimeout(() => {
                 // Карты останавливаются и сливаются
                 container.classList.remove('shuffling');
-                title.innerText = "FIRST PICK GOES TO...";
                 card2.classList.add('loser-card');
                 card1.classList.add('winner-card');
                 
-                // Переворачиваем карту победителя через полсекунды
+                // Плавный переворот через 0.6 сек
                 setTimeout(() => {
                     card1.classList.add('flipped');
-                }, 500); 
-            }, 2000); // Крутим анимацию 2 секунды
+                }, 600); 
+            }, 2500); // Крутим плавную анимацию 2.5 секунды
         });
 
         socket.on('update_state', updateUI);
         
         socket.on('game_started', () => { 
             isGameStarted = true; 
-            document.getElementById('toss-overlay').style.display = 'none'; // Прячем экран с картами
+            document.getElementById('toss-overlay').style.display = 'none';
         });
         
         socket.on('game_over', (state) => { updateUI(state); alert("Draft is complete and saved!"); });
