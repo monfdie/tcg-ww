@@ -22,10 +22,15 @@
         
         <div class="separator"><span>OR JOIN</span></div>
         
-        <div class="input-group">
+        <div class="input-group" style="margin-bottom: 10px;">
             <label>ROOM CODE</label>
             <input id="room-input" placeholder="Enter Code" style="text-transform: uppercase;">
         </div>
+        
+        <label style="display: flex; align-items: center; gap: 10px; color: #8da4c4; font-size: 0.9em; font-family: 'Segoe UI', sans-serif; cursor: pointer; margin-bottom: 25px;">
+            <input type="checkbox" id="spectator-checkbox" style="width: 18px; height: 18px; accent-color: #4facfe; cursor: pointer; margin: 0;">
+            <b>Join as Spectator</b>
+        </label>
         
         <button class="btn-secondary" onclick="joinGame()">Join Game</button>
     </div>
@@ -34,13 +39,10 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io({ transports: ['websocket'] });
-    
-    // Данные из Discord для отправки на сервер
     const discordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const avatar = '<%= locals.user ? locals.user.avatar : "" %>';
     const dbUserId = '<%= locals.user ? locals.user._id : "" %>';
 
-    // Берем ID дискорда если есть, иначе берем из сессии или генерируем
     let myUserId = dbUserId || sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
 
@@ -48,22 +50,28 @@
         const nick = document.getElementById('nickname-input').value.trim() || 'Player 1';
         const type = document.getElementById('draft-type-select').value;
         
+        // При создании игры мы 100% не спектатор
+        sessionStorage.setItem('draft_spectator', 'false');
+
         socket.emit('create_game', { 
             nickname: nick, 
             draftType: type, 
             userId: myUserId,
             discordId: discordId,
             avatar: avatar
-        }); 
+        });
     }
 
     function joinGame() {
         const room = document.getElementById('room-input').value.trim().toUpperCase();
         if(!room) return alert("Enter code!");
         
-        // Сохраняем введенный ник, чтобы он передался на страницу игры
         const nick = document.getElementById('nickname-input').value.trim() || 'Player 2';
         sessionStorage.setItem('draft_nickname', nick);
+        
+        // Сохраняем выбор галочки
+        const isSpec = document.getElementById('spectator-checkbox').checked;
+        sessionStorage.setItem('draft_spectator', isSpec ? 'true' : 'false');
         
         window.location.href = `/game/${room}`;
     }
