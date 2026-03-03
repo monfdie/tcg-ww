@@ -11,13 +11,15 @@
         margin: 0;
     }
 
+    /* ДЕЛАЕМ ПУЛЛ ПЕРСОНАЖЕЙ И ФОН ИГРЫ ПРОЗРАЧНЫМИ */
     .page-container, #game-screen, .char-pool { background: transparent !important; }
 
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
     .player-header { height: auto !important; min-height: 70px; }
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
     .player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
-
+    
+    /* --- ЛОГИКА ФИЛЬТРОВ И РАМОК --- */
     #char-pool-container .char-option.disabled { pointer-events: none !important; opacity: 0.5; filter: grayscale(100%); }
     #char-pool-container .char-option.immunity-highlight { border: 3px solid #d4af37 !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; }
 
@@ -82,13 +84,16 @@
     .winner-card { left: 80px !important; transform: scale(1.3) !important; z-index: 10 !important; }
     .loser-card { opacity: 0; transform: scale(0.7) !important; transition: 0.8s ease-out; }
 
-    /* =======================================================
-       ВСТРОЕННЫЕ СТИЛИ ЛЕСЕНКИ (ГАРАНТИЯ 100% ОТОБРАЖЕНИЯ) 
-       ======================================================= */
-    .char-pool { position: relative; overflow-y: auto; scrollbar-width: none; }
-    .char-pool::-webkit-scrollbar { display: none; }
-    
-    .ladder-container { position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 100px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 20px; padding-bottom: 40px; overflow-y: auto; z-index: 10; scrollbar-width: none; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent); }
+    /* ========================================================= */
+    /* ВСТРОЕННЫЕ СТИЛИ ЛЕСЕНКИ (ИМЕННО ИХ НЕ ХВАТАЛО В ТВОЕМ КОДЕ) */
+    /* ========================================================= */
+    .char-pool { position: relative; }
+    .ladder-container { 
+        position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; 
+        width: 100px; display: flex; flex-direction: column; align-items: center; gap: 4px; 
+        padding-top: 20px; padding-bottom: 40px; overflow-y: auto; z-index: 10; 
+        scrollbar-width: none; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent); 
+    }
     .ladder-container::-webkit-scrollbar { display: none; }
     .ladder-step { font-family: 'Segoe UI', sans-serif; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 2px; text-transform: uppercase; opacity: 0.3; width: 100%; box-sizing: border-box; transition: 0.3s; border: 1px solid transparent; }
     .step-left { text-align: left; border-left: 2px solid; border-right: none; }
@@ -103,9 +108,9 @@
     .row-half { width: calc(50% - 60px); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
     .left-half { justify-content: flex-end; padding-right: 20px; } 
     .right-half { justify-content: flex-start; padding-left: 20px; } 
-    .row-gap { width: 120px; }
+    .row-gap { width: 120px; } 
 
-    /* Отключаем лесенку только для телефонов, чтобы не ломать верстку */
+    /* Скрываем лесенку только на телефонах */
     @media (max-width: 768px) {
         .ladder-container, .row-gap { display: none !important; }
         .row-half { width: 100% !important; justify-content: center !important; padding: 0 !important; }
@@ -313,7 +318,7 @@
              document.getElementById('red-timer').style.opacity = (state.currentTeam === 'red') ? '1' : '0';
         }
 
-        // --- ЛОГИКА ПОДСВЕТКИ ЛЕСЕНКИ ---
+        // --- ВОССТАНОВЛЕННАЯ ЛОГИКА ПОДСВЕТКИ ЛЕСЕНКИ ---
         document.querySelectorAll('.ladder-step').forEach((el, idx) => {
             el.classList.remove('step-active', 'step-done');
             if (idx < state.stepIndex - 1) {
@@ -431,8 +436,7 @@
     }
 
     function createChar(char) {
-        const el = document.createElement('div');
-        el.className = 'char-option'; el.id = `char-${char.id}`;
+        const el = document.createElement('div'); el.className = 'char-option'; el.id = `char-${char.id}`;
         el.innerHTML = `<img src="${char.img}">`;
         el.onclick = () => {
             if(!isGameStarted || myRole === 'spectator' || savedData || isDraftFinishedLocal) return;
@@ -468,21 +472,17 @@
     }
 
     function renderSlots(state) {
-         const currentSchema = DRAFT_RULES[currentDraftType];
-         if (!currentSchema) return;
+         const currentSchema = DRAFT_RULES[currentDraftType]; if (!currentSchema) return;
          const getStepsFor = (schema, team, type) => schema.map((step, index) => ({ ...step, globalIndex: index + 1 })).filter(step => step.team === team && step.type === type).map(step => ({ num: step.globalIndex, immunity: step.immunity }));
          const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban'); const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
-         const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick');
-         const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
+         const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick'); const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
          const fill = (containerId, items, stepData, isBan) => {
-             const div = document.getElementById(containerId);
-             if(!div) return; div.innerHTML = ''; 
+             const div = document.getElementById(containerId); if(!div) return; div.innerHTML = ''; 
              stepData.forEach((step, i) => {
                  const slot = document.createElement('div'); slot.className = 'slot-circle';
                  if (isBan) slot.classList.add('slot-ban');
                  if (step.immunity) slot.classList.add('slot-immunity-pick');
                  if (!state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && step.num === state.stepIndex) slot.classList.add('active-slot');
-  
                  let charId = null; if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
                  if (charId) {
                      let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
@@ -495,8 +495,7 @@
          fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true);
          fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
          if (currentDraftType === 'generals_2' || currentDraftType === 'classic') {
-             fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
-             fill('blue-picks-2', [], [], false); 
+             fill('blue-picks-1', state.bluePicks, bluePickSteps, false); fill('blue-picks-2', [], [], false); 
              fill('red-picks-1', state.redPicks, redPickSteps, false); fill('red-picks-2', [], [], false);
          } else {
              fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false);
