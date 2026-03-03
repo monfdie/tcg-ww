@@ -135,7 +135,7 @@ io.on('connection', (socket) => {
         if (session.ready.blue && session.ready.red && !session.gameStarted && !session.tossActive) {
             session.tossActive = true;
             
-            // RANDOM COIN TOSS (50% шанс поменяться местами)
+            // RANDOM COIN TOSS
             if (Math.random() > 0.5) {
                 const tempP = session.bluePlayer; session.bluePlayer = session.redPlayer; session.redPlayer = tempP;
                 const tempU = session.blueUserId; session.blueUserId = session.redUserId; session.redUserId = tempU;
@@ -143,17 +143,13 @@ io.on('connection', (socket) => {
                 const tempA = session.blueAvatar; session.blueAvatar = session.redAvatar; session.redAvatar = tempA;
                 const tempN = session.blueName; session.blueName = session.redName; session.redName = tempN;
                 
-                // Обновляем роли клиентам, чтобы они могли нажимать свои кнопки
                 io.to(session.bluePlayer).emit('role_update', 'blue');
                 io.to(session.redPlayer).emit('role_update', 'red');
             }
 
-            // Отправляем всем команду запустить красивую анимацию
-            io.to(roomId).emit('start_coin_toss', { 
-                winnerName: session.blueName // Blue всегда First Pick
-            });
+            io.to(roomId).emit('start_coin_toss', { winnerName: session.blueName });
 
-            // Ждем 4 секунды (пока идет анимация), затем стартуем игру
+            // Увеличили задержку до 5.5 секунд, так как анимация стала медленнее и красивее
             setTimeout(() => {
                 session.gameStarted = true;
                 session.tossActive = false;
@@ -168,7 +164,7 @@ io.on('connection', (socket) => {
                 startTimer(roomId); 
                 io.to(roomId).emit('game_started'); 
                 io.to(roomId).emit('update_state', getPublicState(session));
-            }, 4000);
+            }, 5500); 
         }
     });
 
