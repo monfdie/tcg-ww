@@ -24,42 +24,13 @@ body, html {
 .turn-timer { transition: opacity 0.3s ease; }
 .draft-area { display: flex; justify-content: center; gap: 60px; }
 
-/* --- РАЗДЕЛЕНИЕ ЛОГОТИПА И КОДА ПО КРАЯМ (ВПРИТЫК К ЭКРАНУ) --- */
-.game-header {
-    position: relative;
-    width: 100%;
-}
-.home-logo-link {
-    position: absolute;
-    left: 5px; /* Максимально прижато влево */
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    outline: none;
-    z-index: 100;
-}
-.home-logo-link img {
-    height: 42px;
-    transition: transform 0.2s, filter 0.2s;
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
-}
-.home-logo-link:hover img {
-    transform: scale(1.1);
-    filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.6));
-}
+/* --- РАЗДЕЛЕНИЕ ЛОГОТИПА И КОДА ПО КРАЯМ --- */
+.game-header { position: relative; width: 100%; }
+.home-logo-link { position: absolute; left: 5px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; text-decoration: none; outline: none; z-index: 100; }
+.home-logo-link img { height: 42px; transition: transform 0.2s, filter 0.2s; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
+.home-logo-link:hover img { transform: scale(1.1); filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.6)); }
 
-#room-container {
-    position: absolute !important;
-    left: auto !important;
-    right: 10px !important; /* Максимально прижато вправо */
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    margin: 0 !important;
-    z-index: 100;
-}
+#room-container { position: absolute !important; left: auto !important; right: 10px !important; top: 50% !important; transform: translateY(-50%) !important; margin: 0 !important; z-index: 100; }
 
 /* --- TOSS OVERLAY ANIMATION --- */
 #toss-overlay {
@@ -68,34 +39,19 @@ body, html {
     display: none; flex-direction: column; align-items: center; justify-content: center;
     backdrop-filter: blur(8px);
 }
-.cards-container {
-    position: relative; width: 300px; height: 240px; display: flex; justify-content: space-between;
-}
-.tcg-card {
-    width: 140px; height: 240px; 
-    perspective: 1200px;
-    position: absolute; top: 0; transition: all 1.5s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
+.cards-container { position: relative; width: 300px; height: 240px; display: flex; justify-content: space-between; }
+.tcg-card { width: 140px; height: 240px; perspective: 1200px; position: absolute; top: 0; transition: all 1.5s cubic-bezier(0.25, 0.8, 0.25, 1); }
 #card-1 { left: 0; z-index: 2; }
 #card-2 { right: 0; z-index: 1; }
-
-.card-inner {
-    width: 100%; height: 100%; transition: transform 1.5s cubic-bezier(0.4, 0.0, 0.2, 1);
-    transform-style: preserve-3d; position: relative;
-}
+.card-inner { width: 100%; height: 100%; transition: transform 1.5s cubic-bezier(0.4, 0.0, 0.2, 1); transform-style: preserve-3d; position: relative; }
 .tcg-card.flipped .card-inner { transform: rotateY(180deg); }
 
 .card-front, .card-back {
     width: 100%; height: 100%; position: absolute; top: 0; left: 0;
     -webkit-backface-visibility: hidden; backface-visibility: hidden; 
-    border-radius: 8px; box-sizing: border-box; 
-    border: none; 
+    border-radius: 8px; box-sizing: border-box; border: none; 
 }
-.card-back {
-    background: url('/cardback.png') center/cover no-repeat;
-    transform: rotateY(0deg); 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-}
+.card-back { background: url('/cardback.png') center/cover no-repeat; transform: rotateY(0deg); box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
 .card-front {
     background: linear-gradient(135deg, #1a2035, #0b0d17); transform: rotateY(180deg);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -103,15 +59,8 @@ body, html {
     padding: 10px; text-align: center;
 }
 
-.first-pick-label {
-    font-family: 'Segoe UI', sans-serif; font-size: 0.75em; color: #8da4c4;
-    letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px;
-}
-.winner-name-display {
-    font-family: 'Cinzel', serif; font-size: 1.6em; font-weight: bold;
-    color: #d4af37; text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
-    word-break: break-word; line-height: 1.2;
-}
+.first-pick-label { font-family: 'Segoe UI', sans-serif; font-size: 0.75em; color: #8da4c4; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+.winner-name-display { font-family: 'Cinzel', serif; font-size: 1.6em; font-weight: bold; color: #d4af37; text-shadow: 0 0 20px rgba(212, 175, 55, 0.6); word-break: break-word; line-height: 1.2; }
 
 @keyframes shuffleLeft {
     0% { transform: translate(0, 0) scale(1); z-index: 2; }
@@ -156,14 +105,10 @@ body, html {
 
 <div id="game-screen">
     <div class="game-header">
-         <a href="/" class="home-logo-link" title="Back to Home">
-             <img src="/logo.png" alt="GITCG Logo">
-         </a>
-         
+         <a href="/" class="home-logo-link" title="Back to Home"><img src="/logo.png" alt="GITCG Logo"></a>
          <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
          <div id="status">Waiting...</div>
          <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
-
          <div id="room-container">
              <div id="room-display" onclick="copyRoomCode()">CODE: <%= roomId %></div>
              <span id="copy-toast">Code Copied!</span>
@@ -246,6 +191,7 @@ body, html {
             blueAvatar: savedData.blueAvatar, redAvatar: savedData.redAvatar,
             draftType: savedData.draftType, immunityPhaseActive: false,
             immunityPool: savedData.immunityPool||[], immunityBans: savedData.immunityBans||[],
+            immunityStepIndex: 999,
             stepIndex: 999, ready: { blue: true, red: true },
             draftFinished: true
         };
@@ -337,6 +283,16 @@ body, html {
              document.getElementById('red-timer').style.opacity = (state.currentTeam === 'red') ? '1' : '0';
         }
 
+        // --- ВОССТАНОВЛЕННАЯ ЛОГИКА ПОДСВЕТКИ ЛЕСЕНКИ ---
+        document.querySelectorAll('.ladder-step').forEach((el, idx) => {
+            el.classList.remove('step-active', 'step-done');
+            if (idx < state.stepIndex - 1) {
+                el.classList.add('step-done');
+            } else if (idx === state.stepIndex - 1 && state.gameStarted && !state.draftFinished && !state.immunityPhaseActive) {
+                el.classList.add('step-active');
+            }
+        });
+
         const confirmBtn = document.getElementById('confirm-btn');
         const skipBtn = document.getElementById('skip-btn');
 
@@ -410,7 +366,23 @@ body, html {
 
     function renderRows() {
         const container = document.getElementById('char-pool-container'); container.innerHTML = '';
-        const ladder = document.createElement('div'); ladder.className = 'ladder-container'; container.appendChild(ladder);
+        
+        // --- ВОССТАНОВЛЕННАЯ ЛОГИКА ОТРИСОВКИ ЛЕСЕНКИ ---
+        const ladder = document.createElement('div'); ladder.className = 'ladder-container';
+        const schema = DRAFT_RULES[currentDraftType];
+        if(schema) {
+            schema.forEach((step, i) => {
+                const d = document.createElement('div');
+                const sideClass = step.team === 'blue' ? 'step-left' : 'step-right';
+                let colorClass = 'step-pick'; 
+                if (step.type.includes('ban')) { colorClass = 'step-ban'; } else if (step.immunity) { colorClass = 'step-immunity'; }
+                d.className = `ladder-step ${sideClass} ${colorClass}`;
+                d.id = `step-node-${i}`; d.innerText = `${i+1}. ${step.type}`;
+                ladder.appendChild(d);
+            });
+            container.appendChild(ladder);
+        }
+
         ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
             const row = document.createElement('div'); row.className = `element-row row-${elem}`;
             const chars = charsData[elem], mid = Math.ceil(chars.length/2);
@@ -437,14 +409,6 @@ body, html {
         return el;
     }
 
-    function confirmSelection() {
-        if(selectedCharId && currentRoom && !savedData && !isDraftFinishedLocal) {
-            socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
-            selectedCharId = null; document.getElementById('confirm-btn').disabled = true;
-            document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
-        }
-    }
-
     function updateImmunityTop(state) {
          const topDisp = document.getElementById('immunity-top-display');
          if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
@@ -452,14 +416,19 @@ body, html {
          const row = document.getElementById('immunity-icons-row'); row.innerHTML = '';
          const bans = state.immunityBans || []; const picks = state.immunityPool || [];
          const slots = [ { val: bans[0], type: 'ban' }, { val: picks[0], type: 'pick' }, { val: picks[1], type: 'pick' }, { val: bans[1], type: 'ban' } ];
-         slots.forEach(slot => {
+         slots.forEach((slot, i) => {
              const div = document.createElement('div'); div.className = `im-icon im-${slot.type}`;
+             div.style.transition = 'all 0.3s';
              if (slot.val === 'skipped') { div.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`; div.style.background = '#222'; } 
              else if (slot.val) {
                  let all = []; Object.values(charsData).forEach(a => all.push(...a));
                  const char = all.find(c => c.id === slot.val);
                  if(char) div.innerHTML = `<img src="${char.img}">`;
              } else div.classList.add('im-empty');
+
+             if (state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && state.immunityStepIndex === i) {
+                 div.classList.add('active-slot');
+             }
              row.appendChild(div);
          });
     }
