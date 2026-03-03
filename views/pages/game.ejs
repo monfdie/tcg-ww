@@ -25,7 +25,30 @@ body, html {
 .turn-timer { transition: opacity 0.3s ease; }
 .draft-area { display: flex; justify-content: center; gap: 60px; }
 
-/* --- TOSS OVERLAY ANIMATION (Максимально плавно, без выпирающих рамок) --- */
+/* --- ЛОГОТИП ДОМОЙ В ШАПКЕ --- */
+.header-left-group {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.home-logo-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    outline: none;
+}
+.home-logo-link img {
+    height: 42px;
+    transition: transform 0.2s, filter 0.2s;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+}
+.home-logo-link:hover img {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.6));
+}
+
+/* --- TOSS OVERLAY ANIMATION --- */
 #toss-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(10, 12, 20, 0.95); z-index: 9999;
@@ -49,27 +72,24 @@ body, html {
 }
 .tcg-card.flipped .card-inner { transform: rotateY(180deg); }
 
-/* ПОЛНОЕ УДАЛЕНИЕ РАМОК И ИДЕАЛЬНАЯ СКЛЕЙКА */
 .card-front, .card-back {
     width: 100%; height: 100%; position: absolute; top: 0; left: 0;
-    -webkit-backface-visibility: hidden; backface-visibility: hidden; /* Фикс для Safari/Chrome */
+    -webkit-backface-visibility: hidden; backface-visibility: hidden; 
     border-radius: 8px; box-sizing: border-box; 
-    border: none; /* Убираем физические границы, чтобы ничего не выпирало */
+    border: none; 
 }
 .card-back {
     background: url('/cardback.png') center/cover no-repeat;
-    transform: rotateY(0deg); /* Фикс z-index бага при перевороте */
+    transform: rotateY(0deg); 
     box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
 .card-front {
     background: linear-gradient(135deg, #1a2035, #0b0d17); transform: rotateY(180deg);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    /* Рисуем золотую рамку ВНУТРИ карточки через inset, чтобы она не ломала идеальные края */
     box-shadow: inset 0 0 0 2px #d4af37, 0 0 40px rgba(212, 175, 55, 0.2), 0 10px 30px rgba(0,0,0,0.8);
     padding: 10px; text-align: center;
 }
 
-/* Строгие шрифты для лица карты */
 .first-pick-label {
     font-family: 'Segoe UI', sans-serif; font-size: 0.75em; color: #8da4c4;
     letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px;
@@ -80,7 +100,6 @@ body, html {
     word-break: break-word; line-height: 1.2;
 }
 
-/* Плавная и медленная анимация тасования (1.5 секунды) */
 @keyframes shuffleLeft {
     0% { transform: translate(0, 0) scale(1); z-index: 2; }
     25% { transform: translate(80px, -15px) scale(0.95); z-index: 1; }
@@ -124,10 +143,16 @@ body, html {
 
 <div id="game-screen">
     <div class="game-header">
-         <div id="room-container">
-             <div id="room-display" onclick="copyRoomCode()">CODE: <%= roomId %></div>
-             <span id="copy-toast">Code Copied!</span>
+         <div class="header-left-group">
+             <a href="/" class="home-logo-link" title="Back to Home">
+                 <img src="/logo.png" alt="GITCG Logo">
+             </a>
+             <div id="room-container">
+                 <div id="room-display" onclick="copyRoomCode()">CODE: <%= roomId %></div>
+                 <span id="copy-toast">Code Copied!</span>
+             </div>
          </div>
+         
          <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
          <div id="status">Waiting...</div>
          <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
@@ -238,7 +263,6 @@ body, html {
             myRole = newRole;
         });
 
-        // Запуск очень медленной анимации
         socket.on('start_coin_toss', (data) => {
             const overlay = document.getElementById('toss-overlay');
             const card1 = document.getElementById('card-1');
@@ -252,13 +276,11 @@ body, html {
             container.classList.add('shuffling');
             overlay.style.display = 'flex';
 
-            // Ждем 3.5 секунды (карты медленно тасуются)
             setTimeout(() => {
                 container.classList.remove('shuffling');
                 card2.classList.add('loser-card');
                 card1.classList.add('winner-card');
                 
-                // Плавный переворот через 0.5 сек 
                 setTimeout(() => {
                     card1.classList.add('flipped');
                 }, 500); 
