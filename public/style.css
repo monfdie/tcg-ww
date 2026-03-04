@@ -198,20 +198,7 @@ button {
 }
 .slot-circle img { width: 100%; height: 100%; object-fit: cover; }
 .step-number { font-family: 'Cinzel', serif; font-size: 20px; color: rgba(255, 255, 255, 0.2); }
-/* Базовый вид слота иммунитета */
-.slot-immunity-pick { 
-    border-color: #50b36b !important; 
-    background: rgba(80, 179, 107, 0.1) !important; 
-}
-
-/* Красивое зеленое свечение, когда наступает очередь этого пика */
-.slot-immunity-pick.active-slot {
-    border-color: #50b36b !important;
-    background: rgba(80, 179, 107, 0.2) !important;
-    box-shadow: 0 0 20px rgba(80, 179, 107, 0.8) !important;
-    transform: scale(1.1);
-    z-index: 5;
-}
+.slot-immunity-pick { border-color: #50b36b !important; background: transparent !important; box-shadow: none; }
 
 .controls-area { 
     display: flex; justify-content: center; align-items: center; 
@@ -257,7 +244,7 @@ button {
     display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 20px; padding-bottom: 40px; 
     overflow-y: auto; z-index: 10; scrollbar-width: none; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
 }
-
+.ladder-container::-webkit-scrollbar { display: none; }
 .ladder-step { 
     font-family: 'Segoe UI', sans-serif; font-size: 11px; font-weight: bold; 
     padding: 2px 6px; border-radius: 2px; text-transform: uppercase; 
@@ -286,4 +273,3 @@ button {
 .selected-pending img { opacity: 1; }
 .immunity-highlight { border-color: #50b36b !important; box-shadow: 0 0 10px rgba(80, 179, 107, 0.6) !important; opacity: 1 !important; filter: none !important; }
 .disabled { opacity: 0.15; filter: grayscale(100%); pointer-events: none; border-color: transparent; }
-
