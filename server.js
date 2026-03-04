@@ -90,7 +90,6 @@ io.on('connection', (socket) => {
             redPlayer: null, redUserId: null, redDiscordId: null, redAvatar: null,
             spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
-            tossActive: false, // <-- ФЛАГ ДЛЯ АНИМАЦИИ
             immunityPhaseActive: false, immunityStepIndex: 0, immunityPool: [], immunityBans: [],
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
@@ -101,41 +100,71 @@ io.on('connection', (socket) => {
         socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    socket.on('join_game', ({roomId, nickname, asSpectator, userId}) => {
-        const session = sessions[roomId];
-        if (!session) return socket.emit('error_msg', 'Room not found');
-        
-        session.lastActive = Date.now();
-
-        if (!session.redPlayer && !asSpectator) {
-            session.redPlayer = socket.id; session.redUserId = userId; session.redName = nickname || 'Player 2';
-            socket.join(roomId); socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
-            io.to(roomId).emit('update_state', getPublicState(session));
-        } else {
-            session.spectators.push(socket.id); socket.join(roomId);
-            socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
-        }
-    });
-
     socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar }) => { 
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Session expired');
         
         session.lastActive = Date.now();
         let role = 'spectator';
+        
+        // Только жесткая проверка. Никакого авто-назначения на пустые места!
         if (session.blueUserId === userId) { 
             session.bluePlayer = socket.id; session.blueDiscordId = discordId || session.blueDiscordId; session.blueAvatar = avatar || session.blueAvatar; role = 'blue'; 
         } else if (session.redUserId === userId) { 
             session.redPlayer = socket.id; session.redDiscordId = discordId || session.redDiscordId; session.redAvatar = avatar || session.redAvatar; role = 'red'; 
-        } else if (!session.redUserId) {
-            session.redUserId = userId; session.redPlayer = socket.id;
-            session.redName = nickname || 'Player 2'; session.redDiscordId = discordId; session.redAvatar = avatar; role = 'red';
-            io.to(roomId).emit('update_state', getPublicState(session));
         } else {
             session.spectators.push(socket.id);
         }
+        
         socket.join(roomId);
         socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+    });
+
+    // --- НОВЫЕ ИВЕНТЫ: ПОСАДКА НА СТУЛ И ВЫХОД ---
+    socket.on('take_seat', ({ roomId, userId, side, nickname, discordId, avatar }) => {
+        const session = sessions[roomId];
+        if (!session || session.gameStarted) return;
+
+        // Удаляем игрока с текущего места, если он решил пересесть
+        if (session.blueUserId === userId) { 
+            session.blueUserId = null; session.bluePlayer = null; session.blueName = 'Waiting...'; 
+            session.blueDiscordId = null; session.blueAvatar = null; session.ready.blue = false; 
+        }
+        if (session.redUserId === userId) { 
+            session.redUserId = null; session.redPlayer = null; session.redName = 'Waiting...'; 
+            session.redDiscordId = null; session.redAvatar = null; session.ready.red = false; 
+        }
+
+        // Сажаем на новое место
+        if (side === 'blue' && !session.blueUserId) {
+            session.blueUserId = userId; session.bluePlayer = socket.id; 
+            session.blueName = nickname || 'Player 1'; session.blueDiscordId = discordId; session.blueAvatar = avatar;
+            io.to(socket.id).emit('role_update', 'blue');
+        } else if (side === 'red' && !session.redUserId) {
+            session.redUserId = userId; session.redPlayer = socket.id; 
+            session.redName = nickname || 'Player 2'; session.redDiscordId = discordId; session.redAvatar = avatar;
+            io.to(socket.id).emit('role_update', 'red');
+        } else {
+            io.to(socket.id).emit('role_update', 'spectator');
+        }
+        io.to(roomId).emit('update_state', getPublicState(session));
+    });
+
+    socket.on('leave_seat', ({ roomId, userId }) => {
+        const session = sessions[roomId];
+        if (!session || session.gameStarted) return;
+
+        if (session.blueUserId === userId) { 
+            session.blueUserId = null; session.bluePlayer = null; session.blueName = 'Waiting...'; 
+            session.blueDiscordId = null; session.blueAvatar = null; session.ready.blue = false; 
+        }
+        if (session.redUserId === userId) { 
+            session.redUserId = null; session.redPlayer = null; session.redName = 'Waiting...'; 
+            session.redDiscordId = null; session.redAvatar = null; session.ready.red = false; 
+        }
+
+        io.to(socket.id).emit('role_update', 'spectator');
+        io.to(roomId).emit('update_state', getPublicState(session));
     });
 
     socket.on('player_ready', (roomId) => {
@@ -147,41 +176,19 @@ io.on('connection', (socket) => {
         if (socket.id === session.redPlayer) session.ready.red = true;
         io.to(roomId).emit('update_state', getPublicState(session));
         
-        if (session.ready.blue && session.ready.red && !session.gameStarted && !session.tossActive) {
-            session.tossActive = true;
-            
-            // RANDOM COIN TOSS (50% шанс поменяться местами)
-            if (Math.random() > 0.5) {
-                const tempP = session.bluePlayer; session.bluePlayer = session.redPlayer; session.redPlayer = tempP;
-                const tempU = session.blueUserId; session.blueUserId = session.redUserId; session.redUserId = tempU;
-                const tempD = session.blueDiscordId; session.blueDiscordId = session.redDiscordId; session.redDiscordId = tempD;
-                const tempA = session.blueAvatar; session.blueAvatar = session.redAvatar; session.redAvatar = tempA;
-                const tempN = session.blueName; session.blueName = session.redName; session.redName = tempN;
-                
-                // КРИТИЧЕСКИ ВАЖНО: Обновляем роль клиентам, чтобы они могли пикать!
-                io.to(session.bluePlayer).emit('role_update', 'blue');
-                io.to(session.redPlayer).emit('role_update', 'red');
+        if (session.ready.blue && session.ready.red && !session.gameStarted) {
+            session.gameStarted = true;
+            if (session.draftType === 'gitcg_cup_2') {
+                session.immunityPhaseActive = true;
+                session.currentTeam = IMMUNITY_ORDER[0].team;
+                session.currentAction = IMMUNITY_ORDER[0].type;
+            } else {
+                session.currentTeam = session.draftOrder[0].team;
+                session.currentAction = session.draftOrder[0].type;
             }
-
-            // Отправляем сигнал запустить анимацию карт
-            io.to(roomId).emit('start_coin_toss', { winnerName: session.blueName });
-
-            // Пауза 3.5 секунды
-            setTimeout(() => {
-                session.gameStarted = true;
-                session.tossActive = false;
-                if (session.draftType === 'gitcg_cup_2') {
-                    session.immunityPhaseActive = true;
-                    session.currentTeam = IMMUNITY_ORDER[0].team;
-                    session.currentAction = IMMUNITY_ORDER[0].type;
-                } else {
-                    session.currentTeam = session.draftOrder[0].team;
-                    session.currentAction = session.draftOrder[0].type;
-                }
-                startTimer(roomId); 
-                io.to(roomId).emit('game_started'); 
-                io.to(roomId).emit('update_state', getPublicState(session));
-            }, 3500); 
+            startTimer(roomId); 
+            io.to(roomId).emit('game_started'); 
+            io.to(roomId).emit('update_state', getPublicState(session));
         }
     });
 
@@ -376,7 +383,9 @@ function getPublicState(session) {
         bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
         blueDiscordId: session.blueDiscordId, redDiscordId: session.redDiscordId, 
-        blueAvatar: session.blueAvatar, redAvatar: session.redAvatar,             
+        blueAvatar: session.blueAvatar, redAvatar: session.redAvatar,
+        isBlueTaken: !!session.blueUserId, // <--- ДЛЯ КНОПОК ПОСАДКИ
+        isRedTaken: !!session.redUserId,   // <--- ДЛЯ КНОПОК ПОСАДКИ
         immunityPhaseActive: session.immunityPhaseActive,
         immunityPool: session.immunityPool || [],
         immunityBans: session.immunityBans || [],
