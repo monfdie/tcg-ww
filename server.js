@@ -90,6 +90,7 @@ io.on('connection', (socket) => {
             redPlayer: null, redUserId: null, redDiscordId: null, redAvatar: null,
             spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
+            tossActive: false, // <-- ДОБАВЛЕН ФЛАГ ДЛЯ МОНЕТКИ
             immunityPhaseActive: false, immunityStepIndex: 0, immunityPool: [], immunityBans: [],
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
@@ -146,19 +147,42 @@ io.on('connection', (socket) => {
         if (socket.id === session.redPlayer) session.ready.red = true;
         io.to(roomId).emit('update_state', getPublicState(session));
         
-        if (session.ready.blue && session.ready.red && !session.gameStarted) {
-            session.gameStarted = true;
-            if (session.draftType === 'gitcg_cup_2') {
-                session.immunityPhaseActive = true;
-                session.currentTeam = IMMUNITY_ORDER[0].team;
-                session.currentAction = IMMUNITY_ORDER[0].type;
-            } else {
-                session.currentTeam = session.draftOrder[0].team;
-                session.currentAction = session.draftOrder[0].type;
+        // --- ЛОГИКА БРОСКА МОНЕТКИ (COIN TOSS) ---
+        if (session.ready.blue && session.ready.red && !session.gameStarted && !session.tossActive) {
+            session.tossActive = true;
+            
+            // 50% шанс поменяться местами
+            if (Math.random() > 0.5) {
+                const tempP = session.bluePlayer; session.bluePlayer = session.redPlayer; session.redPlayer = tempP;
+                const tempU = session.blueUserId; session.blueUserId = session.redUserId; session.redUserId = tempU;
+                const tempD = session.blueDiscordId; session.blueDiscordId = session.redDiscordId; session.redDiscordId = tempD;
+                const tempA = session.blueAvatar; session.blueAvatar = session.redAvatar; session.redAvatar = tempA;
+                const tempN = session.blueName; session.blueName = session.redName; session.redName = tempN;
+                
+                // Обновляем роли клиентам
+                io.to(session.bluePlayer).emit('role_update', 'blue');
+                io.to(session.redPlayer).emit('role_update', 'red');
             }
-            startTimer(roomId); 
-            io.to(roomId).emit('game_started'); 
-            io.to(roomId).emit('update_state', getPublicState(session));
+
+            // Отправляем сигнал запустить анимацию карт
+            io.to(roomId).emit('start_coin_toss', { winnerName: session.blueName });
+
+            // Ждем 3.5 секунды, пока крутятся карты
+            setTimeout(() => {
+                session.gameStarted = true;
+                session.tossActive = false;
+                if (session.draftType === 'gitcg_cup_2') {
+                    session.immunityPhaseActive = true;
+                    session.currentTeam = IMMUNITY_ORDER[0].team;
+                    session.currentAction = IMMUNITY_ORDER[0].type;
+                } else {
+                    session.currentTeam = session.draftOrder[0].team;
+                    session.currentAction = session.draftOrder[0].type;
+                }
+                startTimer(roomId); 
+                io.to(roomId).emit('game_started'); 
+                io.to(roomId).emit('update_state', getPublicState(session));
+            }, 3500); 
         }
     });
 
@@ -338,7 +362,6 @@ async function saveMatchImmediately(s) {
         if (s.blueDiscordId) await User.updateOne({ discordId: s.blueDiscordId }, { $inc: { gamesPlayed: 1 } });
         if (s.redDiscordId) await User.updateOne({ discordId: s.redDiscordId }, { $inc: { gamesPlayed: 1 } });
 
-        // Чистка старых матчей, если их больше 10000
         const count = await Match.countDocuments();
         if (count > 10000) {
             const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 10000);
