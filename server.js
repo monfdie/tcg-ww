@@ -100,25 +100,37 @@ io.on('connection', (socket) => {
         socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    // Измененная функция реконнекта, которая принимает флаг asSpectator
-    socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar, asSpectator }) => { 
+    socket.on('join_game', ({roomId, nickname, asSpectator, userId}) => {
+        const session = sessions[roomId];
+        if (!session) return socket.emit('error_msg', 'Room not found');
+        
+        session.lastActive = Date.now();
+
+        if (!session.redPlayer && !asSpectator) {
+            session.redPlayer = socket.id; session.redUserId = userId; session.redName = nickname || 'Player 2';
+            socket.join(roomId); socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+            io.to(roomId).emit('update_state', getPublicState(session));
+        } else {
+            session.spectators.push(socket.id); socket.join(roomId);
+            socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+        }
+    });
+
+    socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar }) => { 
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Session expired');
         
         session.lastActive = Date.now();
         let role = 'spectator';
-        
         if (session.blueUserId === userId) { 
             session.bluePlayer = socket.id; session.blueDiscordId = discordId || session.blueDiscordId; session.blueAvatar = avatar || session.blueAvatar; role = 'blue'; 
         } else if (session.redUserId === userId) { 
             session.redPlayer = socket.id; session.redDiscordId = discordId || session.redDiscordId; session.redAvatar = avatar || session.redAvatar; role = 'red'; 
-        } else if (!session.redUserId && !asSpectator) {
-            // Если место 2го игрока свободно и галочка Спектатора НЕ нажата - занимаем место
+        } else if (!session.redUserId) {
             session.redUserId = userId; session.redPlayer = socket.id;
             session.redName = nickname || 'Player 2'; session.redDiscordId = discordId; session.redAvatar = avatar; role = 'red';
             io.to(roomId).emit('update_state', getPublicState(session));
         } else {
-            // В противном случае (если галочка нажата) — кидаем в зрители
             session.spectators.push(socket.id);
         }
         socket.join(roomId);
@@ -326,6 +338,7 @@ async function saveMatchImmediately(s) {
         if (s.blueDiscordId) await User.updateOne({ discordId: s.blueDiscordId }, { $inc: { gamesPlayed: 1 } });
         if (s.redDiscordId) await User.updateOne({ discordId: s.redDiscordId }, { $inc: { gamesPlayed: 1 } });
 
+        // Чистка старых матчей, если их больше 10000
         const count = await Match.countDocuments();
         if (count > 10000) {
             const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 10000);
