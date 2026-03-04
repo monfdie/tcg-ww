@@ -10,35 +10,29 @@
         min-height: 100vh;
     }
 
-    .page-container, #game-screen, .char-pool {
-        background: transparent !important;
-    }
+    .page-container, #game-screen, .char-pool { background: transparent !important; }
 
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
     .player-header { height: auto !important; min-height: 70px; }
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
     .player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
     
-    #char-pool-container .char-option.disabled {
-        pointer-events: none !important;
-        opacity: 0.5;
-        filter: grayscale(100%);
-    }
+    /* --- СТИЛИ КНОПОК ПОСАДКИ (ВЫБОР ИГРОКА) --- */
+    .seat-btn { border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 10px; margin-top: 5px; text-transform: uppercase; transition: 0.2s; font-family: 'Segoe UI', sans-serif; letter-spacing: 1px; }
+    .join-seat { background: #4facfe; color: #000; box-shadow: 0 0 10px rgba(79,172,254,0.3); }
+    .join-seat:hover { background: #fff; box-shadow: 0 0 15px #4facfe; }
+    .red-side .join-seat { background: #ff6b6b; box-shadow: 0 0 10px rgba(255,107,107,0.3); }
+    .red-side .join-seat:hover { background: #fff; box-shadow: 0 0 15px #ff6b6b; }
+    .leave-seat { background: transparent; border: 1px solid #ff6b6b; color: #ff6b6b; }
+    .leave-seat:hover { background: rgba(255, 107, 107, 0.2); }
 
-    #char-pool-container .char-option.immunity-highlight { 
-        border: 3px solid #d4af37 !important;
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; 
-    }
+    #char-pool-container .char-option.disabled { pointer-events: none !important; opacity: 0.5; filter: grayscale(100%); }
+    #char-pool-container .char-option.immunity-highlight { border: 3px solid #d4af37 !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; }
 
     .turn-timer { transition: opacity 0.3s ease; }
+    .draft-area { display: flex; justify-content: center; gap: 60px; }
 
-    .draft-area {
-        display: flex;
-        justify-content: center;
-        gap: 60px;
-    }
-
-    /* --- ПОЗИЦИОНИРОВАНИЕ ШАПКИ --- */
+    /* --- ПОЗИЦИОНИРОВАНИЕ ШАПКИ (ЛОГО И КОД КОМНАТЫ) --- */
     .game-header { position: relative; width: 100%; display: flex; justify-content: center; align-items: center; }
 
     .home-logo-link { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); z-index: 100; text-decoration: none; display: flex; align-items: center; }
@@ -46,77 +40,7 @@
     .home-logo-link:hover img { transform: scale(1.1); filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.6)); }
 
     #room-container { position: absolute !important; right: 20px !important; left: auto !important; top: 50% !important; transform: translateY(-50%) !important; margin: 0 !important; z-index: 100; }
-
-    /* --- СТИЛИ АНИМАЦИИ КАРТ (COIN TOSS) --- */
-    #toss-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(10, 12, 20, 0.95); z-index: 9999;
-        display: none; flex-direction: column; align-items: center; justify-content: center;
-        backdrop-filter: blur(8px);
-    }
-    .cards-container { position: relative; width: 300px; height: 240px; display: flex; justify-content: space-between; }
-    .tcg-card { width: 140px; height: 240px; perspective: 1200px; position: absolute; top: 0; transition: all 1.5s cubic-bezier(0.25, 0.8, 0.25, 1); }
-    #card-1 { left: 0; z-index: 2; }
-    #card-2 { right: 0; z-index: 1; }
-    .card-inner { width: 100%; height: 100%; transition: transform 1.5s cubic-bezier(0.4, 0.0, 0.2, 1); transform-style: preserve-3d; position: relative; }
-    .tcg-card.flipped .card-inner { transform: rotateY(180deg); }
-
-    .card-front, .card-back {
-        width: 100%; height: 100%; position: absolute; top: 0; left: 0;
-        -webkit-backface-visibility: hidden; backface-visibility: hidden; 
-        border-radius: 8px; box-sizing: border-box; border: none; 
-    }
-    .card-back { background: url('/cardback.png') center/cover no-repeat; transform: rotateY(0deg); box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-    .card-front {
-        background: linear-gradient(135deg, #1a2035, #0b0d17); transform: rotateY(180deg);
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        box-shadow: inset 0 0 0 2px #d4af37, 0 0 40px rgba(212, 175, 55, 0.2), 0 10px 30px rgba(0,0,0,0.8);
-        padding: 10px; text-align: center;
-    }
-
-    .first-pick-label { font-family: 'Segoe UI', sans-serif; font-size: 0.75em; color: #8da4c4; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
-    .winner-name-display { font-family: 'Cinzel', serif; font-size: 1.6em; font-weight: bold; color: #d4af37; text-shadow: 0 0 20px rgba(212, 175, 55, 0.6); word-break: break-word; line-height: 1.2; }
-
-    @keyframes shuffleLeft {
-        0% { transform: translate(0, 0) scale(1); z-index: 2; }
-        25% { transform: translate(80px, -15px) scale(0.95); z-index: 1; }
-        50% { transform: translate(160px, 0) scale(1); z-index: 1; }
-        75% { transform: translate(80px, 15px) scale(1.05); z-index: 2; }
-        100% { transform: translate(0, 0) scale(1); z-index: 2; }
-    }
-    @keyframes shuffleRight {
-        0% { transform: translate(0, 0) scale(1); z-index: 1; }
-        25% { transform: translate(-80px, 15px) scale(1.05); z-index: 2; }
-        50% { transform: translate(-160px, 0) scale(1); z-index: 2; }
-        75% { transform: translate(-80px, -15px) scale(0.95); z-index: 1; }
-        100% { transform: translate(0, 0) scale(1); z-index: 1; }
-    }
-    .shuffling #card-1 { animation: shuffleLeft 1.5s ease-in-out infinite; }
-    .shuffling #card-2 { animation: shuffleRight 1.5s ease-in-out infinite; }
-
-    .winner-card { left: 80px !important; transform: scale(1.3) !important; z-index: 10 !important; }
-    .loser-card { opacity: 0; transform: scale(0.7) !important; transition: 0.8s ease-out; }
 </style>
-
-<div id="toss-overlay">
-    <div id="cards-container" class="cards-container">
-        <div class="tcg-card" id="card-1">
-            <div class="card-inner">
-                <div class="card-back"></div>
-                <div class="card-front">
-                    <div class="first-pick-label">FIRST PICK</div>
-                    <div id="winner-name-text" class="winner-name-display"></div>
-                </div>
-            </div>
-        </div>
-        <div class="tcg-card" id="card-2">
-            <div class="card-inner">
-                <div class="card-back"></div>
-                <div class="card-front"></div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div id="game-screen">
     <div class="game-header">
@@ -141,6 +65,8 @@
                  <div class="player-info-wrapper">
                      <img id="blue-avatar" class="player-avatar" src="" alt="">
                      <h2 id="blue-name-display">PLAYER 1</h2>
+                     <button id="join-blue-btn" class="seat-btn join-seat" onclick="takeSeat('blue')" style="display:none;">SIT HERE</button>
+                     <button id="leave-blue-btn" class="seat-btn leave-seat" onclick="leaveSeat()" style="display:none;">LEAVE</button>
                  </div>
                  <div id="blue-ready-switch" class="ready-switch" onclick="toggleReady('blue')">
                      <div class="switch-circle"></div>
@@ -159,6 +85,8 @@
                  <div class="player-info-wrapper">
                      <img id="red-avatar" class="player-avatar" src="" alt="">
                      <h2 id="red-name-display">PLAYER 2</h2>
+                     <button id="join-red-btn" class="seat-btn join-seat" onclick="takeSeat('red')" style="display:none;">SIT HERE</button>
+                     <button id="leave-red-btn" class="seat-btn leave-seat" onclick="leaveSeat()" style="display:none;">LEAVE</button>
                  </div>
                  <div id="red-timer" class="turn-timer">45</div>
              </div>
@@ -184,6 +112,7 @@
     const currentRoom = '<%= roomId %>';
     const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
+    
     let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
     let charsData = {}, selectedCharId = null;
     let isDraftFinishedLocal = false;
@@ -191,6 +120,9 @@
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
     const myNick = <%- locals.user ? JSON.stringify(locals.user.username) : '""' %>;
+    const localNick = sessionStorage.getItem('draft_nickname') || 'Player';
+    const finalNick = myNick || localNick;
+
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
 
@@ -206,7 +138,7 @@
             draftType: savedData.draftType, immunityPhaseActive: false,
             immunityPool: savedData.immunityPool||[], immunityBans: savedData.immunityBans||[],
             stepIndex: 999, ready: { blue: true, red: true },
-            draftFinished: true
+            draftFinished: true, isBlueTaken: true, isRedTaken: true
         };
         updateUI(mockState);
     } else {
@@ -214,53 +146,25 @@
             if (currentRoom && myUserId) {
                 socket.emit('rejoin_game', { 
                     roomId: currentRoom, userId: myUserId, 
-                    discordId: myRealDiscordId, avatar: myAvatarHash, nickname: myNick 
+                    discordId: myRealDiscordId, avatar: myAvatarHash, nickname: finalNick 
                 });
             }
         });
+        
         socket.on('init_game', (data) => {
             myRole = data.role; charsData = data.chars; currentDraftType = data.state.draftType || 'gitcg';
             document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
             renderRows(); updateUI(data.state);
         });
 
-        // ВАЖНО: СЛУШАТЕЛЬ ОБНОВЛЕНИЯ РОЛИ!
+        // Синхронизация роли с сервером
         socket.on('role_update', (newRole) => {
             myRole = newRole;
-        });
-
-        // ВАЖНО: СЛУШАТЕЛЬ АНИМАЦИИ МОНЕТКИ!
-        socket.on('start_coin_toss', (data) => {
-            const overlay = document.getElementById('toss-overlay');
-            const card1 = document.getElementById('card-1');
-            const card2 = document.getElementById('card-2');
-            const container = document.getElementById('cards-container');
-            
-            document.getElementById('winner-name-text').innerText = data.winnerName;
-            
-            card1.className = 'tcg-card';
-            card2.className = 'tcg-card';
-            container.classList.add('shuffling');
-            overlay.style.display = 'flex';
-
-            setTimeout(() => {
-                container.classList.remove('shuffling');
-                card2.classList.add('loser-card');
-                card1.classList.add('winner-card');
-                
-                setTimeout(() => {
-                    card1.classList.add('flipped');
-                }, 500); 
-            }, 3500); 
+            document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
         });
 
         socket.on('update_state', updateUI);
-        
-        socket.on('game_started', () => { 
-            isGameStarted = true; 
-            document.getElementById('toss-overlay').style.display = 'none'; // Скрываем анимацию
-        });
-
+        socket.on('game_started', () => { isGameStarted = true; });
         socket.on('game_over', (state) => { updateUI(state); alert("Draft is complete and saved!"); });
         socket.on('timer_tick', (data) => {
             const t = typeof data === 'object' ? data.main : data;
@@ -277,11 +181,38 @@
     function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
     function copyRoomCode() { navigator.clipboard.writeText(currentRoom); }
     function skipTurn() { if(currentRoom && !savedData && !isDraftFinishedLocal) socket.emit('skip_action', currentRoom); }
+
+    // --- ФУНКЦИИ ВЫБОРА МЕСТА ---
+    function takeSeat(side) {
+        socket.emit('take_seat', { roomId: currentRoom, userId: myUserId, side: side, nickname: finalNick, discordId: myRealDiscordId, avatar: myAvatarHash });
+    }
+    function leaveSeat() {
+        socket.emit('leave_seat', { roomId: currentRoom, userId: myUserId });
+    }
     
     function updateUI(state) {
         isGameStarted = state.gameStarted;
         isDraftFinishedLocal = state.draftFinished;
         const isMyTurn = (myRole === state.currentTeam);
+
+        // --- ЛОГИКА ОТОБРАЖЕНИЯ КНОПОК ПОСАДКИ ---
+        const blueJoinBtn = document.getElementById('join-blue-btn');
+        const redJoinBtn = document.getElementById('join-red-btn');
+        const blueLeaveBtn = document.getElementById('leave-blue-btn');
+        const redLeaveBtn = document.getElementById('leave-red-btn');
+
+        if (!state.gameStarted && !state.draftFinished) {
+            if (!state.isBlueTaken && myRole !== 'blue') { blueJoinBtn.style.display = 'block'; } else { blueJoinBtn.style.display = 'none'; }
+            if (myRole === 'blue') { blueLeaveBtn.style.display = 'block'; } else { blueLeaveBtn.style.display = 'none'; }
+
+            if (!state.isRedTaken && myRole !== 'red') { redJoinBtn.style.display = 'block'; } else { redJoinBtn.style.display = 'none'; }
+            if (myRole === 'red') { redLeaveBtn.style.display = 'block'; } else { redLeaveBtn.style.display = 'none'; }
+        } else {
+            if (blueJoinBtn) blueJoinBtn.style.display = 'none';
+            if (redJoinBtn) redJoinBtn.style.display = 'none';
+            if (blueLeaveBtn) blueLeaveBtn.style.display = 'none';
+            if (redLeaveBtn) redLeaveBtn.style.display = 'none';
+        }
 
         if (!state.gameStarted || state.draftFinished) {
              document.getElementById('blue-timer').style.opacity = '0';
@@ -316,8 +247,10 @@
             skipBtn.style.display = 'none';
         }
 
-        document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
-        document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
+        // Переключатели Ready прячем, если место пустое
+        document.getElementById('blue-ready-switch').style.display = (state.gameStarted || !state.isBlueTaken) ? 'none' : 'flex';
+        document.getElementById('red-ready-switch').style.display = (state.gameStarted || !state.isRedTaken) ? 'none' : 'flex';
+        
         if(!state.gameStarted) {
              state.ready.blue ? document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
              state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
@@ -325,10 +258,18 @@
 
         document.getElementById('blue-name-display').innerText = state.blueName;
         document.getElementById('red-name-display').innerText = state.redName;
+        
         const blueAv = document.getElementById('blue-avatar');
-        if (state.blueAvatar && state.blueDiscordId) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block'; }
+        if (state.blueAvatar && state.blueDiscordId && state.isBlueTaken) { 
+            blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; 
+            blueAv.style.display = 'block'; 
+        } else { blueAv.style.display = 'none'; }
+        
         const redAv = document.getElementById('red-avatar');
-        if (state.redAvatar && state.redDiscordId) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; }
+        if (state.redAvatar && state.redDiscordId && state.isRedTaken) { 
+            redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; 
+            redAv.style.display = 'block'; 
+        } else { redAv.style.display = 'none'; }
         
         let txt = "WAITING...";
         if (state.draftFinished) {
