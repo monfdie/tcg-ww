@@ -1,20 +1,32 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* Убираем ограничение в 900px, позволяем растянуться до 1400px (почти на весь экран) */
-    .page-container { max-width: 1400px !important; width: 100%; margin: 0 auto; box-sizing: border-box; }
+    /* 1. Блокируем прокрутку всего сайта для этой страницы */
+    .main-content { overflow: hidden !important; }
+
+    /* 2. Делаем контейнер на всю высоту с Flexbox */
+    .page-container { 
+        max-width: 1400px !important; 
+        width: 100%; 
+        margin: 0 auto; 
+        box-sizing: border-box; 
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 80px); /* 100vh минус верхний и нижний паддинг (40+40) */
+    }
     
-    /* ШАПКА ТУРНИРА ПО ЭСКИЗУ */
+    /* ШАПКА ТУРНИРА */
     .tv-header {
+        flex-shrink: 0; /* Запрещаем шапке сжиматься */
         background: rgba(16, 20, 32, 0.85); 
         border: 1px solid #2a3454; 
         border-radius: 12px; 
         padding: 50px 30px; 
-        margin-bottom: 40px;
+        margin-bottom: 30px;
         display: flex; 
         flex-direction: column; 
-        align-items: center; /* Центровка всего контента */
-        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        align-items: center; 
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4); 
     }
     
     .tv-title { 
@@ -23,7 +35,7 @@
         color: #fff; 
         margin: 0 0 25px 0; 
         text-shadow: 0 0 20px rgba(79, 172, 254, 0.4); 
-        text-align: center;
+        text-align: center; 
         letter-spacing: 2px;
     }
     
@@ -33,10 +45,10 @@
         border: 1px solid #4facfe; 
         color: #4facfe; 
         padding: 10px 30px; 
-        border-radius: 30px; /* Скругленные формы */
+        border-radius: 30px; 
         font-weight: bold; 
         text-transform: uppercase; 
-        letter-spacing: 1px;
+        letter-spacing: 1px; 
         font-family: 'Segoe UI', sans-serif;
     }
 
@@ -58,7 +70,7 @@
         color: #000; 
         border-color: #4facfe;
         box-shadow: 0 0 20px rgba(79, 172, 254, 0.4); 
-        transform: translateY(-2px);
+        transform: translateY(-2px); 
     }
 
     .tv-divider { width: 80%; height: 1px; background: #2a3454; margin: 10px 0 25px 0; }
@@ -67,10 +79,28 @@
     .tv-date span { color: #fff; margin-left: 10px;}
 
     /* ФИЛЬТРЫ МАТЧЕЙ */
-    .stage-filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; justify-content: center; padding-bottom: 10px; }
+    .stage-filters { 
+        flex-shrink: 0; /* Запрещаем фильтрам сжиматься */
+        display: flex; gap: 10px; margin-bottom: 20px; 
+        overflow-x: auto; justify-content: center; padding-bottom: 10px; 
+    }
     .filter-btn { background: transparent; border: 1px solid #3c4566; color: #8da4c4; padding: 10px 25px; border-radius: 30px; cursor: pointer; transition: 0.2s; font-weight: bold; white-space: nowrap; }
     .filter-btn:hover { border-color: #d4af37; color: #fff; }
     .filter-btn.active { background: #d4af37; color: #000; border-color: #d4af37; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+
+    /* 3. КОНТЕЙНЕР МАТЧЕЙ (ИМЕННО ОН ПРОКРУЧИВАЕТСЯ) */
+    #matches-list {
+        flex-grow: 1; /* Занимает всё доступное место внизу экрана */
+        overflow-y: auto; /* Включаем независимую прокрутку */
+        padding-right: 15px; /* Отступ для скроллбара, чтобы он не наезжал на карточки */
+        padding-bottom: 20px;
+    }
+
+    /* Кастомизация ползунка прокрутки для матчей */
+    #matches-list::-webkit-scrollbar { width: 8px; }
+    #matches-list::-webkit-scrollbar-track { background: rgba(16, 20, 32, 0.5); border-radius: 10px; }
+    #matches-list::-webkit-scrollbar-thumb { background: #3c4566; border-radius: 10px; }
+    #matches-list::-webkit-scrollbar-thumb:hover { background: #4facfe; }
 
     /* КАРТОЧКА МАТЧА */
     .match-item { background: rgba(16, 20, 32, 0.8); border: 1px solid #2a3454; padding: 20px 30px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; text-decoration: none; }
@@ -78,6 +108,13 @@
     .m-title { font-family: 'Cinzel', serif; font-size: 1.3em; color: #fff; display: flex; align-items: center; gap: 15px; }
     .m-replay { background: #2a3454; color: #fff; padding: 8px 20px; border-radius: 4px; font-size: 0.85em; text-transform: uppercase; font-weight: bold; border: 1px solid #3c4566; transition: 0.2s; }
     .match-item:hover .m-replay { background: #4facfe; color: #000; border-color: #4facfe; }
+
+    /* Адаптация под мобильные телефоны (корректировка высоты) */
+    @media (max-width: 768px) {
+        .page-container { height: calc(100vh - 30px); }
+        .tv-header { padding: 30px 20px; }
+        .tv-title { font-size: 2em; }
+    }
 </style>
 
 <div class="page-container">
