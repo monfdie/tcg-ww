@@ -105,9 +105,15 @@ io.on('connection', (socket) => {
         if (!session) return socket.emit('error_msg', 'Room not found');
         
         session.lastActive = Date.now();
-        // Убрали авто-назначение. Теперь все изначально заходят зрителями!
-        session.spectators.push(socket.id); socket.join(roomId);
-        socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+
+        if (!session.redPlayer && !asSpectator) {
+            session.redPlayer = socket.id; session.redUserId = userId; session.redName = nickname || 'Player 2';
+            socket.join(roomId); socket.emit('init_game', { roomId, role: 'red', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+            io.to(roomId).emit('update_state', getPublicState(session));
+        } else {
+            session.spectators.push(socket.id); socket.join(roomId);
+            socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+        }
     });
 
     socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar }) => { 
@@ -116,64 +122,19 @@ io.on('connection', (socket) => {
         
         session.lastActive = Date.now();
         let role = 'spectator';
-        
-        // Жесткая проверка. Назначает роль только если ID совпадает с местом!
         if (session.blueUserId === userId) { 
             session.bluePlayer = socket.id; session.blueDiscordId = discordId || session.blueDiscordId; session.blueAvatar = avatar || session.blueAvatar; role = 'blue'; 
         } else if (session.redUserId === userId) { 
             session.redPlayer = socket.id; session.redDiscordId = discordId || session.redDiscordId; session.redAvatar = avatar || session.redAvatar; role = 'red'; 
+        } else if (!session.redUserId) {
+            session.redUserId = userId; session.redPlayer = socket.id;
+            session.redName = nickname || 'Player 2'; session.redDiscordId = discordId; session.redAvatar = avatar; role = 'red';
+            io.to(roomId).emit('update_state', getPublicState(session));
         } else {
             session.spectators.push(socket.id);
         }
         socket.join(roomId);
         socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
-    });
-
-    // --- НОВЫЕ СОБЫТИЯ: ПОСАДКА НА МЕСТО И ВЫХОД С НЕГО ---
-    socket.on('take_seat', ({ roomId, userId, side, nickname, discordId, avatar }) => {
-        const session = sessions[roomId];
-        if (!session || session.gameStarted) return;
-
-        // Если игрок решил сменить стул, убираем его со старого места
-        if (session.blueUserId === userId) { 
-            session.blueUserId = null; session.bluePlayer = null; session.blueName = 'Waiting...'; 
-            session.blueDiscordId = null; session.blueAvatar = null; session.ready.blue = false; 
-        }
-        if (session.redUserId === userId) { 
-            session.redUserId = null; session.redPlayer = null; session.redName = 'Waiting...'; 
-            session.redDiscordId = null; session.redAvatar = null; session.ready.red = false; 
-        }
-
-        // Сажаем на новое место
-        if (side === 'blue' && !session.blueUserId) {
-            session.blueUserId = userId; session.bluePlayer = socket.id; 
-            session.blueName = nickname || 'Player 1'; session.blueDiscordId = discordId; session.blueAvatar = avatar;
-            io.to(socket.id).emit('role_update', 'blue');
-        } else if (side === 'red' && !session.redUserId) {
-            session.redUserId = userId; session.redPlayer = socket.id; 
-            session.redName = nickname || 'Player 2'; session.redDiscordId = discordId; session.redAvatar = avatar;
-            io.to(socket.id).emit('role_update', 'red');
-        } else {
-            io.to(socket.id).emit('role_update', 'spectator');
-        }
-        io.to(roomId).emit('update_state', getPublicState(session));
-    });
-
-    socket.on('leave_seat', ({ roomId, userId }) => {
-        const session = sessions[roomId];
-        if (!session || session.gameStarted) return;
-
-        if (session.blueUserId === userId) { 
-            session.blueUserId = null; session.bluePlayer = null; session.blueName = 'Waiting...'; 
-            session.blueDiscordId = null; session.blueAvatar = null; session.ready.blue = false; 
-        }
-        if (session.redUserId === userId) { 
-            session.redUserId = null; session.redPlayer = null; session.redName = 'Waiting...'; 
-            session.redDiscordId = null; session.redAvatar = null; session.ready.red = false; 
-        }
-
-        io.to(socket.id).emit('role_update', 'spectator');
-        io.to(roomId).emit('update_state', getPublicState(session));
     });
 
     socket.on('player_ready', (roomId) => {
@@ -377,6 +338,7 @@ async function saveMatchImmediately(s) {
         if (s.blueDiscordId) await User.updateOne({ discordId: s.blueDiscordId }, { $inc: { gamesPlayed: 1 } });
         if (s.redDiscordId) await User.updateOne({ discordId: s.redDiscordId }, { $inc: { gamesPlayed: 1 } });
 
+        // Чистка старых матчей, если их больше 10000
         const count = await Match.countDocuments();
         if (count > 10000) {
             const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 10000);
@@ -392,9 +354,7 @@ function getPublicState(session) {
         bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
         blueDiscordId: session.blueDiscordId, redDiscordId: session.redDiscordId, 
-        blueAvatar: session.blueAvatar, redAvatar: session.redAvatar,
-        isBlueTaken: !!session.blueUserId, // <-- ДЛЯ КНОПОК ПОСАДКИ
-        isRedTaken: !!session.redUserId,   // <-- ДЛЯ КНОПОК ПОСАДКИ
+        blueAvatar: session.blueAvatar, redAvatar: session.redAvatar,             
         immunityPhaseActive: session.immunityPhaseActive,
         immunityPool: session.immunityPool || [],
         immunityBans: session.immunityBans || [],
