@@ -100,6 +100,16 @@ io.on('connection', (socket) => {
         socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
     });
 
+    socket.on('join_game', ({roomId, nickname, asSpectator, userId}) => {
+        const session = sessions[roomId];
+        if (!session) return socket.emit('error_msg', 'Room not found');
+        
+        session.lastActive = Date.now();
+        // Убрали авто-назначение. Теперь все изначально заходят зрителями!
+        session.spectators.push(socket.id); socket.join(roomId);
+        socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
+    });
+
     socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar }) => { 
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Session expired');
@@ -107,7 +117,7 @@ io.on('connection', (socket) => {
         session.lastActive = Date.now();
         let role = 'spectator';
         
-        // Только жесткая проверка. Никакого авто-назначения на пустые места!
+        // Жесткая проверка. Назначает роль только если ID совпадает с местом!
         if (session.blueUserId === userId) { 
             session.bluePlayer = socket.id; session.blueDiscordId = discordId || session.blueDiscordId; session.blueAvatar = avatar || session.blueAvatar; role = 'blue'; 
         } else if (session.redUserId === userId) { 
@@ -115,17 +125,16 @@ io.on('connection', (socket) => {
         } else {
             session.spectators.push(socket.id);
         }
-        
         socket.join(roomId);
         socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    // --- НОВЫЕ ИВЕНТЫ: ПОСАДКА НА СТУЛ И ВЫХОД ---
+    // --- НОВЫЕ СОБЫТИЯ: ПОСАДКА НА МЕСТО И ВЫХОД С НЕГО ---
     socket.on('take_seat', ({ roomId, userId, side, nickname, discordId, avatar }) => {
         const session = sessions[roomId];
         if (!session || session.gameStarted) return;
 
-        // Удаляем игрока с текущего места, если он решил пересесть
+        // Если игрок решил сменить стул, убираем его со старого места
         if (session.blueUserId === userId) { 
             session.blueUserId = null; session.bluePlayer = null; session.blueName = 'Waiting...'; 
             session.blueDiscordId = null; session.blueAvatar = null; session.ready.blue = false; 
@@ -384,8 +393,8 @@ function getPublicState(session) {
         blueName: session.blueName, redName: session.redName, draftType: session.draftType,
         blueDiscordId: session.blueDiscordId, redDiscordId: session.redDiscordId, 
         blueAvatar: session.blueAvatar, redAvatar: session.redAvatar,
-        isBlueTaken: !!session.blueUserId, // <--- ДЛЯ КНОПОК ПОСАДКИ
-        isRedTaken: !!session.redUserId,   // <--- ДЛЯ КНОПОК ПОСАДКИ
+        isBlueTaken: !!session.blueUserId, // <-- ДЛЯ КНОПОК ПОСАДКИ
+        isRedTaken: !!session.redUserId,   // <-- ДЛЯ КНОПОК ПОСАДКИ
         immunityPhaseActive: session.immunityPhaseActive,
         immunityPool: session.immunityPool || [],
         immunityBans: session.immunityBans || [],
