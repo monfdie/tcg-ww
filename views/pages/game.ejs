@@ -1,48 +1,29 @@
 <%- include('../partials/header') %>
 
 <style>
-    body, html {
-        background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important;
-        background-size: cover !important;
-        background-position: center !important;
-        background-repeat: no-repeat !important;
-        background-attachment: fixed !important;
-        min-height: 100vh;
-    }
+body, html {
+    background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    min-height: 100vh;
+    margin: 0;
+}
 
-    /* 2. ДЕЛАЕМ ПУЛЛ ПЕРСОНАЖЕЙ И ФОН ИГРЫ ПРОЗРАЧНЫМИ */
-    .page-container, #game-screen, .char-pool {
-        background: transparent !important;
-    }
+.page-container, #game-screen, .char-pool { background: transparent !important; }
+.ladder-container { display: none !important; }
 
-    .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
-    .player-header { height: auto !important; min-height: 70px; }
-    .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
-    .player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
-    
-    /* --- ЛОГИКА ФИЛЬТРОВ И РАМОК --- */
-    
-    /* Стандартная блокировка (серый + нельзя нажать) */
-    #char-pool-container .char-option.disabled {
-        pointer-events: none !important;
-        opacity: 0.5;
-        filter: grayscale(100%);
-    }
+.page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
+.player-header { height: auto !important; min-height: 70px; }
+.player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
 
-    /* Рамка иммунитета */
-    #char-pool-container .char-option.immunity-highlight { 
-        border: 3px solid #d4af37 !important; 
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; 
-    }
+#char-pool-container .char-option.disabled { pointer-events: none !important; opacity: 0.5; filter: grayscale(100%); }
+#char-pool-container .char-option.immunity-highlight { border: 3px solid #d4af37 !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; }
 
-    .turn-timer { transition: opacity 0.3s ease; }
-
-    /* Отступ между панелями игроков (вместо линии) */
-    .draft-area {
-        display: flex;
-        justify-content: center;
-        gap: 60px;
-    }
+.turn-timer { transition: opacity 0.3s ease; }
+.draft-area { display: flex; justify-content: center; gap: 60px; }
 </style>
 
 <div id="game-screen">
@@ -112,8 +93,7 @@
     sessionStorage.setItem('draft_user_id', myUserId);
     
     let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
-    let charsData = {}, selectedCharId = null;
-    let isDraftFinishedLocal = false;
+    let charsData = {}, selectedCharId = null, isDraftFinishedLocal = false;
     
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
@@ -140,9 +120,16 @@
     } else {
         socket.on('connect', () => {
             if (currentRoom && myUserId) {
+                // Читаем, нажимал ли юзер галочку "Join as Spectator"
+                const isSpec = sessionStorage.getItem('draft_spectator') === 'true';
+                
                 socket.emit('rejoin_game', { 
-                    roomId: currentRoom, userId: myUserId, 
-                    discordId: myRealDiscordId, avatar: myAvatarHash, nickname: myNick 
+                    roomId: currentRoom, 
+                    userId: myUserId, 
+                    discordId: myRealDiscordId, 
+                    avatar: myAvatarHash, 
+                    nickname: myNick || sessionStorage.getItem('draft_nickname') || 'Player 2',
+                    asSpectator: isSpec // Отправляем серверу
                 });
             }
         });
@@ -154,7 +141,6 @@
         socket.on('update_state', updateUI);
         socket.on('game_started', () => { isGameStarted = true; });
         socket.on('game_over', (state) => { updateUI(state); alert("Draft is complete and saved!"); });
-        
         socket.on('timer_tick', (data) => {
             const t = typeof data === 'object' ? data.main : data;
             document.getElementById('blue-timer').innerText = t; 
@@ -183,15 +169,6 @@
              document.getElementById('blue-timer').style.opacity = (state.currentTeam === 'blue') ? '1' : '0';
              document.getElementById('red-timer').style.opacity = (state.currentTeam === 'red') ? '1' : '0';
         }
-
-        document.querySelectorAll('.ladder-step').forEach((el, idx) => {
-            el.classList.remove('step-active', 'step-done');
-            if (idx < state.stepIndex - 1) {
-                el.classList.add('step-done');
-            } else if (idx === state.stepIndex - 1 && state.gameStarted && !state.draftFinished && !state.immunityPhaseActive) {
-                el.classList.add('step-active');
-            }
-        });
 
         const confirmBtn = document.getElementById('confirm-btn');
         const skipBtn = document.getElementById('skip-btn');
@@ -224,100 +201,49 @@
         if (state.redAvatar && state.redDiscordId) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; }
         
         let txt = "WAITING...";
-        if (state.draftFinished) {
-            txt = "DRAFT FINISHED";
-        } else if (state.immunityPhaseActive) {
-            txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
-        } else if (state.gameStarted) {
-            txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
-        }
+        if (state.draftFinished) { txt = "DRAFT FINISHED"; } 
+        else if (state.immunityPhaseActive) { txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`; } 
+        else if (state.gameStarted) { txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`; }
         document.getElementById('status').innerText = txt.toUpperCase();
 
         updateImmunityTop(state);
         renderSlots(state);
         
-        // --- ЛОГИКА БЛОКИРОВОК ---
-        document.querySelectorAll('.char-option').forEach(el => {
-            el.classList.remove('disabled', 'immunity-highlight');
-        });
+        document.querySelectorAll('.char-option').forEach(el => { el.classList.remove('disabled', 'immunity-highlight'); });
         
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
 
         if (state.immunityPhaseActive) {
-            immuneChars.forEach(id => {
-                const el = document.getElementById(`char-${id}`);
-                if(el) el.classList.add('immunity-highlight', 'disabled');
-            });
-            immunityBans.forEach(id => {
-                const el = document.getElementById(`char-${id}`);
-                if(el) el.classList.add('disabled');
-            });
-            
+            immuneChars.forEach(id => { const el = document.getElementById(`char-${id}`); if(el) el.classList.add('immunity-highlight', 'disabled'); });
+            immunityBans.forEach(id => { const el = document.getElementById(`char-${id}`); if(el) el.classList.add('disabled'); });
         } else if (state.gameStarted && !state.draftFinished) {
             const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] || {};
             const isImmuneStep = currentStepData.immunity === true;
             const isPickPhase = state.currentAction && state.currentAction.includes('pick');
             
-            state.bans.forEach(b => {
-                const el = document.getElementById(`char-${b.id}`);
-                if(el) el.classList.add('disabled');
-            });
-
+            state.bans.forEach(b => { const el = document.getElementById(`char-${b.id}`); if(el) el.classList.add('disabled'); });
             immuneChars.forEach(id => {
                 const el = document.getElementById(`char-${id}`);
                 if (!el) return;
-
-                if (isPickPhase && isImmuneStep) {
-                    // Доступно для пика - без стилей блокировки
-                } else {
-                    el.classList.add('disabled');
-                }
+                if (!(isPickPhase && isImmuneStep)) el.classList.add('disabled');
             });
-
             state.bluePicks.forEach(id => {
-                if (myRole === 'blue') {
-                    document.getElementById(`char-${id}`)?.classList.add('disabled'); 
-                } else if (myRole === 'red') {
-                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); 
-                } else {
-                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); 
-                }
+                if (myRole === 'blue') { document.getElementById(`char-${id}`)?.classList.add('disabled'); } 
+                else { if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); }
             });
-
             state.redPicks.forEach(id => {
-                if (myRole === 'red') {
-                    document.getElementById(`char-${id}`)?.classList.add('disabled');
-                } else if (myRole === 'blue') {
-                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
-                } else {
-                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
-                }
+                if (myRole === 'red') { document.getElementById(`char-${id}`)?.classList.add('disabled'); } 
+                else { if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); }
             });
         } else if (state.draftFinished) {
-            // Если драфт закончен, блокируем абсолютно все карточки, чтобы их нельзя было кликать
-            document.querySelectorAll('.char-option').forEach(el => {
-                el.classList.add('disabled');
-            });
+            document.querySelectorAll('.char-option').forEach(el => { el.classList.add('disabled'); });
         }
     }
 
     function renderRows() {
         const container = document.getElementById('char-pool-container'); container.innerHTML = '';
-        const ladder = document.createElement('div'); ladder.className = 'ladder-container';
-        const schema = DRAFT_RULES[currentDraftType];
-        if(schema) {
-            schema.forEach((step, i) => {
-                const d = document.createElement('div');
-                const sideClass = step.team === 'blue' ? 'step-left' : 'step-right';
-                let colorClass = 'step-pick'; 
-                if (step.type.includes('ban')) { colorClass = 'step-ban'; } else if (step.immunity) { colorClass = 'step-immunity'; }
-                d.className = `ladder-step ${sideClass} ${colorClass}`;
-                d.id = `step-node-${i}`; d.innerText = `${i+1}. ${step.type}`;
-                ladder.appendChild(d);
-            });
-            container.appendChild(ladder);
-        }
+        const ladder = document.createElement('div'); ladder.className = 'ladder-container'; container.appendChild(ladder);
         ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
             const row = document.createElement('div'); row.className = `element-row row-${elem}`;
             const chars = charsData[elem], mid = Math.ceil(chars.length/2);
