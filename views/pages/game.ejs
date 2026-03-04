@@ -31,7 +31,7 @@
 
     /* Рамка иммунитета */
     #char-pool-container .char-option.immunity-highlight { 
-        border: 3px solid #d4af37 !important; 
+        border: 3px solid #d4af37 !important;
         box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; 
     }
 
@@ -43,17 +43,61 @@
         justify-content: center;
         gap: 60px;
     }
+
+    /* --- ПОЗИЦИОНИРОВАНИЕ ШАПКИ (ЛОГО И КОД КОМНАТЫ) --- */
+    .game-header { 
+        position: relative; 
+        width: 100%; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+    }
+
+    .home-logo-link { 
+        position: absolute; 
+        left: 20px; 
+        top: 50%; 
+        transform: translateY(-50%); 
+        z-index: 100; 
+        text-decoration: none; 
+        display: flex; 
+        align-items: center;
+    }
+    .home-logo-link img { 
+        height: 38px; 
+        transition: 0.2s; 
+        filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); 
+    }
+    .home-logo-link:hover img { 
+        transform: scale(1.1); 
+        filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.6)); 
+    }
+
+    #room-container { 
+        position: absolute !important; 
+        right: 20px !important; 
+        left: auto !important; 
+        top: 50% !important; 
+        transform: translateY(-50%) !important; 
+        margin: 0 !important; 
+        z-index: 100; 
+    }
 </style>
 
 <div id="game-screen">
     <div class="game-header">
+         <a href="/" class="home-logo-link" title="Back to Home">
+             <img src="/logo.png" alt="GITCG Logo">
+         </a>
+         
+         <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
+         <div id="status">Waiting...</div>
+         <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
+         
          <div id="room-container">
              <div id="room-display" onclick="copyRoomCode()">CODE: <%= roomId %></div>
              <span id="copy-toast">Code Copied!</span>
          </div>
-         <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
-         <div id="status">Waiting...</div>
-         <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
     </div>
 
      <div class="draft-area">
@@ -68,6 +112,7 @@
                      <img id="blue-avatar" class="player-avatar" src="" alt="">
                      <h2 id="blue-name-display">PLAYER 1</h2>
                  </div>
+                
                  <div id="blue-ready-switch" class="ready-switch" onclick="toggleReady('blue')">
                      <div class="switch-circle"></div>
                  </div>
@@ -86,6 +131,7 @@
                      <img id="red-avatar" class="player-avatar" src="" alt="">
                      <h2 id="red-name-display">PLAYER 2</h2>
                  </div>
+              
                  <div id="red-timer" class="turn-timer">45</div>
              </div>
              <div class="ban-row" id="red-bans"></div>
@@ -96,6 +142,7 @@
 
      <div class="controls-area" style="min-height: 40px;">
          <button id="skip-btn" class="round-btn" onclick="skipTurn()" style="display: none;">SKIP</button>
+ 
          <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled style="display: none;">SELECT</button>
      </div>
 
@@ -110,21 +157,18 @@
     const currentRoom = '<%= roomId %>';
     const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
-    
     let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
     let charsData = {}, selectedCharId = null;
     let isDraftFinishedLocal = false;
     
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
-    const myNick = <%- locals.user ? JSON.stringify(locals.user.username) : '""' %>; 
-
+    const myNick = <%- locals.user ? JSON.stringify(locals.user.username) : '""' %>;
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
-
     if (savedData) {
         socket.disconnect(); charsData = serverChars;
-        renderRows(); 
+        renderRows();
         const mockState = {
             gameStarted: true, currentTeam: 'none', currentAction: 'none',
             bans: savedData.bans, bluePicks: savedData.bluePicks, redPicks: savedData.redPicks,
@@ -132,6 +176,7 @@
             blueDiscordId: savedData.blueDiscordId, redDiscordId: savedData.redDiscordId,
             blueAvatar: savedData.blueAvatar, redAvatar: savedData.redAvatar,
             draftType: savedData.draftType, immunityPhaseActive: false,
+   
             immunityPool: savedData.immunityPool||[], immunityBans: savedData.immunityBans||[],
             stepIndex: 999, ready: { blue: true, red: true },
             draftFinished: true
@@ -143,6 +188,7 @@
                 socket.emit('rejoin_game', { 
                     roomId: currentRoom, userId: myUserId, 
                     discordId: myRealDiscordId, avatar: myAvatarHash, nickname: myNick 
+  
                 });
             }
         });
@@ -154,25 +200,28 @@
         socket.on('update_state', updateUI);
         socket.on('game_started', () => { isGameStarted = true; });
         socket.on('game_over', (state) => { updateUI(state); alert("Draft is complete and saved!"); });
-        
         socket.on('timer_tick', (data) => {
             const t = typeof data === 'object' ? data.main : data;
             document.getElementById('blue-timer').innerText = t; 
             document.getElementById('red-timer').innerText = t;
             if(typeof data === 'object') {
                  document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
+           
                  document.getElementById('red-res').innerText = formatTime(data.redReserve);
             }
         });
     }
 
-    function formatTime(s) { if (s < 0) s = 0; const m=Math.floor(s/60), sec=s%60; return `${m}:${sec<10?'0':''}${sec}`; }
+    function formatTime(s) { if (s < 0) s = 0; const m=Math.floor(s/60), sec=s%60; return `${m}:${sec<10?'0':''}${sec}`;
+    }
     function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
-    function copyRoomCode() { navigator.clipboard.writeText(currentRoom); }
-    function skipTurn() { if(currentRoom && !savedData && !isDraftFinishedLocal) socket.emit('skip_action', currentRoom); }
+    function copyRoomCode() { navigator.clipboard.writeText(currentRoom);
+    }
+    function skipTurn() { if(currentRoom && !savedData && !isDraftFinishedLocal) socket.emit('skip_action', currentRoom);
+    }
     
     function updateUI(state) {
-        isGameStarted = state.gameStarted; 
+        isGameStarted = state.gameStarted;
         isDraftFinishedLocal = state.draftFinished;
         const isMyTurn = (myRole === state.currentTeam);
 
@@ -180,7 +229,8 @@
              document.getElementById('blue-timer').style.opacity = '0';
              document.getElementById('red-timer').style.opacity = '0';
         } else {
-             document.getElementById('blue-timer').style.opacity = (state.currentTeam === 'blue') ? '1' : '0';
+             document.getElementById('blue-timer').style.opacity = (state.currentTeam === 'blue') ?
+             '1' : '0';
              document.getElementById('red-timer').style.opacity = (state.currentTeam === 'red') ? '1' : '0';
         }
 
@@ -189,10 +239,10 @@
             if (idx < state.stepIndex - 1) {
                 el.classList.add('step-done');
             } else if (idx === state.stepIndex - 1 && state.gameStarted && !state.draftFinished && !state.immunityPhaseActive) {
+                
                 el.classList.add('step-active');
             }
         });
-
         const confirmBtn = document.getElementById('confirm-btn');
         const skipBtn = document.getElementById('skip-btn');
 
@@ -219,9 +269,11 @@
         document.getElementById('blue-name-display').innerText = state.blueName;
         document.getElementById('red-name-display').innerText = state.redName;
         const blueAv = document.getElementById('blue-avatar');
-        if (state.blueAvatar && state.blueDiscordId) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block'; }
+        if (state.blueAvatar && state.blueDiscordId) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block';
+        }
         const redAv = document.getElementById('red-avatar');
-        if (state.redAvatar && state.redDiscordId) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; }
+        if (state.redAvatar && state.redDiscordId) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`;
+        redAv.style.display = 'block'; }
         
         let txt = "WAITING...";
         if (state.draftFinished) {
@@ -235,14 +287,13 @@
 
         updateImmunityTop(state);
         renderSlots(state);
-        
         // --- ЛОГИКА БЛОКИРОВОК ---
         document.querySelectorAll('.char-option').forEach(el => {
             el.classList.remove('disabled', 'immunity-highlight');
         });
-        
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
-        const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
+        const immunityBans = state.immunityBans ?
+        state.immunityBans.filter(id => id !== 'skipped') : [];
 
         if (state.immunityPhaseActive) {
             immuneChars.forEach(id => {
@@ -253,43 +304,42 @@
                 const el = document.getElementById(`char-${id}`);
                 if(el) el.classList.add('disabled');
             });
-            
         } else if (state.gameStarted && !state.draftFinished) {
-            const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] || {};
+            const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] ||
+            {};
             const isImmuneStep = currentStepData.immunity === true;
             const isPickPhase = state.currentAction && state.currentAction.includes('pick');
-            
             state.bans.forEach(b => {
                 const el = document.getElementById(`char-${b.id}`);
                 if(el) el.classList.add('disabled');
             });
-
             immuneChars.forEach(id => {
                 const el = document.getElementById(`char-${id}`);
                 if (!el) return;
 
                 if (isPickPhase && isImmuneStep) {
                     // Доступно для пика - без стилей блокировки
+              
                 } else {
                     el.classList.add('disabled');
                 }
             });
-
             state.bluePicks.forEach(id => {
                 if (myRole === 'blue') {
                     document.getElementById(`char-${id}`)?.classList.add('disabled'); 
                 } else if (myRole === 'red') {
                     if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); 
+            
                 } else {
                     if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); 
                 }
             });
-
             state.redPicks.forEach(id => {
                 if (myRole === 'red') {
                     document.getElementById(`char-${id}`)?.classList.add('disabled');
                 } else if (myRole === 'blue') {
                     if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
+              
                 } else {
                     if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
                 }
@@ -303,7 +353,8 @@
     }
 
     function renderRows() {
-        const container = document.getElementById('char-pool-container'); container.innerHTML = '';
+        const container = document.getElementById('char-pool-container');
+        container.innerHTML = '';
         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
         const schema = DRAFT_RULES[currentDraftType];
         if(schema) {
@@ -311,7 +362,8 @@
                 const d = document.createElement('div');
                 const sideClass = step.team === 'blue' ? 'step-left' : 'step-right';
                 let colorClass = 'step-pick'; 
-                if (step.type.includes('ban')) { colorClass = 'step-ban'; } else if (step.immunity) { colorClass = 'step-immunity'; }
+                if (step.type.includes('ban')) { colorClass 
+                = 'step-ban'; } else if (step.immunity) { colorClass = 'step-immunity'; }
                 d.className = `ladder-step ${sideClass} ${colorClass}`;
                 d.id = `step-node-${i}`; d.innerText = `${i+1}. ${step.type}`;
                 ladder.appendChild(d);
@@ -324,6 +376,7 @@
             if(!chars) return; 
             const l = document.createElement('div'); l.className = 'row-half left-half';
             chars.slice(0,mid).forEach(c => l.appendChild(createChar(c)));
+     
             const gap = document.createElement('div'); gap.className = 'row-gap';
             const r = document.createElement('div'); r.className = 'row-half right-half';
             chars.slice(mid).forEach(c => r.appendChild(createChar(c)));
@@ -333,7 +386,8 @@
     }
 
     function createChar(char) {
-        const el = document.createElement('div'); el.className = 'char-option'; el.id = `char-${char.id}`;
+        const el = document.createElement('div');
+        el.className = 'char-option'; el.id = `char-${char.id}`;
         el.innerHTML = `<img src="${char.img}">`;
         el.onclick = () => {
             if(!isGameStarted || myRole === 'spectator' || savedData || isDraftFinishedLocal) return;
@@ -364,6 +418,7 @@
              if (slot.val === 'skipped') { div.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`; div.style.background = '#222'; } 
              else if (slot.val) {
                  let all = []; Object.values(charsData).forEach(a => all.push(...a));
+         
                  const char = all.find(c => c.id === slot.val);
                  if(char) div.innerHTML = `<img src="${char.img}">`;
              } else div.classList.add('im-empty');
@@ -372,21 +427,26 @@
     }
 
     function renderSlots(state) {
-         const currentSchema = DRAFT_RULES[currentDraftType]; if (!currentSchema) return;
+         const currentSchema = DRAFT_RULES[currentDraftType];
+         if (!currentSchema) return;
          const getStepsFor = (schema, team, type) => schema.map((step, index) => ({ ...step, globalIndex: index + 1 })).filter(step => step.team === team && step.type === type).map(step => ({ num: step.globalIndex, immunity: step.immunity }));
          const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban'); const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
-         const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick'); const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
+         const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick');
+         const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
          const fill = (containerId, items, stepData, isBan) => {
-             const div = document.getElementById(containerId); if(!div) return; div.innerHTML = ''; 
+             const div = document.getElementById(containerId);
+             if(!div) return; div.innerHTML = ''; 
              stepData.forEach((step, i) => {
                  const slot = document.createElement('div'); slot.className = 'slot-circle';
                  if (isBan) slot.classList.add('slot-ban');
                  if (step.immunity) slot.classList.add('slot-immunity-pick');
                  if (!state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && step.num === state.stepIndex) slot.classList.add('active-slot');
-                 let charId = null; if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
+  
+                let charId = null; if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
                  if (charId) {
                      let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
-                     const char = allFlat.find(c => c.id === charId);
+                     const char = 
+                     allFlat.find(c => c.id === charId);
                      if (char) slot.innerHTML = `<img src="${char.img}">`;
                  } else slot.innerHTML = `<span class="step-number">${step.num}</span>`;
                  div.appendChild(slot);
@@ -395,7 +455,8 @@
          fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true);
          fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
          if (currentDraftType === 'generals_2' || currentDraftType === 'classic') {
-             fill('blue-picks-1', state.bluePicks, bluePickSteps, false); fill('blue-picks-2', [], [], false); 
+             fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
+             fill('blue-picks-2', [], [], false); 
              fill('red-picks-1', state.redPicks, redPickSteps, false); fill('red-picks-2', [], [], false);
          } else {
              fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false);
