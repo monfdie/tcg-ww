@@ -6,7 +6,8 @@
     .limits-panel { display: flex; gap: 15px; flex-wrap: wrap; background: rgba(16, 20, 32, 0.8); padding: 20px; border-radius: 8px; border: 1px solid #2a3454; margin-bottom: 20px; align-items: center; }
     .limit-box { display: flex; flex-direction: column; align-items: center; gap: 5px; }
     .limit-box label { color: #8da4c4; font-weight: bold; font-size: 0.9em; text-transform: uppercase; }
-    .limit-box input { width: 60px; text-align: center; background: #0b0d17; border: 1px solid #4facfe; color: #fff; font-family: 'Cinzel', serif; font-size: 1.2em; padding: 5px; border-radius: 4px; }
+    .limit-box input { width: 60px; text-align: center; background: #0b0d17; border: 1px solid #4facfe; color: #fff; font-family: 'Cinzel', serif; font-size: 1.2em; padding: 5px; border-radius: 4px; transition: 0.2s; }
+    .limit-box input:focus { box-shadow: 0 0 10px rgba(79, 172, 254, 0.5); outline: none; }
 
     .char-grid { background: rgba(16, 20, 32, 0.6); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
     .element-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; }
@@ -34,13 +35,12 @@
     .tier-0 .tier-badge { color: #888; }
 
     .save-btn { padding: 12px 30px; font-size: 1.1em; background: #28a745; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; text-transform: uppercase; }
-    .save-btn:hover { background: #34d058; box-shadow: 0 0 15px rgba(40, 167, 69, 0.5); transform: translateY(-2px); }
 </style>
 
 <div class="page-container" style="max-width: 1000px;">
     <div class="admin-header">
         <h1 style="color: #fff; margin: 0; font-family: 'Cinzel', serif;">Manage Tiers</h1>
-        <button class="save-btn" id="save-tiers-btn" onclick="saveTiers()">💾 Save Changes</button>
+        <button class="save-btn" id="save-tiers-btn" onclick="autoSaveTiers(true)">💾 All Saved</button>
     </div>
 
     <div class="limits-panel">
@@ -48,10 +48,10 @@
         <% [4, 3, 2, 1, 0].forEach(tier => { %>
             <div class="limit-box">
                 <label>Tier <%= tier %></label>
-                <input type="number" id="limit-<%= tier %>" value="<%= tiers.limits[tier] !== undefined ? tiers.limits[tier] : 0 %>" min="0" max="50">
+                <input type="number" id="limit-<%= tier %>" value="<%= tiers.limits[tier] !== undefined ? tiers.limits[tier] : 0 %>" min="0" max="50" oninput="autoSaveTiers()">
             </div>
         <% }) %>
-        <div style="color: #8da4c4; font-size: 0.8em; margin-left: auto;">* Max characters allowed per tier in user's box</div>
+        <div style="color: #8da4c4; font-size: 0.8em; margin-left: auto;">* Changes save automatically</div>
     </div>
 
     <div style="color: #8da4c4; margin-bottom: 10px;">Click on a character to change their tier (0 ➔ 1 ➔ 2 ➔ 3 ➔ 4 ➔ 0).</div>
@@ -72,6 +72,8 @@
 </div>
 
 <script>
+    let saveTimeout;
+
     // Функция переключения тира по клику
     function cycleTier(element) {
         let currentTier = parseInt(element.getAttribute('data-tier'));
@@ -84,50 +86,66 @@
         
         // Обновляем классы цветов
         element.className = `char-box tier-${nextTier}`;
+
+        // ВЫЗЫВАЕМ АВТОСОХРАНЕНИЕ
+        autoSaveTiers();
     }
 
-    async function saveTiers() {
+    function autoSaveTiers(instant = false) {
         const btn = document.getElementById('save-tiers-btn');
         btn.innerText = 'Saving...';
-        btn.disabled = true;
+        btn.style.background = '#4facfe'; // Синий цвет в процессе сохранения
 
-        // Собираем лимиты
-        const limits = {
-            "4": parseInt(document.getElementById('limit-4').value) || 0,
-            "3": parseInt(document.getElementById('limit-3').value) || 0,
-            "2": parseInt(document.getElementById('limit-2').value) || 0,
-            "1": parseInt(document.getElementById('limit-1').value) || 0,
-            "0": parseInt(document.getElementById('limit-0').value) || 0
+        clearTimeout(saveTimeout);
+
+        const executeSave = async () => {
+            // Собираем лимиты
+            const limits = {
+                "4": parseInt(document.getElementById('limit-4').value) || 0,
+                "3": parseInt(document.getElementById('limit-3').value) || 0,
+                "2": parseInt(document.getElementById('limit-2').value) || 0,
+                "1": parseInt(document.getElementById('limit-1').value) || 0,
+                "0": parseInt(document.getElementById('limit-0').value) || 0
+            };
+
+            // Собираем персонажей
+            const characters = {};
+            document.querySelectorAll('.char-box').forEach(el => {
+                const id = el.getAttribute('data-id');
+                const tier = parseInt(el.getAttribute('data-tier'));
+                if (tier > 0) {
+                    characters[id] = tier;
+                }
+            });
+
+            try {
+                const res = await fetch('/admin/tiers/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ limits, characters })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    btn.innerText = '✅ Saved';
+                    btn.style.background = '#28a745'; // Зеленый цвет при успехе
+                    setTimeout(() => { btn.innerText = '💾 All Saved'; }, 2000);
+                } else {
+                    btn.innerText = '❌ Error';
+                    btn.style.background = '#ff4444';
+                }
+            } catch(e) {
+                console.error(e);
+                btn.innerText = '❌ Error';
+                btn.style.background = '#ff4444';
+            }
         };
 
-        // Собираем персонажей (сохраняем только тех, кто не Т0, для экономии места)
-        const characters = {};
-        document.querySelectorAll('.char-box').forEach(el => {
-            const id = el.getAttribute('data-id');
-            const tier = parseInt(el.getAttribute('data-tier'));
-            if (tier > 0) {
-                characters[id] = tier;
-            }
-        });
-
-        try {
-            const res = await fetch('/admin/tiers/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ limits, characters })
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert('Tiers successfully updated!');
-            } else {
-                alert('Error saving tiers.');
-            }
-        } catch(e) {
-            console.error(e);
-            alert('Server connection error.');
-        } finally {
-            btn.innerText = '💾 Save Changes';
-            btn.disabled = false;
+        if (instant) {
+            executeSave();
+        } else {
+            // Ждем 500мс после последнего клика, чтобы не спамить сервер запросами
+            saveTimeout = setTimeout(executeSave, 500); 
         }
     }
 </script>
