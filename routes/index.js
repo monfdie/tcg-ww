@@ -102,27 +102,35 @@ router.get('/history', async (req, res) => {
     } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
 });
 
+const TierConfig = require('../models/TierConfig'); // <--- ВАЖНО! ДОБАВИТЬ НАВЕРХ!
+
 // ==========================================
-// НОВЫЕ РОУТЫ: ПРОФИЛЬ И СБОРКА БОКСА
+// ПРОФИЛЬ И СБОРКА БОКСА
 // ==========================================
 router.get('/profile', async (req, res) => {
-    if (!req.isAuthenticated()) return res.redirect('/auth/discord'); // Требуем логин
+    if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     
-    let tiers = { limits: { "0": 20, "1": 15, "2": 10, "3": 4, "4": 1 }, characters: {} };
-    try {
-        tiers = JSON.parse(fs.readFileSync(path.join(__dirname, '../tiers.json'), 'utf-8'));
-    } catch(e) { console.log('tiers.json не найден, используем дефолт'); }
+    // Достаем тиры из БД (если нет, создаем)
+    let config = await TierConfig.findOne({ settingsKey: 'main' });
+    if (!config) { config = await TierConfig.create({ settingsKey: 'main' }); }
+    
+    // Перенос старых данных, если у пользователя был только 1 бокс в старой системе
+    if (req.user.boxes.length === 1 && req.user.boxes[0].characters.length === 0 && req.user.box && req.user.box.length > 0) {
+        req.user.boxes[0].characters = req.user.box;
+        await req.user.save();
+    }
 
-    res.render('pages/profile', { title: 'My Profile', user: req.user, chars: CHARACTERS_BY_ELEMENT, tiers });
+    res.render('pages/profile', { title: 'My Profile', user: req.user, chars: CHARACTERS_BY_ELEMENT, tiers: config });
 });
 
 router.post('/profile/save-box', express.json(), async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
     try {
-        const { box } = req.body;
-        if (!Array.isArray(box)) return res.status(400).json({ error: 'Invalid data' });
-        
-        req.user.box = box;
+        const { boxes, activeBoxIndex } = req.body;
+        req.user.boxes = boxes;
+        req.user.activeBoxIndex = activeBoxIndex;
+        // Для обратной совместимости с сервером
+        if (boxes[activeBoxIndex]) req.user.box = boxes[activeBoxIndex].characters;
         await req.user.save();
         res.json({ success: true });
     } catch (e) {
@@ -130,39 +138,31 @@ router.post('/profile/save-box', express.json(), async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-// ==========================================
 
 // ==========================================
-// АДМИНКА: УПРАВЛЕНИЕ ТИРАМИ (TIERS)
+// АДМИНКА: УПРАВЛЕНИЕ ТИРАМИ ИЗ БД
 // ==========================================
-router.get('/admin/tiers', isAdmin, (req, res) => {
-    let tiers = { limits: { "0": 20, "1": 15, "2": 10, "3": 4, "4": 1 }, characters: {} };
-    try {
-        tiers = JSON.parse(fs.readFileSync(path.join(__dirname, '../tiers.json'), 'utf-8'));
-    } catch(e) { console.log('tiers.json не найден, создаем базовый'); }
+router.get('/admin/tiers', isAdmin, async (req, res) => {
+    let config = await TierConfig.findOne({ settingsKey: 'main' });
+    if (!config) { config = await TierConfig.create({ settingsKey: 'main' }); }
 
-    res.render('pages/admin_manage_tiers', { 
-        title: 'Manage Tiers', 
-        chars: CHARACTERS_BY_ELEMENT, 
-        tiers 
-    });
+    res.render('pages/admin_manage_tiers', { title: 'Manage Tiers', chars: CHARACTERS_BY_ELEMENT, tiers: config });
 });
 
-router.post('/admin/tiers/save', isAdmin, express.json(), (req, res) => {
+router.post('/admin/tiers/save', isAdmin, express.json(), async (req, res) => {
     try {
         const { limits, characters } = req.body;
-        const newData = {
-            limits: limits || { "0": 20, "1": 15, "2": 10, "3": 4, "4": 1 },
-            characters: characters || {}
-        };
-        fs.writeFileSync(path.join(__dirname, '../tiers.json'), JSON.stringify(newData, null, 2));
+        await TierConfig.findOneAndUpdate(
+            { settingsKey: 'main' },
+            { limits, characters },
+            { upsert: true }
+        );
         res.json({ success: true });
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Server error' });
     }
 });
-// ==========================================
 
 router.get('/admin/dashboard', isAdmin, async (req, res) => {
     const tournaments = await Tournament.find().sort({ createdAt: -1 });
