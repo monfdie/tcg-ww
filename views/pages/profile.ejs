@@ -5,8 +5,10 @@
     .profile-title-container { display: flex; align-items: center; gap: 15px; }
     .profile-title { font-family: 'Cinzel', serif; font-size: 1.8em; color: #fff; margin: 0; text-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
     
-    /* Иконка-кнопка настроек */
-    .edit-gear-btn { background: transparent; border: none; cursor: pointer; transition: 0.3s; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); outline: none; padding: 0; display: flex; align-items: center; justify-content: center; color: #fff; }
+    .edit-name-btn { background: transparent; border: none; cursor: pointer; font-size: 1.2em; color: #8da4c4; transition: 0.2s; padding: 0; outline: none; }
+    .edit-name-btn:hover { color: #fff; transform: scale(1.1); }
+
+    .edit-gear-btn { background: transparent; border: none; cursor: pointer; transition: 0.3s; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); outline: none; padding: 0; display: flex; align-items: center; justify-content: center; color: #fff; margin-left: 10px; }
     .edit-gear-btn svg { width: 28px; height: 28px; transition: 0.3s; }
     .edit-gear-btn:hover svg { transform: rotate(90deg) scale(1.1); filter: drop-shadow(0 0 10px #4facfe); color: #4facfe; }
     .edit-gear-btn.active svg { filter: drop-shadow(0 0 15px #d4af37); color: #d4af37; }
@@ -18,7 +20,7 @@
     .box-tab.active { background: #2a3454; color: #4facfe; border-bottom: 3px solid #4facfe; }
     .box-tab.add-btn { color: #50b36b; }
 
-    /* ПАНЕЛЬ ФИЛЬТРОВ КНОПКАМИ */
+    /* ПАНЕЛЬ ФИЛЬТРОВ (МУЛЬТИ-ВЫБОР) */
     .filter-bar { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; background: rgba(16, 20, 32, 0.6); padding: 15px; border-radius: 8px; border: 1px solid #2a3454; }
     .filter-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .filter-group-label { color: #8da4c4; font-weight: bold; font-size: 0.8em; text-transform: uppercase; margin-right: 5px; }
@@ -27,10 +29,13 @@
     .f-btn:hover { background: #2a3454; color: #fff; }
     .f-btn.active { background: #4facfe; color: #000; border-color: #4facfe; box-shadow: 0 0 10px rgba(79,172,254,0.5); }
     
-    /* Цвета стихий для кнопок */
-    .f-btn[data-val="cryo"] { color: #99ffff; } .f-btn[data-val="hydro"] { color: #4facfe; } .f-btn[data-val="pyro"] { color: #ff6b6b; }
-    .f-btn[data-val="electro"] { color: #b28dff; } .f-btn[data-val="anemo"] { color: #50b3b3; } .f-btn[data-val="geo"] { color: #d4af37; } .f-btn[data-val="dendro"] { color: #50b36b; }
-    .f-btn.active { color: #000 !important; }
+    .f-btn[data-val="cryo"].active { background: #99ffff; border-color: #99ffff; } 
+    .f-btn[data-val="hydro"].active { background: #4facfe; border-color: #4facfe; } 
+    .f-btn[data-val="pyro"].active { background: #ff6b6b; border-color: #ff6b6b; }
+    .f-btn[data-val="electro"].active { background: #b28dff; border-color: #b28dff; } 
+    .f-btn[data-val="anemo"].active { background: #50b3b3; border-color: #50b3b3; } 
+    .f-btn[data-val="geo"].active { background: #d4af37; border-color: #d4af37; } 
+    .f-btn[data-val="dendro"].active { background: #50b36b; border-color: #50b36b; }
 
     /* Панель редактирования */
     .edit-panel { display: none; flex-direction: column; gap: 15px; margin-bottom: 20px; background: rgba(16, 20, 32, 0.9); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
@@ -49,32 +54,32 @@
     .delete-btn { background: transparent; border: 1px solid #ff4444; color: #ff4444; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
     .delete-btn:hover { background: rgba(255,68,68,0.2); }
 
-    /* СЕТКА ПЕРСОНАЖЕЙ (БЕЗ ЗОЛОТЫХ РАМОК) */
-    .char-grid { background: rgba(16, 20, 32, 0.6); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-content: flex-start; min-height: 200px; }
+    /* СЕТКА ПЕРСОНАЖЕЙ (ПО ЛИНИЯМ) */
+    .char-grid { background: rgba(16, 20, 32, 0.6); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 15px; min-height: 200px; }
+    .element-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     
-    .char-option-box { width: 65px; height: 65px; border-radius: 8px; cursor: pointer; border: none; transition: 0.2s; position: relative; background: #111; overflow: hidden; }
-    .char-option-box img { width: 100%; height: 100%; object-fit: cover; opacity: 1; transition: 0.2s; }
+    .char-option-box { width: 62px; height: 62px; border-radius: 8px; cursor: pointer; border: none; transition: 0.2s; position: relative; background: #111; overflow: hidden; }
+    .char-option-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.2s; }
     
-    /* В режиме просмотра просто показываем выбранных (опасити 1) */
+    /* Режим просмотра: обычные цвета */
     .char-grid:not(.edit-mode-active) .char-option-box { cursor: default; }
 
-    /* В режиме редактирования: тусклые невыбранные, яркие с галочкой выбранные */
-    .edit-mode-active .char-option-box img { opacity: 0.3; }
-    .edit-mode-active .char-option-box:hover img { opacity: 0.8; transform: scale(1.05); }
-    .edit-mode-active .char-option-box.in-box img { opacity: 1 !important; }
+    /* Режим редактирования: черно-белые и тусклые для невыбранных, яркие и цветные для выбранных */
+    .edit-mode-active .char-option-box img { opacity: 0.3; filter: grayscale(100%); }
+    .edit-mode-active .char-option-box:hover img { opacity: 0.8; filter: grayscale(50%); transform: scale(1.05); }
+    .edit-mode-active .char-option-box.in-box img { opacity: 1 !important; filter: none !important; }
     
-    /* Зеленая галочка вместо золотой рамки */
-    .edit-mode-active .char-option-box.in-box::after { content: '✔'; position: absolute; top: 4px; left: 4px; background: #50b36b; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 5px rgba(0,0,0,0.8); font-family: sans-serif; pointer-events: none; }
+    .tier-section-title { width: 100%; color: #8da4c4; font-weight: bold; font-family: 'Cinzel', serif; font-size: 1.2em; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(141, 164, 196, 0.3); border-bottom: 1px solid rgba(60, 69, 102, 0.5); padding-bottom: 5px; margin-bottom: 5px; }
 </style>
 
 <div class="page-container">
     
-    <div class="box-tabs" id="box-tabs">
-        </div>
+    <div class="box-tabs" id="box-tabs"></div>
 
     <div class="profile-header">
         <div class="profile-title-container">
             <h1 class="profile-title" id="current-box-title">My Abyss Box</h1>
+            <button class="edit-name-btn" onclick="renameBox()" title="Rename Box">✏️</button>
             <button id="gear-btn" class="edit-gear-btn" onclick="toggleEditMode()" title="Edit Box">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
@@ -88,17 +93,17 @@
         <div class="filter-group">
             <span class="filter-group-label">Elements:</span>
             <button class="f-btn elem-btn active" data-val="all">ALL</button>
-            <button class="f-btn elem-btn" data-val="cryo">❄️ CRYO</button>
-            <button class="f-btn elem-btn" data-val="hydro">💧 HYDRO</button>
-            <button class="f-btn elem-btn" data-val="pyro">🔥 PYRO</button>
-            <button class="f-btn elem-btn" data-val="electro">⚡ ELEC</button>
-            <button class="f-btn elem-btn" data-val="anemo">🌪️ ANEMO</button>
-            <button class="f-btn elem-btn" data-val="geo">🪨 GEO</button>
-            <button class="f-btn elem-btn" data-val="dendro">🌿 DENDRO</button>
+            <button class="f-btn elem-btn" data-val="cryo">CRYO</button>
+            <button class="f-btn elem-btn" data-val="hydro">HYDRO</button>
+            <button class="f-btn elem-btn" data-val="pyro">PYRO</button>
+            <button class="f-btn elem-btn" data-val="electro">ELEC</button>
+            <button class="f-btn elem-btn" data-val="anemo">ANEMO</button>
+            <button class="f-btn elem-btn" data-val="geo">GEO</button>
+            <button class="f-btn elem-btn" data-val="dendro">DENDRO</button>
         </div>
         <div class="filter-group" style="margin-left: 20px;">
             <span class="filter-group-label">Tiers:</span>
-            <button class="f-btn tier-btn active" data-val="all">ALL T</button>
+            <button class="f-btn tier-btn active" data-val="all">ALL</button>
             <button class="f-btn tier-btn" data-val="4">T4</button>
             <button class="f-btn tier-btn" data-val="3">T3</button>
             <button class="f-btn tier-btn" data-val="2">T2</button>
@@ -131,18 +136,20 @@
 
 <script>
     const charsData = <%- JSON.stringify(chars) %>;
-    const tiersData = <%- JSON.stringify(tiers.characters) %>;
-    const limits = <%- JSON.stringify(tiers.limits) %>;
+    const tiersData = <%- JSON.stringify(tiers.characters || {}) %>;
+    const limits = <%- JSON.stringify(tiers.limits || {}) %>;
     
-    let boxes = <%- JSON.stringify(user.boxes) %>;
+    let boxes = <%- JSON.stringify(user.boxes || []) %>;
     if (!boxes || boxes.length === 0) boxes = [{ name: 'Box 1', characters: [] }];
     let activeBoxIndex = <%- user.activeBoxIndex || 0 %>;
     if (activeBoxIndex >= boxes.length) activeBoxIndex = 0;
     
     let selectedBox = [...boxes[activeBoxIndex].characters];
     let isEditMode = false;
-    let elemFilter = 'all';
-    let tierFilter = 'all';
+    
+    // Массивы для мульти-выбора фильтров
+    let activeElems = []; 
+    let activeTiers = []; 
     
     const maxBoxSize = Object.values(limits).reduce((sum, val) => sum + parseInt(val || 0), 0);
     const elementsOrder = ['cryo', 'hydro', 'pyro', 'electro', 'anemo', 'geo', 'dendro'];
@@ -178,8 +185,8 @@
     }
 
     function switchBox(index) {
-        if (isEditMode) toggleEditMode(); // Выходим из редактирования при смене
-        boxes[activeBoxIndex].characters = [...selectedBox]; // сохраняем текущий в массив
+        if (isEditMode) toggleEditMode(); 
+        if (boxes[activeBoxIndex]) boxes[activeBoxIndex].characters = [...selectedBox]; 
         activeBoxIndex = index;
         selectedBox = [...boxes[activeBoxIndex].characters];
         renderTabs();
@@ -189,32 +196,71 @@
     function addBox() {
         boxes.push({ name: 'Box ' + (boxes.length + 1), characters: [] });
         switchBox(boxes.length - 1);
-        toggleEditMode(); // Сразу открываем редактирование нового бокса
+        toggleEditMode(); 
+    }
+
+    function renameBox() {
+        const newName = prompt("Enter new name for this box:", boxes[activeBoxIndex].name);
+        if (newName && newName.trim() !== "") {
+            boxes[activeBoxIndex].name = newName.trim();
+            renderTabs();
+            saveBoxData(); 
+        }
     }
 
     function deleteCurrentBox() {
         if (boxes.length <= 1) return alert("You must have at least one box!");
         if (confirm("Are you sure you want to delete this box entirely?")) {
             boxes.splice(activeBoxIndex, 1);
-            switchBox(0);
-            saveBoxData(); // Авто-сохраняем удаление в БД
+            activeBoxIndex = 0; // Сброс на первую вкладку
+            selectedBox = [...boxes[0].characters];
+            renderTabs();
+            renderGrid();
+            saveBoxData(); 
         }
     }
 
-    // --- ЛОГИКА ФИЛЬТРОВ ---
+    // --- ЛОГИКА ФИЛЬТРОВ (МУЛЬТИ-ВЫБОР) ---
     document.querySelectorAll('.elem-btn').forEach(btn => {
         btn.onclick = () => {
-            document.querySelectorAll('.elem-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            elemFilter = btn.getAttribute('data-val');
+            const val = btn.getAttribute('data-val');
+            if (val === 'all') {
+                activeElems = [];
+                document.querySelectorAll('.elem-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            } else {
+                document.querySelector('.elem-btn[data-val="all"]').classList.remove('active');
+                if (activeElems.includes(val)) {
+                    activeElems = activeElems.filter(e => e !== val);
+                    btn.classList.remove('active');
+                } else {
+                    activeElems.push(val);
+                    btn.classList.add('active');
+                }
+                if (activeElems.length === 0) document.querySelector('.elem-btn[data-val="all"]').classList.add('active');
+            }
             renderGrid();
         };
     });
+
     document.querySelectorAll('.tier-btn').forEach(btn => {
         btn.onclick = () => {
-            document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            tierFilter = btn.getAttribute('data-val');
+            const val = btn.getAttribute('data-val');
+            if (val === 'all') {
+                activeTiers = [];
+                document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            } else {
+                document.querySelector('.tier-btn[data-val="all"]').classList.remove('active');
+                if (activeTiers.includes(val)) {
+                    activeTiers = activeTiers.filter(t => t !== val);
+                    btn.classList.remove('active');
+                } else {
+                    activeTiers.push(val);
+                    btn.classList.add('active');
+                }
+                if (activeTiers.length === 0) document.querySelector('.tier-btn[data-val="all"]').classList.add('active');
+            }
             renderGrid();
         };
     });
@@ -230,7 +276,7 @@
             btn.classList.add('active'); panel.style.display = 'flex'; grid.classList.add('edit-mode-active');
         } else {
             btn.classList.remove('active'); panel.style.display = 'none'; grid.classList.remove('edit-mode-active');
-            selectedBox = [...boxes[activeBoxIndex].characters]; // Откат если не сохранили
+            selectedBox = [...boxes[activeBoxIndex].characters]; 
         }
         renderGrid();
     }
@@ -239,24 +285,33 @@
         const grid = document.getElementById('char-grid');
         grid.innerHTML = '';
 
-        // Применяем фильтры
         let visibleChars = allChars.filter(c => {
-            if (elemFilter !== 'all' && c.element !== elemFilter) return false;
-            if (tierFilter !== 'all' && c.tier !== parseInt(tierFilter)) return false;
+            if (activeElems.length > 0 && !activeElems.includes(c.element)) return false;
+            if (activeTiers.length > 0 && !activeTiers.includes(c.tier.toString())) return false;
+            if (!isEditMode && !selectedBox.includes(c.id)) return false;
             return true;
         });
 
-        // Если режим просмотра - показываем только тех, кто в боксе
-        if (!isEditMode) {
-            visibleChars = visibleChars.filter(c => selectedBox.includes(c.id));
-            if (visibleChars.length === 0) {
-                grid.innerHTML = '<div style="width:100%; text-align:center; color:#8da4c4; padding: 40px; font-family:\'Cinzel\', serif;">Box is empty or no characters match filters.</div>';
-                return;
-            }
+        if (visibleChars.length === 0) {
+            grid.innerHTML = '<div style="width:100%; text-align:center; color:#8da4c4; padding: 40px; font-family:\'Cinzel\', serif;">Box is empty or no characters match filters.</div>';
+            return;
         }
 
-        visibleChars.sort((a, b) => elementsOrder.indexOf(a.element) - elementsOrder.indexOf(b.element));
-        visibleChars.forEach(c => grid.appendChild(createCharBox(c)));
+        // Отрисовка по линиям (Тирам)
+        [4, 3, 2, 1, 0].forEach(t => {
+            const tierChars = visibleChars.filter(c => c.tier === t).sort((a, b) => elementsOrder.indexOf(a.element) - elementsOrder.indexOf(b.element));
+            if(tierChars.length === 0) return;
+
+            const title = document.createElement('div');
+            title.className = 'tier-section-title';
+            title.innerText = `Tier ${t}`;
+            grid.appendChild(title);
+            
+            const rowContainer = document.createElement('div');
+            rowContainer.className = 'element-row';
+            tierChars.forEach(c => rowContainer.appendChild(createCharBox(c)));
+            grid.appendChild(rowContainer);
+        });
         
         updateVisualSelection();
     }
@@ -266,7 +321,7 @@
         div.className = 'char-option-box';
         div.setAttribute('data-id', c.id);
         div.onclick = function() { if (isEditMode) toggleChar(this, c.id); };
-        div.innerHTML = `<img src="${c.img}" alt="${c.name}" title="${c.name} (T${c.tier})">`;
+        div.innerHTML = `<img src="${c.img}" alt="${c.name}" title="${c.name}">`;
         return div;
     }
 
