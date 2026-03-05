@@ -142,11 +142,20 @@ io.on('connection', (socket) => {
         if (session.draftType === 'abyss_box') {
             try {
                 const userDb = await User.findOne({ discordId: discordId });
-                if (!userDb || !userDb.box || userDb.box.length === 0) {
-                    socket.emit('error_msg', 'You must assemble your Abyss Box in the Profile first!');
+                let activeBox = [];
+                // Берем персонажей из активного бокса (вкладки)
+                if (userDb && userDb.boxes && userDb.boxes.length > 0) {
+                    const idx = userDb.activeBoxIndex || 0;
+                    activeBox = userDb.boxes[idx]?.characters || [];
+                } else if (userDb && userDb.box) {
+                    activeBox = userDb.box; // резерв
+                }
+                
+                if (!activeBox || activeBox.length === 0) {
+                    socket.emit('error_msg', 'You must assemble an Abyss Box in your Profile first!');
                     return;
                 }
-                userBox = userDb.box;
+                userBox = activeBox;
             } catch (e) {
                 console.error(e);
                 socket.emit('error_msg', 'Database error loading your box.');
