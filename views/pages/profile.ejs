@@ -1,75 +1,97 @@
 <%- include('../partials/header') %>
 
 <style>
-    .profile-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: rgba(16, 20, 32, 0.8); padding: 20px 30px; border: 1px solid #2a3454; border-radius: 8px; }
-    .profile-title { font-family: 'Cinzel', serif; font-size: 2em; color: #fff; margin: 0; text-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
+    /* Шапка профиля */
+    .profile-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: rgba(16, 20, 32, 0.8); padding: 15px 25px; border: 1px solid #2a3454; border-radius: 8px; }
+    .profile-title-container { display: flex; align-items: center; gap: 15px; }
+    .profile-title { font-family: 'Cinzel', serif; font-size: 1.8em; color: #fff; margin: 0; text-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
     
-    .tiers-panel { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
-    .tier-box { background: rgba(10, 12, 20, 0.9); border: 1px solid #3c4566; padding: 15px 25px; border-radius: 8px; text-align: center; min-width: 100px; transition: 0.3s; }
-    .tier-box h3 { margin: 0 0 5px 0; font-size: 0.9em; color: #8da4c4; text-transform: uppercase; letter-spacing: 1px; }
-    .tier-count { font-size: 1.8em; font-weight: bold; font-family: 'Cinzel', serif; color: #fff; }
+    /* Кнопка-шестеренка для режима редактирования */
+    .edit-gear-btn { background: transparent; border: none; font-size: 1.5em; cursor: pointer; transition: 0.3s; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); outline: none; padding: 0; }
+    .edit-gear-btn:hover { transform: rotate(90deg) scale(1.1); filter: drop-shadow(0 0 10px #4facfe); }
+    .edit-gear-btn.active { filter: drop-shadow(0 0 15px #d4af37); color: #d4af37; }
+
+    /* Переключатель сортировки */
+    .sort-wrapper { display: flex; align-items: center; gap: 10px; }
+    .sort-label { color: #8da4c4; font-weight: bold; text-transform: uppercase; font-size: 0.85em; letter-spacing: 1px; }
+    .sort-select { background: #0b0d17; color: #4facfe; border: 1px solid #4facfe; padding: 6px 12px; border-radius: 4px; font-family: 'Segoe UI', sans-serif; cursor: pointer; outline: none; font-weight: bold; transition: 0.3s; }
+    .sort-select:hover { box-shadow: 0 0 10px rgba(79, 172, 254, 0.3); }
+
+    /* Панель редактирования (с окошками) */
+    .edit-panel { display: none; flex-direction: column; gap: 15px; margin-bottom: 20px; background: rgba(16, 20, 32, 0.9); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+    
+    .tiers-panel { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .tier-box { background: rgba(10, 12, 20, 0.9); border: 1px solid #3c4566; padding: 10px 20px; border-radius: 8px; text-align: center; min-width: 90px; transition: 0.3s; }
+    .tier-box h3 { margin: 0 0 5px 0; font-size: 0.8em; color: #8da4c4; text-transform: uppercase; letter-spacing: 1px; }
+    .tier-count { font-size: 1.5em; font-weight: bold; font-family: 'Cinzel', serif; color: #fff; }
     
     .count-ok { color: #50b36b !important; text-shadow: 0 0 10px rgba(80, 179, 107, 0.5); border-color: #50b36b; }
     .count-error { color: #ff6b6b !important; text-shadow: 0 0 10px rgba(255, 107, 107, 0.5); border-color: #ff6b6b; }
 
-    .char-grid { background: rgba(16, 20, 32, 0.6); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-    .element-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; }
+    .controls-panel { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #3c4566; padding-top: 15px; margin-top: 5px; }
+    .total-counter { font-size: 1.1em; color: #8da4c4; }
+    .total-counter span { font-size: 1.4em; font-weight: bold; color: #fff; margin-left: 8px; }
+
+    /* Новая красивая кнопка Save */
+    .save-btn { padding: 10px 30px; font-size: 1em; background: linear-gradient(135deg, #4facfe, #00f2fe); color: #000; border: none; border-radius: 25px; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-weight: bold; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
+    .save-btn:disabled { background: #444; color: #888; box-shadow: none; cursor: not-allowed; }
+    .save-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(79, 172, 254, 0.8); }
+
+    /* СЕТКА ПЕРСОНАЖЕЙ: Сплошной поток (flex-wrap), без разделения на ряды */
+    .char-grid { background: rgba(16, 20, 32, 0.6); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-content: flex-start; min-height: 200px; }
     
-    .char-option-box { width: 55px; height: 55px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; position: relative; background: #111; overflow: hidden; }
-    .char-option-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.4; transition: 0.2s; }
-    .char-option-box:hover img { opacity: 0.8; transform: scale(1.05); }
+    .char-option-box { width: 62px; height: 62px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; position: relative; background: #111; overflow: hidden; }
+    .char-option-box img { width: 100%; height: 100%; object-fit: cover; opacity: 1; transition: 0.2s; }
     
-    .char-option-box.in-box { border-color: #d4af37; box-shadow: 0 0 15px rgba(212, 175, 55, 0.5); transform: translateY(-2px); }
-    .char-option-box.in-box img { opacity: 1; }
+    /* Режим просмотра: курсор обычный, все персонажи яркие */
+    .char-grid:not(.edit-mode-active) .char-option-box { cursor: default; border-color: #d4af37; box-shadow: 0 0 12px rgba(212, 175, 55, 0.3); }
+
+    /* Режим редактирования: невыбранные становятся полупрозрачными */
+    .edit-mode-active .char-option-box img { opacity: 0.3; }
+    .edit-mode-active .char-option-box:hover img { opacity: 0.8; transform: scale(1.05); }
     
-    .char-tier-badge { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.8); color: #fff; font-size: 10px; padding: 2px 5px; border-top-left-radius: 4px; font-weight: bold; }
+    /* Выделенные персонажи в режиме редактирования */
+    .char-option-box.in-box { border-color: #d4af37; box-shadow: 0 0 12px rgba(212, 175, 55, 0.6); transform: translateY(-2px); }
+    .edit-mode-active .char-option-box.in-box img { opacity: 1 !important; }
 
-    .save-btn { padding: 12px 30px; font-size: 1.1em; background: #28a745; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-weight: bold; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
-    .save-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
-    .save-btn:not(:disabled):hover { background: #34d058; box-shadow: 0 0 15px rgba(40, 167, 69, 0.5); transform: translateY(-2px); }
-
-    .total-counter { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 20px; background: rgba(16, 20, 32, 0.9); border: 1px solid #2a3454; border-radius: 8px; }
-    .total-text { font-size: 1.2em; color: #8da4c4; }
-    .total-text span { font-size: 1.5em; font-weight: bold; color: #fff; margin-left: 10px; }
-
-    /* Сортировка */
-    .controls-panel { display: flex; justify-content: flex-end; margin-bottom: 10px; align-items: center; }
-    .sort-label { color: #8da4c4; margin-right: 10px; font-weight: bold; text-transform: uppercase; font-size: 0.9em; letter-spacing: 1px; }
-    .sort-select { background: #0b0d17; color: #4facfe; border: 1px solid #4facfe; padding: 8px 15px; border-radius: 4px; font-family: 'Segoe UI', sans-serif; cursor: pointer; outline: none; font-weight: bold; transition: 0.3s; }
-    .sort-select:hover { box-shadow: 0 0 10px rgba(79, 172, 254, 0.3); }
-
-    .tier-section-title { color: #8da4c4; font-weight: bold; font-family: 'Cinzel', serif; font-size: 1.2em; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(141, 164, 196, 0.3); }
+    /* Заголовки при сортировке по тирам */
+    .tier-section-title { width: 100%; color: #8da4c4; font-weight: bold; font-family: 'Cinzel', serif; font-size: 1.2em; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(141, 164, 196, 0.3); border-bottom: 1px solid rgba(60, 69, 102, 0.5); padding-bottom: 5px; text-align: left; }
 </style>
 
-<div class="profile-header">
-    <div>
-        <h1 class="profile-title">Abyss Box Builder</h1>
-        <div style="color: #8da4c4; margin-top: 5px;">Assemble up to 50 characters based on tier limits. You don't have to fill all slots.</div>
-    </div>
-</div>
-
-<div class="tiers-panel">
-    <% [4, 3, 2, 1, 0].forEach(tier => { %>
-        <div class="tier-box" id="tier-box-<%= tier %>">
-            <h3>Tier <%= tier %></h3>
-            <div class="tier-count" id="count-t<%= tier %>">0 / <%= tiers.limits[tier] %></div>
+<div class="page-container">
+    <div class="profile-header">
+        <div class="profile-title-container">
+            <h1 class="profile-title">My Abyss Box</h1>
+            <button id="gear-btn" class="edit-gear-btn" onclick="toggleEditMode()" title="Edit Box">⚙️</button>
         </div>
-    <% }) %>
-</div>
+        <div class="sort-wrapper">
+            <span class="sort-label">Sort By:</span>
+            <select id="sort-select" class="sort-select" onchange="changeSort(this.value)">
+                <option value="element">Elements</option>
+                <option value="tier">Tiers</option>
+            </select>
+        </div>
+    </div>
 
-<div class="controls-panel">
-    <div class="sort-label">Sort By:</div>
-    <select id="sort-select" class="sort-select" onchange="changeSort(this.value)">
-        <option value="element">Elements</option>
-        <option value="tier">Tiers</option>
-    </select>
-</div>
+    <div id="edit-panel" class="edit-panel">
+        <div style="color: #8da4c4; font-size: 0.9em; text-align: center; margin-bottom: 5px;">Select characters to fill your box. Save when ready.</div>
+        
+        <div class="tiers-panel">
+            <% [4, 3, 2, 1, 0].forEach(tier => { %>
+                <div class="tier-box" id="tier-box-<%= tier %>">
+                    <h3>Tier <%= tier %></h3>
+                    <div class="tier-count" id="count-t<%= tier %>">0 / <%= tiers.limits[tier] || 0 %></div>
+                </div>
+            <% }) %>
+        </div>
 
-<div id="char-grid" class="char-grid"></div>
+        <div class="controls-panel">
+            <div class="total-counter">Total Size: <span id="total-count">0 / 0</span></div>
+            <button id="save-box-btn" class="save-btn" disabled onclick="saveBox()">Save Box</button>
+        </div>
+    </div>
 
-<div class="total-counter">
-    <div class="total-text">Total Box Size: <span id="total-count">0 / 50</span></div>
-    <button id="save-box-btn" class="save-btn" disabled onclick="saveBox()">Save Box</button>
+    <div id="char-grid" class="char-grid"></div>
 </div>
 
 <script>
@@ -79,93 +101,109 @@
     
     let selectedBox = <%- JSON.stringify(user.box || []) %>;
     let currentSort = 'element';
+    let isEditMode = false;
     
-    // Определяем порядок элементов
+    // Динамический подсчет максимального размера бокса из базы тиров
+    const maxBoxSize = Object.values(limits).reduce((sum, val) => sum + parseInt(val || 0), 0);
+    
     const elementsOrder = ['cryo', 'hydro', 'pyro', 'electro', 'anemo', 'geo', 'dendro'];
     
-    // Создаем единый плоский массив всех персонажей со вшитыми тирами и элементами
+    // Создаем единый массив
     let allChars = [];
     elementsOrder.forEach(elem => {
         if(charsData[elem]) {
             charsData[elem].forEach(c => {
                 allChars.push({
-                    id: c.id,
-                    name: c.name,
-                    img: c.img,
-                    element: elem,
+                    id: c.id, name: c.name, img: c.img, element: elem,
                     tier: tiersData[c.id] !== undefined ? tiersData[c.id] : 0
                 });
             });
         }
     });
 
-    // Функция отрисовки сетки
+    // Переключение режима редактирования (Шестеренка)
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        
+        const btn = document.getElementById('gear-btn');
+        const panel = document.getElementById('edit-panel');
+        const grid = document.getElementById('char-grid');
+        
+        if (isEditMode) {
+            btn.classList.add('active');
+            panel.style.display = 'flex';
+            grid.classList.add('edit-mode-active');
+        } else {
+            btn.classList.remove('active');
+            panel.style.display = 'none';
+            grid.classList.remove('edit-mode-active');
+            
+            // Если выходим без сохранения, возвращаем сохраненный в БД бокс
+            selectedBox = <%- JSON.stringify(user.box || []) %>;
+        }
+        
+        renderGrid();
+    }
+
+    // Смена сортировки
+    function changeSort(val) {
+        currentSort = val;
+        renderGrid();
+    }
+
+    // Отрисовка сплошной сетки
     function renderGrid() {
         const grid = document.getElementById('char-grid');
         grid.innerHTML = '';
 
+        let charsToRender = allChars;
+
+        // Если не режим редактирования, показываем ТОЛЬКО выбранных персонажей
+        if (!isEditMode) {
+            charsToRender = allChars.filter(c => selectedBox.includes(c.id));
+            if (charsToRender.length === 0) {
+                grid.innerHTML = '<div style="width:100%; text-align:center; color:#8da4c4; padding: 40px; font-family:\'Cinzel\', serif; font-size:1.2em;">Your box is empty. Click the gear icon ⚙️ to assemble your team.</div>';
+                return;
+            }
+        }
+
         if (currentSort === 'element') {
-            elementsOrder.forEach(elem => {
-                const elemChars = allChars.filter(c => c.element === elem);
-                if(elemChars.length === 0) return;
-                
-                const row = document.createElement('div');
-                row.className = 'element-row';
-                
-                elemChars.forEach(c => { row.appendChild(createCharBox(c)); });
-                grid.appendChild(row);
-            });
+            charsToRender.sort((a, b) => elementsOrder.indexOf(a.element) - elementsOrder.indexOf(b.element));
+            // Сплошной поток без заголовков
+            charsToRender.forEach(c => grid.appendChild(createCharBox(c)));
         } else if (currentSort === 'tier') {
             [4, 3, 2, 1, 0].forEach(t => {
-                // Сортируем внутри тира по порядку элементов
-                const tierChars = allChars.filter(c => c.tier === t).sort((a, b) => {
-                    return elementsOrder.indexOf(a.element) - elementsOrder.indexOf(b.element);
-                });
-                
+                const tierChars = charsToRender.filter(c => c.tier === t).sort((a, b) => elementsOrder.indexOf(a.element) - elementsOrder.indexOf(b.element));
                 if(tierChars.length === 0) return;
 
-                const wrapper = document.createElement('div');
+                // Заголовок тира (он сломает сплошной поток и начнет с новой строки)
                 const title = document.createElement('div');
                 title.className = 'tier-section-title';
                 title.innerText = `Tier ${t}`;
+                grid.appendChild(title);
                 
-                const row = document.createElement('div');
-                row.className = 'element-row';
-                
-                tierChars.forEach(c => { row.appendChild(createCharBox(c)); });
-                
-                wrapper.appendChild(title);
-                wrapper.appendChild(row);
-                grid.appendChild(wrapper);
+                tierChars.forEach(c => grid.appendChild(createCharBox(c)));
             });
         }
         
         updateVisualSelection();
     }
 
-    // Создание HTML-элемента карточки
     function createCharBox(c) {
         const div = document.createElement('div');
         div.className = 'char-option-box';
         div.setAttribute('data-id', c.id);
-        div.onclick = function() { toggleChar(this); };
         
-        div.innerHTML = `
-            <img src="${c.img}" alt="${c.name}">
-            <div class="char-tier-badge">T${c.tier}</div>
-        `;
+        div.onclick = function() { 
+            if (isEditMode) toggleChar(this, c.id); 
+        };
+        
+        // Значок T0 убран, только портрет
+        div.innerHTML = `<img src="${c.img}" alt="${c.name}" title="${c.name}">`;
         return div;
     }
 
-    // Переключение сортировки
-    function changeSort(val) {
-        currentSort = val;
-        renderGrid();
-    }
-
-    function toggleChar(element) {
-        const charId = element.getAttribute('data-id');
-        
+    function toggleChar(element, charId) {
         if (selectedBox.includes(charId)) {
             selectedBox = selectedBox.filter(id => id !== charId);
         } else {
@@ -174,22 +212,17 @@
         updateVisualSelection();
     }
 
-    // Обновляет классы выделения и счетчики
     function updateVisualSelection() {
         document.querySelectorAll('.char-option-box').forEach(el => {
-            if (selectedBox.includes(el.getAttribute('data-id'))) {
-                el.classList.add('in-box');
-            } else {
-                el.classList.remove('in-box');
-            }
+            if (selectedBox.includes(el.getAttribute('data-id'))) el.classList.add('in-box');
+            else el.classList.remove('in-box');
         });
-        updateCounters();
+        if (isEditMode) updateCounters();
     }
 
     function updateCounters() {
         let counts = { "0": 0, "1": 0, "2": 0, "3": 0, "4": 0 };
         
-        // Считаем по сохраненному массиву (самый надежный способ)
         selectedBox.forEach(id => {
             const charObj = allChars.find(c => c.id === id);
             if(charObj) counts[charObj.tier]++;
@@ -202,32 +235,27 @@
             const tBox = document.getElementById(`tier-box-${i}`);
             const tCount = document.getElementById(`count-t${i}`);
             const current = counts[i];
-            const limit = limits[i];
+            const limit = limits[i] || 0;
             
-            tCount.innerText = `${current} / ${limit}`;
+            if (tCount) tCount.innerText = `${current} / ${limit}`;
 
-            tBox.classList.remove('count-ok', 'count-error');
-            if (current <= limit) {
-                tBox.classList.add('count-ok');
-            } else {
-                tBox.classList.add('count-error');
-                allValid = false;
+            if (tBox) {
+                tBox.classList.remove('count-ok', 'count-error');
+                if (current <= limit) tBox.classList.add('count-ok');
+                else { tBox.classList.add('count-error'); allValid = false; }
             }
         }
 
         const totalEl = document.getElementById('total-count');
-        totalEl.innerText = `${total} / 50`;
-        
-        if (total > 0 && total <= 50) {
-            totalEl.style.color = '#50b36b';
-        } else if (total > 50) {
-            totalEl.style.color = '#ff6b6b';
-            allValid = false;
-        } else {
-            totalEl.style.color = '#fff';
+        if (totalEl) {
+            totalEl.innerText = `${total} / ${maxBoxSize}`;
+            if (total > 0 && total <= maxBoxSize) totalEl.style.color = '#50b36b';
+            else if (total > maxBoxSize) { totalEl.style.color = '#ff6b6b'; allValid = false; }
+            else totalEl.style.color = '#fff';
         }
 
-        document.getElementById('save-box-btn').disabled = !(allValid && total > 0);
+        const btn = document.getElementById('save-box-btn');
+        if (btn) btn.disabled = !(allValid && total > 0);
     }
 
     async function saveBox() {
@@ -243,7 +271,9 @@
             });
             const data = await res.json();
             if (data.success) {
-                alert('Box successfully saved! You are ready for Abyss Draft.');
+                // При успешном сохранении выходим из режима редактирования
+                toggleEditMode();
+                alert('Box successfully saved!');
                 btn.innerText = 'Save Box';
                 btn.disabled = false;
             } else {
@@ -259,7 +289,6 @@
         }
     }
 
-    // Рендерим при загрузке страницы
     document.addEventListener('DOMContentLoaded', () => {
         renderGrid();
     });
