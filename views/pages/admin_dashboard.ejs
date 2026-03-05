@@ -1,65 +1,15 @@
 <%- include('../partials/header') %>
 
 <style>
-    .tour-item { 
-        background: rgba(22, 28, 48, 0.85); 
-        padding: 20px; 
-        margin-bottom: 15px; 
-        border: 1px solid #2a3454; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        border-radius: 8px;
-        transition: 0.2s;
-    }
-    .tour-item:hover {
-        border-color: #3c4566;
-        background: rgba(22, 28, 48, 1);
-    }
-    .btn-manage { 
-        background: #4facfe; 
-        color: #000; 
-        padding: 8px 15px; 
-        text-decoration: none; 
-        border-radius: 4px; 
-        font-weight: bold; 
-        margin-left: 10px;
-        transition: 0.2s;
-    }
-    .btn-manage:hover {
-        box-shadow: 0 0 10px rgba(79, 172, 254, 0.4);
-    }
-    .btn-delete { 
-        background: #ff4444; 
-        color: #fff; 
-        border: none; 
-        padding: 8px 15px; 
-        border-radius: 4px; 
-        cursor: pointer; 
-        font-weight: bold; 
-        transition: 0.2s; 
-    }
-    .btn-delete:hover { 
-        background: #cc0000; 
-    }
-    .type-badge { 
-        font-size: 0.7em; 
-        padding: 4px 8px; 
-        border-radius: 4px; 
-        text-transform: uppercase; 
-        margin-left: 15px;
-        font-weight: bold;
-    }
-    .type-tour { 
-        background: rgba(79, 172, 254, 0.1); 
-        color: #4facfe; 
-        border: 1px solid rgba(79, 172, 254, 0.4);
-    }
-    .type-news { 
-        background: rgba(212, 175, 55, 0.1); 
-        color: #d4af37; 
-        border: 1px solid rgba(212, 175, 55, 0.4);
-    }
+    .tour-item { background: rgba(22, 28, 48, 0.85); padding: 20px; margin-bottom: 15px; border: 1px solid #2a3454; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; transition: 0.2s; }
+    .tour-item:hover { border-color: #3c4566; background: rgba(22, 28, 48, 1); }
+    .btn-manage { background: #4facfe; color: #000; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-left: 10px; transition: 0.2s; }
+    .btn-manage:hover { box-shadow: 0 0 10px rgba(79, 172, 254, 0.4); }
+    .btn-delete { background: #ff4444; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+    .btn-delete:hover { background: #cc0000; }
+    .type-badge { font-size: 0.7em; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 15px; font-weight: bold; }
+    .type-tour { background: rgba(79, 172, 254, 0.1); color: #4facfe; border: 1px solid rgba(79, 172, 254, 0.4); }
+    .type-news { background: rgba(212, 175, 55, 0.1); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.4); }
 </style>
 
 <div class="page-container" style="max-width: 900px;">
@@ -68,6 +18,8 @@
         <h1 style="color: #fff; margin: 0; font-family: 'Cinzel', serif;">Admin Dashboard</h1>
         
         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <a href="/admin/tiers" style="background: #b28dff; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; box-shadow: 0 0 10px rgba(178, 141, 255, 0.4); transition: 0.2s;">⚙️ Manage Tiers</a>
+
             <a href="/admin/add-tournament" style="background: #4facfe; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; box-shadow: 0 0 10px rgba(79, 172, 254, 0.4); transition: 0.2s;">+ Add Tournament</a>
             
             <a href="/admin/add-announcement" style="background: #d4af37; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); transition: 0.2s;">+ Add Announcement</a>
@@ -89,12 +41,10 @@
                             Slug: <span style="color: #fff;"><%= t.slug %></span> • Date: <%= t.date || 'No Date' %>
                         </span>
                     </div>
-                    
                     <div style="display: flex; align-items: center;">
                         <% if (t.type !== 'announcement') { %>
                             <a href="/admin/manage/<%= t.slug %>" class="btn-manage">Manage</a>
                         <% } %>
-
                         <form action="/admin/delete/<%= t._id %>" method="POST" style="margin-left: 10px; margin-bottom: 0;" onsubmit="return confirm('Are you sure you want to delete this?');">
                             <button type="submit" class="btn-delete">Delete</button>
                         </form>
@@ -108,7 +58,6 @@
             </div>
         <% } %>
     </div>
-
 </div>
 
 <%- include('../partials/footer') %>
