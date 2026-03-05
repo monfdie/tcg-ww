@@ -4,6 +4,7 @@ const passport = require('passport');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const User = require('../models/User');
 const Match = require('../models/Match');
 const Tournament = require('../models/Tournament');
 const CHARACTERS_BY_ELEMENT = require('../characters.json');
