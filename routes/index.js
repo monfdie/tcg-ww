@@ -96,11 +96,41 @@ router.get('/history', async (req, res) => {
         if (req.user) {
             matches = await Match.find({ $or: [ { blueDiscordId: req.user.discordId }, { redDiscordId: req.user.discordId } ] })
                 .sort({ date: -1 })
-                .limit(9); // <--- ИМЕННО ЭТА СТРОЧКА ОТВЕЧАЕТ ЗА 9 ПОСЛЕДНИХ ИГР
+                .limit(9);
         }
         res.render('pages/history', { title: 'My History', matches });
     } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
 });
+
+// ==========================================
+// НОВЫЕ РОУТЫ: ПРОФИЛЬ И СБОРКА БОКСА
+// ==========================================
+router.get('/profile', async (req, res) => {
+    if (!req.isAuthenticated()) return res.redirect('/auth/discord'); // Требуем логин
+    
+    let tiers = { limits: { "0": 20, "1": 15, "2": 10, "3": 4, "4": 1 }, characters: {} };
+    try {
+        tiers = JSON.parse(fs.readFileSync(path.join(__dirname, '../tiers.json'), 'utf-8'));
+    } catch(e) { console.log('tiers.json не найден, используем дефолт'); }
+
+    res.render('pages/profile', { title: 'My Profile', user: req.user, chars: CHARACTERS_BY_ELEMENT, tiers });
+});
+
+router.post('/profile/save-box', express.json(), async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const { box } = req.body;
+        if (!Array.isArray(box)) return res.status(400).json({ error: 'Invalid data' });
+        
+        req.user.box = box;
+        await req.user.save();
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+// ==========================================
 
 router.get('/admin/dashboard', isAdmin, async (req, res) => {
     const tournaments = await Tournament.find().sort({ createdAt: -1 });
