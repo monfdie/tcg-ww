@@ -132,6 +132,38 @@ router.post('/profile/save-box', express.json(), async (req, res) => {
 });
 // ==========================================
 
+// ==========================================
+// АДМИНКА: УПРАВЛЕНИЕ ТИРАМИ (TIERS)
+// ==========================================
+router.get('/admin/tiers', isAdmin, (req, res) => {
+    let tiers = { limits: { "0": 20, "1": 15, "2": 10, "3": 4, "4": 1 }, characters: {} };
+    try {
+        tiers = JSON.parse(fs.readFileSync(path.join(__dirname, '../tiers.json'), 'utf-8'));
+    } catch(e) { console.log('tiers.json не найден, создаем базовый'); }
+
+    res.render('pages/admin_manage_tiers', { 
+        title: 'Manage Tiers', 
+        chars: CHARACTERS_BY_ELEMENT, 
+        tiers 
+    });
+});
+
+router.post('/admin/tiers/save', isAdmin, express.json(), (req, res) => {
+    try {
+        const { limits, characters } = req.body;
+        const newData = {
+            limits: limits || { "0": 20, "1": 15, "2": 10, "3": 4, "4": 1 },
+            characters: characters || {}
+        };
+        fs.writeFileSync(path.join(__dirname, '../tiers.json'), JSON.stringify(newData, null, 2));
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+// ==========================================
+
 router.get('/admin/dashboard', isAdmin, async (req, res) => {
     const tournaments = await Tournament.find().sort({ createdAt: -1 });
     res.render('pages/admin_dashboard', { tournaments });
