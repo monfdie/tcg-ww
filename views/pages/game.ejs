@@ -1,99 +1,44 @@
 <%- include('../partials/header') %>
 
 <style>
-    body, html {
-        background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important;
-        background-size: cover !important;
-        background-position: center !important;
-        background-repeat: no-repeat !important;
-        background-attachment: fixed !important;
-        min-height: 100vh;
-    }
-
-    /* 2. ДЕЛАЕМ ПУЛЛ ПЕРСОНАЖЕЙ И ФОН ИГРЫ ПРОЗРАЧНЫМИ */
-    .page-container, #game-screen, .char-pool {
-        background: transparent !important;
-    }
-
+    body, html { background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important; background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important; background-attachment: fixed !important; min-height: 100vh; }
+    .page-container, #game-screen, .char-pool { background: transparent !important; }
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
     .player-header { height: auto !important; min-height: 70px; }
     .player-info-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
     .player-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px rgba(0,0,0,0.6); display: none; }
     
-    /* --- ЛОГИКА ФИЛЬТРОВ И РАМОК --- */
-    
-    /* Стандартная блокировка (серый + нельзя нажать) */
-    #char-pool-container .char-option.disabled {
-        pointer-events: none !important;
-        opacity: 0.5;
-        filter: grayscale(100%);
-    }
+    .seat-btn { border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 10px; margin-top: 5px; text-transform: uppercase; transition: 0.2s; font-family: 'Segoe UI', sans-serif; letter-spacing: 1px; }
+    .join-seat { background: #4facfe; color: #000; box-shadow: 0 0 10px rgba(79,172,254,0.3); }
+    .join-seat:hover { background: #fff; box-shadow: 0 0 15px #4facfe; }
+    .red-side .join-seat { background: #ff6b6b; box-shadow: 0 0 10px rgba(255,107,107,0.3); }
+    .red-side .join-seat:hover { background: #fff; box-shadow: 0 0 15px #ff6b6b; }
+    .leave-seat { background: transparent; border: 1px solid #ff6b6b; color: #ff6b6b; }
+    .leave-seat:hover { background: rgba(255, 107, 107, 0.2); }
 
-    /* Рамка иммунитета */
-    #char-pool-container .char-option.immunity-highlight { 
-        border: 3px solid #d4af37 !important;
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; 
-    }
+    #char-pool-container .char-option.disabled { pointer-events: none !important; opacity: 0.2; filter: grayscale(100%); }
+    #char-pool-container .char-option.immunity-highlight { border: 3px solid #d4af37 !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; opacity: 1 !important; filter: none !important; }
 
     .turn-timer { transition: opacity 0.3s ease; }
+    .draft-area { display: flex; justify-content: center; gap: 60px; }
 
-    /* Отступ между панелями игроков (вместо линии) */
-    .draft-area {
-        display: flex;
-        justify-content: center;
-        gap: 60px;
-    }
+    .game-header { position: relative; width: 100%; display: flex; justify-content: center; align-items: center; }
+    .home-logo-link { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); z-index: 100; text-decoration: none; display: flex; align-items: center; }
+    .home-logo-link img { height: 38px; transition: 0.2s; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
+    .home-logo-link:hover img { transform: scale(1.1); filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.6)); }
+    #room-container { position: absolute !important; right: 20px !important; left: auto !important; top: 50% !important; transform: translateY(-50%) !important; margin: 0 !important; z-index: 100; }
 
-    /* --- ПОЗИЦИОНИРОВАНИЕ ШАПКИ (ЛОГО И КОД КОМНАТЫ) --- */
-    .game-header { 
-        position: relative; 
-        width: 100%; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-    }
-
-    .home-logo-link { 
-        position: absolute; 
-        left: 20px; 
-        top: 50%; 
-        transform: translateY(-50%); 
-        z-index: 100; 
-        text-decoration: none; 
-        display: flex; 
-        align-items: center;
-    }
-    .home-logo-link img { 
-        height: 38px; 
-        transition: 0.2s; 
-        filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); 
-    }
-    .home-logo-link:hover img { 
-        transform: scale(1.1); 
-        filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.6)); 
-    }
-
-    #room-container { 
-        position: absolute !important; 
-        right: 20px !important; 
-        left: auto !important; 
-        top: 50% !important; 
-        transform: translateY(-50%) !important; 
-        margin: 0 !important; 
-        z-index: 100; 
-    }
+    .box-label { position: absolute; top: -15px; font-size: 11px; color: #8da4c4; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
+    .left-box-label { left: 40px; }
+    .right-box-label { right: 40px; }
 </style>
 
 <div id="game-screen">
     <div class="game-header">
-         <a href="/" class="home-logo-link" title="Back to Home">
-             <img src="/logo.png" alt="GITCG Logo">
-         </a>
-         
+         <a href="/" class="home-logo-link" title="Back to Home"><img src="/logo.png" alt="GITCG Logo"></a>
          <div class="reserve-timer blue-res"><span id="blue-res">3:00</span></div>
          <div id="status">Waiting...</div>
          <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
-         
          <div id="room-container">
              <div id="room-display" onclick="copyRoomCode()">CODE: <%= roomId %></div>
              <span id="copy-toast">Code Copied!</span>
@@ -111,8 +56,9 @@
                  <div class="player-info-wrapper">
                      <img id="blue-avatar" class="player-avatar" src="" alt="">
                      <h2 id="blue-name-display">PLAYER 1</h2>
+                     <button id="join-blue-btn" class="seat-btn join-seat" onclick="takeSeat('blue')" style="display:none;">SIT HERE</button>
+                     <button id="leave-blue-btn" class="seat-btn leave-seat" onclick="leaveSeat()" style="display:none;">LEAVE</button>
                  </div>
-                
                  <div id="blue-ready-switch" class="ready-switch" onclick="toggleReady('blue')">
                      <div class="switch-circle"></div>
                  </div>
@@ -130,8 +76,9 @@
                  <div class="player-info-wrapper">
                      <img id="red-avatar" class="player-avatar" src="" alt="">
                      <h2 id="red-name-display">PLAYER 2</h2>
+                     <button id="join-red-btn" class="seat-btn join-seat" onclick="takeSeat('red')" style="display:none;">SIT HERE</button>
+                     <button id="leave-red-btn" class="seat-btn leave-seat" onclick="leaveSeat()" style="display:none;">LEAVE</button>
                  </div>
-              
                  <div id="red-timer" class="turn-timer">45</div>
              </div>
              <div class="ban-row" id="red-bans"></div>
@@ -142,7 +89,6 @@
 
      <div class="controls-area" style="min-height: 40px;">
          <button id="skip-btn" class="round-btn" onclick="skipTurn()" style="display: none;">SKIP</button>
- 
          <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled style="display: none;">SELECT</button>
      </div>
 
@@ -157,18 +103,23 @@
     const currentRoom = '<%= roomId %>';
     const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
+    
     let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
-    let charsData = {}, selectedCharId = null;
+    let charsData = {}, selectedCharId = null, currentState = null;
     let isDraftFinishedLocal = false;
+    let lastBlueBoxHash = '', lastRedBoxHash = ''; // Для кэширования отрисовки
     
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
     const myNick = <%- locals.user ? JSON.stringify(locals.user.username) : '""' %>;
+    const localNick = sessionStorage.getItem('draft_nickname') || 'Player';
+    const finalNick = myNick || localNick;
+
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
+
     if (savedData) {
         socket.disconnect(); charsData = serverChars;
-        renderRows();
         const mockState = {
             gameStarted: true, currentTeam: 'none', currentAction: 'none',
             bans: savedData.bans, bluePicks: savedData.bluePicks, redPicks: savedData.redPicks,
@@ -176,91 +127,109 @@
             blueDiscordId: savedData.blueDiscordId, redDiscordId: savedData.redDiscordId,
             blueAvatar: savedData.blueAvatar, redAvatar: savedData.redAvatar,
             draftType: savedData.draftType, immunityPhaseActive: false,
-   
             immunityPool: savedData.immunityPool||[], immunityBans: savedData.immunityBans||[],
             stepIndex: 999, ready: { blue: true, red: true },
-            draftFinished: true
+            draftFinished: true, isBlueTaken: true, isRedTaken: true
         };
+        currentDraftType = mockState.draftType;
+        renderRows(mockState);
         updateUI(mockState);
     } else {
         socket.on('connect', () => {
             if (currentRoom && myUserId) {
-                socket.emit('rejoin_game', { 
-                    roomId: currentRoom, userId: myUserId, 
-                    discordId: myRealDiscordId, avatar: myAvatarHash, nickname: myNick 
-  
-                });
+                socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId, discordId: myRealDiscordId, avatar: myAvatarHash, nickname: finalNick });
             }
         });
+        
         socket.on('init_game', (data) => {
             myRole = data.role; charsData = data.chars; currentDraftType = data.state.draftType || 'gitcg';
             document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
-            renderRows(); updateUI(data.state);
+            renderRows(data.state); updateUI(data.state);
         });
+
+        socket.on('role_update', (newRole) => {
+            myRole = newRole;
+            document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
+        });
+
         socket.on('update_state', updateUI);
         socket.on('game_started', () => { isGameStarted = true; });
         socket.on('game_over', (state) => { updateUI(state); alert("Draft is complete and saved!"); });
+        socket.on('error_msg', (msg) => { alert(msg); });
+        
         socket.on('timer_tick', (data) => {
             const t = typeof data === 'object' ? data.main : data;
             document.getElementById('blue-timer').innerText = t; 
             document.getElementById('red-timer').innerText = t;
             if(typeof data === 'object') {
                  document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
-           
                  document.getElementById('red-res').innerText = formatTime(data.redReserve);
             }
         });
     }
 
-    function formatTime(s) { if (s < 0) s = 0; const m=Math.floor(s/60), sec=s%60; return `${m}:${sec<10?'0':''}${sec}`;
-    }
+    function formatTime(s) { if (s < 0) s = 0; const m=Math.floor(s/60), sec=s%60; return `${m}:${sec<10?'0':''}${sec}`; }
     function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
-    function copyRoomCode() { navigator.clipboard.writeText(currentRoom);
-    }
-    function skipTurn() { if(currentRoom && !savedData && !isDraftFinishedLocal) socket.emit('skip_action', currentRoom);
-    }
+    function copyRoomCode() { navigator.clipboard.writeText(currentRoom); }
+    function skipTurn() { if(currentRoom && !savedData && !isDraftFinishedLocal) socket.emit('skip_action', currentRoom); }
+    function takeSeat(side) { socket.emit('take_seat', { roomId: currentRoom, userId: myUserId, side: side, nickname: finalNick, discordId: myRealDiscordId, avatar: myAvatarHash }); }
+    function leaveSeat() { socket.emit('leave_seat', { roomId: currentRoom, userId: myUserId }); }
     
     function updateUI(state) {
+        currentState = state;
         isGameStarted = state.gameStarted;
         isDraftFinishedLocal = state.draftFinished;
         const isMyTurn = (myRole === state.currentTeam);
 
-        if (!state.gameStarted || state.draftFinished) {
-             document.getElementById('blue-timer').style.opacity = '0';
-             document.getElementById('red-timer').style.opacity = '0';
-        } else {
-             document.getElementById('blue-timer').style.opacity = (state.currentTeam === 'blue') ?
-             '1' : '0';
-             document.getElementById('red-timer').style.opacity = (state.currentTeam === 'red') ? '1' : '0';
+        // Перерисовка сетки, если изменились боксы в режиме abyss
+        if (state.draftType === 'abyss_box') {
+            const currentBlueHash = (state.blueBox || []).join(',');
+            const currentRedHash = (state.redBox || []).join(',');
+            if (currentBlueHash !== lastBlueBoxHash || currentRedHash !== lastRedBoxHash) {
+                lastBlueBoxHash = currentBlueHash; lastRedBoxHash = currentRedHash;
+                renderRows(state);
+            }
         }
+
+        const blueJoinBtn = document.getElementById('join-blue-btn');
+        const redJoinBtn = document.getElementById('join-red-btn');
+        const blueLeaveBtn = document.getElementById('leave-blue-btn');
+        const redLeaveBtn = document.getElementById('leave-red-btn');
+
+        if (!state.gameStarted && !state.draftFinished) {
+            blueJoinBtn.style.display = (!state.isBlueTaken && myRole !== 'blue') ? 'block' : 'none';
+            blueLeaveBtn.style.display = (myRole === 'blue') ? 'block' : 'none';
+            redJoinBtn.style.display = (!state.isRedTaken && myRole !== 'red') ? 'block' : 'none';
+            redLeaveBtn.style.display = (myRole === 'red') ? 'block' : 'none';
+        } else {
+            blueJoinBtn.style.display = 'none'; redJoinBtn.style.display = 'none';
+            blueLeaveBtn.style.display = 'none'; redLeaveBtn.style.display = 'none';
+        }
+
+        document.getElementById('blue-timer').style.opacity = (!state.gameStarted || state.draftFinished || state.currentTeam !== 'blue') ? '0' : '1';
+        document.getElementById('red-timer').style.opacity = (!state.gameStarted || state.draftFinished || state.currentTeam !== 'red') ? '0' : '1';
 
         document.querySelectorAll('.ladder-step').forEach((el, idx) => {
             el.classList.remove('step-active', 'step-done');
-            if (idx < state.stepIndex - 1) {
-                el.classList.add('step-done');
-            } else if (idx === state.stepIndex - 1 && state.gameStarted && !state.draftFinished && !state.immunityPhaseActive) {
-                
-                el.classList.add('step-active');
-            }
+            if (idx < state.stepIndex - 1) el.classList.add('step-done');
+            else if (idx === state.stepIndex - 1 && state.gameStarted && !state.draftFinished && !state.immunityPhaseActive) el.classList.add('step-active');
         });
+        
         const confirmBtn = document.getElementById('confirm-btn');
         const skipBtn = document.getElementById('skip-btn');
-
         if (state.gameStarted && !state.draftFinished && !savedData && isMyTurn) {
             confirmBtn.style.display = 'inline-block';
             if (state.immunityPhaseActive) {
                 skipBtn.style.display = 'inline-block';
                 skipBtn.className = (state.currentTeam === 'blue') ? 'round-btn skip-left' : 'round-btn skip-right';
-            } else {
-                skipBtn.style.display = 'none';
-            }
+            } else skipBtn.style.display = 'none';
         } else {
-            confirmBtn.style.display = 'none';
-            skipBtn.style.display = 'none';
+            confirmBtn.style.display = 'none'; skipBtn.style.display = 'none';
         }
 
-        document.getElementById('blue-ready-switch').style.display = state.gameStarted?'none':'flex';
-        document.getElementById('red-ready-switch').style.display = state.gameStarted?'none':'flex';
+        document.getElementById('blue-ready-switch').style.display = (state.gameStarted || !state.isBlueTaken) ? 'none' : 'flex';
+        document.getElementById('red-ready-switch').style.display = (state.gameStarted || !state.isRedTaken) ? 'none' : 'flex';
+        
         if(!state.gameStarted) {
              state.ready.blue ? document.getElementById('blue-ready-switch').classList.add('ready-on') : document.getElementById('blue-ready-switch').classList.remove('ready-on');
              state.ready.red ? document.getElementById('red-ready-switch').classList.add('ready-on') : document.getElementById('red-ready-switch').classList.remove('ready-on');
@@ -268,93 +237,109 @@
 
         document.getElementById('blue-name-display').innerText = state.blueName;
         document.getElementById('red-name-display').innerText = state.redName;
+        
         const blueAv = document.getElementById('blue-avatar');
-        if (state.blueAvatar && state.blueDiscordId) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block';
-        }
+        if (state.blueAvatar && state.blueDiscordId && state.isBlueTaken) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block'; } else { blueAv.style.display = 'none'; }
+        
         const redAv = document.getElementById('red-avatar');
-        if (state.redAvatar && state.redDiscordId) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`;
-        redAv.style.display = 'block'; }
+        if (state.redAvatar && state.redDiscordId && state.isRedTaken) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; } else { redAv.style.display = 'none'; }
         
         let txt = "WAITING...";
-        if (state.draftFinished) {
-            txt = "DRAFT FINISHED";
-        } else if (state.immunityPhaseActive) {
-            txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
-        } else if (state.gameStarted) {
-            txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
-        }
+        if (state.draftFinished) txt = "DRAFT FINISHED";
+        else if (state.immunityPhaseActive) txt = `IMMUNITY: ${state.currentTeam} ${state.currentAction}`;
+        else if (state.gameStarted) txt = `${state.currentTeam} IS ${state.currentAction==='ban'?'BANNING':'PICKING'}`;
         document.getElementById('status').innerText = txt.toUpperCase();
 
         updateImmunityTop(state);
         renderSlots(state);
-        // --- ЛОГИКА БЛОКИРОВОК ---
+        
+        // --- ЛОГИКА ПОДСВЕТКИ И БЛОКИРОВКИ С УЧЕТОМ БОКСОВ ---
+        const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
+        const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
+        const isImmunePhase = state.immunityPhaseActive;
+        const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] || {};
+        const isImmuneStep = currentStepData.immunity === true;
+        const isPickPhase = state.currentAction && state.currentAction.includes('pick');
+
         document.querySelectorAll('.char-option').forEach(el => {
             el.classList.remove('disabled', 'immunity-highlight');
+            if (state.draftFinished) { el.classList.add('disabled'); return; }
+            if (!state.gameStarted) return; // до старта все активно
+
+            const charId = el.getAttribute('data-id');
+            const side = el.id.includes('-left-') ? 'left' : (el.id.includes('-right-') ? 'right' : 'none');
+
+            if (state.draftType === 'abyss_box') {
+                let leftBox = myRole === 'red' ? state.redBox : state.blueBox;
+                let rightBox = myRole === 'red' ? state.blueBox : state.redBox;
+                if (myRole === 'spectator') { leftBox = state.blueBox; rightBox = state.redBox; }
+                
+                let inBoth = leftBox.includes(charId) && rightBox.includes(charId);
+
+                if (isImmunePhase) {
+                    if (!inBoth) el.classList.add('disabled');
+                    if (immuneChars.includes(charId)) el.classList.add('immunity-highlight', 'disabled');
+                    if (immunityBans.includes(charId)) el.classList.add('disabled');
+                } else {
+                    if (state.bans.some(b => b.id === charId)) el.classList.add('disabled');
+                    
+                    if (isPickPhase) {
+                        if (side === 'right') el.classList.add('disabled'); // Нельзя пикать чужих
+                        if (!isImmuneStep && immuneChars.includes(charId)) el.classList.add('disabled');
+                    } else {
+                        if (immuneChars.includes(charId)) el.classList.add('disabled');
+                    }
+                    
+                    // Уникальность пиков
+                    if (state.bluePicks.includes(charId) || state.redPicks.includes(charId)) {
+                        if (!immuneChars.includes(charId)) el.classList.add('disabled');
+                        else {
+                            if (side === 'left') {
+                                const myPicks = myRole === 'red' ? state.redPicks : state.bluePicks;
+                                if (myPicks.includes(charId)) el.classList.add('disabled');
+                            } else if (side === 'right') {
+                                const oppPicks = myRole === 'red' ? state.bluePicks : state.redPicks;
+                                if (oppPicks.includes(charId)) el.classList.add('disabled');
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Стандартные правила
+                if (isImmunePhase) {
+                    if (immuneChars.includes(charId)) el.classList.add('immunity-highlight', 'disabled');
+                    if (immunityBans.includes(charId)) el.classList.add('disabled');
+                } else {
+                    if (state.bans.some(b => b.id === charId)) el.classList.add('disabled');
+                    if (isPickPhase && !isImmuneStep && immuneChars.includes(charId)) el.classList.add('disabled');
+                    if (!isPickPhase && immuneChars.includes(charId)) el.classList.add('disabled');
+                    
+                    if (state.bluePicks.includes(charId)) {
+                        if (myRole === 'blue') el.classList.add('disabled'); else if (!immuneChars.includes(charId)) el.classList.add('disabled');
+                    }
+                    if (state.redPicks.includes(charId)) {
+                        if (myRole === 'red') el.classList.add('disabled'); else if (!immuneChars.includes(charId)) el.classList.add('disabled');
+                    }
+                }
+            }
         });
-        const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
-        const immunityBans = state.immunityBans ?
-        state.immunityBans.filter(id => id !== 'skipped') : [];
-
-        if (state.immunityPhaseActive) {
-            immuneChars.forEach(id => {
-                const el = document.getElementById(`char-${id}`);
-                if(el) el.classList.add('immunity-highlight', 'disabled');
-            });
-            immunityBans.forEach(id => {
-                const el = document.getElementById(`char-${id}`);
-                if(el) el.classList.add('disabled');
-            });
-        } else if (state.gameStarted && !state.draftFinished) {
-            const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] ||
-            {};
-            const isImmuneStep = currentStepData.immunity === true;
-            const isPickPhase = state.currentAction && state.currentAction.includes('pick');
-            state.bans.forEach(b => {
-                const el = document.getElementById(`char-${b.id}`);
-                if(el) el.classList.add('disabled');
-            });
-            immuneChars.forEach(id => {
-                const el = document.getElementById(`char-${id}`);
-                if (!el) return;
-
-                if (isPickPhase && isImmuneStep) {
-                    // Доступно для пика - без стилей блокировки
-              
-                } else {
-                    el.classList.add('disabled');
-                }
-            });
-            state.bluePicks.forEach(id => {
-                if (myRole === 'blue') {
-                    document.getElementById(`char-${id}`)?.classList.add('disabled'); 
-                } else if (myRole === 'red') {
-                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); 
-            
-                } else {
-                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled'); 
-                }
-            });
-            state.redPicks.forEach(id => {
-                if (myRole === 'red') {
-                    document.getElementById(`char-${id}`)?.classList.add('disabled');
-                } else if (myRole === 'blue') {
-                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
-              
-                } else {
-                    if (!immuneChars.includes(id)) document.getElementById(`char-${id}`)?.classList.add('disabled');
-                }
-            });
-        } else if (state.draftFinished) {
-            // Если драфт закончен, блокируем абсолютно все карточки, чтобы их нельзя было кликать
-            document.querySelectorAll('.char-option').forEach(el => {
-                el.classList.add('disabled');
-            });
-        }
     }
 
-    function renderRows() {
+    function renderRows(state) {
         const container = document.getElementById('char-pool-container');
         container.innerHTML = '';
+        
+        // Добавляем заголовки боксов, если это Абисс
+        if (currentDraftType === 'abyss_box') {
+            const labels = document.createElement('div');
+            labels.style.position = 'relative'; labels.style.width = '100%'; labels.style.height = '15px';
+            labels.innerHTML = `
+                <div class="box-label left-box-label">${myRole === 'red' ? 'PLAYER 2 BOX' : (myRole === 'spectator' ? 'BLUE BOX' : 'MY BOX')}</div>
+                <div class="box-label right-box-label">${myRole === 'red' ? 'PLAYER 1 BOX' : (myRole === 'spectator' ? 'RED BOX' : 'OPPONENT BOX')}</div>
+            `;
+            container.appendChild(labels);
+        }
+
         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
         const schema = DRAFT_RULES[currentDraftType];
         if(schema) {
@@ -362,37 +347,59 @@
                 const d = document.createElement('div');
                 const sideClass = step.team === 'blue' ? 'step-left' : 'step-right';
                 let colorClass = 'step-pick'; 
-                if (step.type.includes('ban')) { colorClass 
-                = 'step-ban'; } else if (step.immunity) { colorClass = 'step-immunity'; }
+                if (step.type.includes('ban')) { colorClass = 'step-ban'; } else if (step.immunity) { colorClass = 'step-immunity'; }
                 d.className = `ladder-step ${sideClass} ${colorClass}`;
                 d.id = `step-node-${i}`; d.innerText = `${i+1}. ${step.type}`;
                 ladder.appendChild(d);
             });
             container.appendChild(ladder);
         }
+
         ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
             const row = document.createElement('div'); row.className = `element-row row-${elem}`;
-            const chars = charsData[elem], mid = Math.ceil(chars.length/2);
+            const chars = charsData[elem];
             if(!chars) return; 
+            
             const l = document.createElement('div'); l.className = 'row-half left-half';
-            chars.slice(0,mid).forEach(c => l.appendChild(createChar(c)));
+            const r = document.createElement('div'); r.className = 'row-half right-half';
+            
+            if (currentDraftType === 'abyss_box' && state) {
+                let leftIds = state.blueBox || [];
+                let rightIds = state.redBox || [];
+                if (myRole === 'red') { leftIds = state.redBox || []; rightIds = state.blueBox || []; }
+                
+                chars.filter(c => leftIds.includes(c.id)).forEach(c => l.appendChild(createChar(c, 'left')));
+                chars.filter(c => rightIds.includes(c.id)).forEach(c => r.appendChild(createChar(c, 'right')));
+            } else {
+                const mid = Math.ceil(chars.length/2);
+                chars.slice(0,mid).forEach(c => l.appendChild(createChar(c, 'left')));
+                chars.slice(mid).forEach(c => r.appendChild(createChar(c, 'right')));
+            }
      
             const gap = document.createElement('div'); gap.className = 'row-gap';
-            const r = document.createElement('div'); r.className = 'row-half right-half';
-            chars.slice(mid).forEach(c => r.appendChild(createChar(c)));
             row.appendChild(l); row.appendChild(gap); row.appendChild(r);
             container.appendChild(row);
         });
     }
 
-    function createChar(char) {
+    function createChar(char, side) {
         const el = document.createElement('div');
-        el.className = 'char-option'; el.id = `char-${char.id}`;
+        el.className = 'char-option'; 
+        el.id = `char-${side}-${char.id}`; // Защита от дублей ID в DOM
+        el.setAttribute('data-id', char.id);
         el.innerHTML = `<img src="${char.img}">`;
+        
         el.onclick = () => {
             if(!isGameStarted || myRole === 'spectator' || savedData || isDraftFinishedLocal) return;
+            
+            if (currentDraftType === 'abyss_box' && currentState) {
+                const isPick = currentState.currentAction.includes('pick');
+                if (isPick && side === 'right') return; // Нельзя пикать из чужого бокса
+            }
+
             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
-            selectedCharId = char.id; el.classList.add('selected-pending');
+            selectedCharId = char.id; 
+            el.classList.add('selected-pending');
             document.getElementById('confirm-btn').disabled = false;
         };
         return el;
@@ -408,7 +415,7 @@
 
     function updateImmunityTop(state) {
          const topDisp = document.getElementById('immunity-top-display');
-         if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
+         if(state.draftType !== 'gitcg_cup_2' && state.draftType !== 'abyss_box') { topDisp.style.display = 'none'; return; }
          topDisp.style.display = 'flex';
          const row = document.getElementById('immunity-icons-row'); row.innerHTML = '';
          const bans = state.immunityBans || []; const picks = state.immunityPool || [];
@@ -418,7 +425,6 @@
              if (slot.val === 'skipped') { div.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`; div.style.background = '#222'; } 
              else if (slot.val) {
                  let all = []; Object.values(charsData).forEach(a => all.push(...a));
-         
                  const char = all.find(c => c.id === slot.val);
                  if(char) div.innerHTML = `<img src="${char.img}">`;
              } else div.classList.add('im-empty');
@@ -431,8 +437,7 @@
          if (!currentSchema) return;
          const getStepsFor = (schema, team, type) => schema.map((step, index) => ({ ...step, globalIndex: index + 1 })).filter(step => step.team === team && step.type === type).map(step => ({ num: step.globalIndex, immunity: step.immunity }));
          const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban'); const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
-         const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick');
-         const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
+         const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick'); const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
          const fill = (containerId, items, stepData, isBan) => {
              const div = document.getElementById(containerId);
              if(!div) return; div.innerHTML = ''; 
@@ -445,24 +450,19 @@
                 let charId = null; if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
                  if (charId) {
                      let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
-                     const char = 
-                     allFlat.find(c => c.id === charId);
+                     const char = allFlat.find(c => c.id === charId);
                      if (char) slot.innerHTML = `<img src="${char.img}">`;
                  } else slot.innerHTML = `<span class="step-number">${step.num}</span>`;
                  div.appendChild(slot);
              });
          };
-         fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true);
-         fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
+         fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true); fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
          if (currentDraftType === 'generals_2' || currentDraftType === 'classic') {
-             fill('blue-picks-1', state.bluePicks, bluePickSteps, false);
-             fill('blue-picks-2', [], [], false); 
+             fill('blue-picks-1', state.bluePicks, bluePickSteps, false); fill('blue-picks-2', [], [], false); 
              fill('red-picks-1', state.redPicks, redPickSteps, false); fill('red-picks-2', [], [], false);
          } else {
-             fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false);
-             fill('blue-picks-2', state.bluePicks.slice(5, 9), bluePickSteps.slice(5, 9), false);
-             fill('red-picks-1', state.redPicks.slice(0, 5), redPickSteps.slice(0, 5), false);
-             fill('red-picks-2', state.redPicks.slice(5, 9), redPickSteps.slice(5, 9), false);
+             fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false); fill('blue-picks-2', state.bluePicks.slice(5, 9), bluePickSteps.slice(5, 9), false);
+             fill('red-picks-1', state.redPicks.slice(0, 5), redPickSteps.slice(0, 5), false); fill('red-picks-2', state.redPicks.slice(5, 9), redPickSteps.slice(5, 9), false);
          }
     }
 </script>
