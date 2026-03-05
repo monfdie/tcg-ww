@@ -16,7 +16,8 @@
     .leave-seat { background: transparent; border: 1px solid #ff6b6b; color: #ff6b6b; }
     .leave-seat:hover { background: rgba(255, 107, 107, 0.2); }
 
-    #char-pool-container .char-option.disabled { pointer-events: none !important; opacity: 0.2; filter: grayscale(100%); }
+    /* Опасити изменена на 0.35, чтобы боксы всегда были отчетливо видны */
+    #char-pool-container .char-option.disabled { pointer-events: none !important; opacity: 0.35; filter: grayscale(100%); }
     #char-pool-container .char-option.immunity-highlight { border: 3px solid #d4af37 !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; opacity: 1 !important; filter: none !important; }
 
     .turn-timer { transition: opacity 0.3s ease; }
@@ -253,7 +254,6 @@
         updateImmunityTop(state);
         renderSlots(state);
         
-        // --- ЛОГИКА ПОДСВЕТКИ И БЛОКИРОВКИ С УЧЕТОМ БОКСОВ ---
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
         const isImmunePhase = state.immunityPhaseActive;
@@ -264,7 +264,7 @@
         document.querySelectorAll('.char-option').forEach(el => {
             el.classList.remove('disabled', 'immunity-highlight');
             if (state.draftFinished) { el.classList.add('disabled'); return; }
-            if (!state.gameStarted) return; // до старта все активно
+            if (!state.gameStarted) return; // До старта всё ярко светится!
 
             const charId = el.getAttribute('data-id');
             const side = el.id.includes('-left-') ? 'left' : (el.id.includes('-right-') ? 'right' : 'none');
@@ -284,13 +284,14 @@
                     if (state.bans.some(b => b.id === charId)) el.classList.add('disabled');
                     
                     if (isPickPhase) {
-                        if (side === 'right') el.classList.add('disabled'); // Нельзя пикать чужих
+                        // ВО ВРЕМЯ ПИКА: чужой бокс становится неактивным, но остается видимым
+                        if (side === 'right') el.classList.add('disabled'); 
                         if (!isImmuneStep && immuneChars.includes(charId)) el.classList.add('disabled');
                     } else {
+                        // ВО ВРЕМЯ БАНА: оба бокса (и left и right) полностью активны!
                         if (immuneChars.includes(charId)) el.classList.add('disabled');
                     }
                     
-                    // Уникальность пиков
                     if (state.bluePicks.includes(charId) || state.redPicks.includes(charId)) {
                         if (!immuneChars.includes(charId)) el.classList.add('disabled');
                         else {
@@ -305,7 +306,6 @@
                     }
                 }
             } else {
-                // Стандартные правила
                 if (isImmunePhase) {
                     if (immuneChars.includes(charId)) el.classList.add('immunity-highlight', 'disabled');
                     if (immunityBans.includes(charId)) el.classList.add('disabled');
@@ -329,7 +329,6 @@
         const container = document.getElementById('char-pool-container');
         container.innerHTML = '';
         
-        // Добавляем заголовки боксов, если это Абисс
         if (currentDraftType === 'abyss_box') {
             const labels = document.createElement('div');
             labels.style.position = 'relative'; labels.style.width = '100%'; labels.style.height = '15px';
@@ -385,7 +384,7 @@
     function createChar(char, side) {
         const el = document.createElement('div');
         el.className = 'char-option'; 
-        el.id = `char-${side}-${char.id}`; // Защита от дублей ID в DOM
+        el.id = `char-${side}-${char.id}`;
         el.setAttribute('data-id', char.id);
         el.innerHTML = `<img src="${char.img}">`;
         
@@ -394,7 +393,7 @@
             
             if (currentDraftType === 'abyss_box' && currentState) {
                 const isPick = currentState.currentAction.includes('pick');
-                if (isPick && side === 'right') return; // Нельзя пикать из чужого бокса
+                if (isPick && side === 'right') return; 
             }
 
             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
