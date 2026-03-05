@@ -17,7 +17,7 @@
     
     .char-option-box { width: 55px; height: 55px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; position: relative; background: #111; overflow: hidden; }
     .char-option-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.4; transition: 0.2s; }
-    .char-option-box:hover img { opacity: 0.8; }
+    .char-option-box:hover img { opacity: 0.8; transform: scale(1.05); }
     
     .char-option-box.in-box { border-color: #d4af37; box-shadow: 0 0 15px rgba(212, 175, 55, 0.5); transform: translateY(-2px); }
     .char-option-box.in-box img { opacity: 1; }
@@ -31,6 +31,14 @@
     .total-counter { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 20px; background: rgba(16, 20, 32, 0.9); border: 1px solid #2a3454; border-radius: 8px; }
     .total-text { font-size: 1.2em; color: #8da4c4; }
     .total-text span { font-size: 1.5em; font-weight: bold; color: #fff; margin-left: 10px; }
+
+    /* Сортировка */
+    .controls-panel { display: flex; justify-content: flex-end; margin-bottom: 10px; align-items: center; }
+    .sort-label { color: #8da4c4; margin-right: 10px; font-weight: bold; text-transform: uppercase; font-size: 0.9em; letter-spacing: 1px; }
+    .sort-select { background: #0b0d17; color: #4facfe; border: 1px solid #4facfe; padding: 8px 15px; border-radius: 4px; font-family: 'Segoe UI', sans-serif; cursor: pointer; outline: none; font-weight: bold; transition: 0.3s; }
+    .sort-select:hover { box-shadow: 0 0 10px rgba(79, 172, 254, 0.3); }
+
+    .tier-section-title { color: #8da4c4; font-weight: bold; font-family: 'Cinzel', serif; font-size: 1.2em; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(141, 164, 196, 0.3); }
 </style>
 
 <div class="profile-header">
@@ -49,19 +57,15 @@
     <% }) %>
 </div>
 
-<div class="char-grid">
-    <% ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => { %>
-        <div class="element-row">
-            <% if(chars[elem]) { chars[elem].forEach(char => { %>
-                <% const tier = tiers.characters[char.id] !== undefined ? tiers.characters[char.id] : 0; %>
-                <div class="char-option-box" data-id="<%= char.id %>" data-tier="<%= tier %>" onclick="toggleChar(this)">
-                    <img src="<%= char.img %>" alt="<%= char.id %>">
-                    <div class="char-tier-badge">T<%= tier %></div>
-                </div>
-            <% })} %>
-        </div>
-    <% }) %>
+<div class="controls-panel">
+    <div class="sort-label">Sort By:</div>
+    <select id="sort-select" class="sort-select" onchange="changeSort(this.value)">
+        <option value="element">Elements</option>
+        <option value="tier">Tiers</option>
+    </select>
 </div>
+
+<div id="char-grid" class="char-grid"></div>
 
 <div class="total-counter">
     <div class="total-text">Total Box Size: <span id="total-count">0 / 50</span></div>
@@ -69,41 +73,130 @@
 </div>
 
 <script>
+    const charsData = <%- JSON.stringify(chars) %>;
+    const tiersData = <%- JSON.stringify(tiers.characters) %>;
     const limits = <%- JSON.stringify(tiers.limits) %>;
-    let selectedBox = <%- JSON.stringify(user.box || []) %>;
     
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.char-option-box').forEach(el => {
-            if (selectedBox.includes(el.getAttribute('data-id'))) {
-                el.classList.add('in-box');
-            }
-        });
-        updateCounters();
+    let selectedBox = <%- JSON.stringify(user.box || []) %>;
+    let currentSort = 'element';
+    
+    // Определяем порядок элементов
+    const elementsOrder = ['cryo', 'hydro', 'pyro', 'electro', 'anemo', 'geo', 'dendro'];
+    
+    // Создаем единый плоский массив всех персонажей со вшитыми тирами и элементами
+    let allChars = [];
+    elementsOrder.forEach(elem => {
+        if(charsData[elem]) {
+            charsData[elem].forEach(c => {
+                allChars.push({
+                    id: c.id,
+                    name: c.name,
+                    img: c.img,
+                    element: elem,
+                    tier: tiersData[c.id] !== undefined ? tiersData[c.id] : 0
+                });
+            });
+        }
     });
+
+    // Функция отрисовки сетки
+    function renderGrid() {
+        const grid = document.getElementById('char-grid');
+        grid.innerHTML = '';
+
+        if (currentSort === 'element') {
+            elementsOrder.forEach(elem => {
+                const elemChars = allChars.filter(c => c.element === elem);
+                if(elemChars.length === 0) return;
+                
+                const row = document.createElement('div');
+                row.className = 'element-row';
+                
+                elemChars.forEach(c => { row.appendChild(createCharBox(c)); });
+                grid.appendChild(row);
+            });
+        } else if (currentSort === 'tier') {
+            [4, 3, 2, 1, 0].forEach(t => {
+                // Сортируем внутри тира по порядку элементов
+                const tierChars = allChars.filter(c => c.tier === t).sort((a, b) => {
+                    return elementsOrder.indexOf(a.element) - elementsOrder.indexOf(b.element);
+                });
+                
+                if(tierChars.length === 0) return;
+
+                const wrapper = document.createElement('div');
+                const title = document.createElement('div');
+                title.className = 'tier-section-title';
+                title.innerText = `Tier ${t}`;
+                
+                const row = document.createElement('div');
+                row.className = 'element-row';
+                
+                tierChars.forEach(c => { row.appendChild(createCharBox(c)); });
+                
+                wrapper.appendChild(title);
+                wrapper.appendChild(row);
+                grid.appendChild(wrapper);
+            });
+        }
+        
+        updateVisualSelection();
+    }
+
+    // Создание HTML-элемента карточки
+    function createCharBox(c) {
+        const div = document.createElement('div');
+        div.className = 'char-option-box';
+        div.setAttribute('data-id', c.id);
+        div.onclick = function() { toggleChar(this); };
+        
+        div.innerHTML = `
+            <img src="${c.img}" alt="${c.name}">
+            <div class="char-tier-badge">T${c.tier}</div>
+        `;
+        return div;
+    }
+
+    // Переключение сортировки
+    function changeSort(val) {
+        currentSort = val;
+        renderGrid();
+    }
 
     function toggleChar(element) {
         const charId = element.getAttribute('data-id');
         
         if (selectedBox.includes(charId)) {
             selectedBox = selectedBox.filter(id => id !== charId);
-            element.classList.remove('in-box');
         } else {
             selectedBox.push(charId);
-            element.classList.add('in-box');
         }
+        updateVisualSelection();
+    }
+
+    // Обновляет классы выделения и счетчики
+    function updateVisualSelection() {
+        document.querySelectorAll('.char-option-box').forEach(el => {
+            if (selectedBox.includes(el.getAttribute('data-id'))) {
+                el.classList.add('in-box');
+            } else {
+                el.classList.remove('in-box');
+            }
+        });
         updateCounters();
     }
 
     function updateCounters() {
         let counts = { "0": 0, "1": 0, "2": 0, "3": 0, "4": 0 };
         
-        document.querySelectorAll('.char-option-box.in-box').forEach(el => {
-            const tier = el.getAttribute('data-tier');
-            counts[tier]++;
+        // Считаем по сохраненному массиву (самый надежный способ)
+        selectedBox.forEach(id => {
+            const charObj = allChars.find(c => c.id === id);
+            if(charObj) counts[charObj.tier]++;
         });
 
         let allValid = true;
-        let total = 0;
+        let total = selectedBox.length;
 
         for (let i = 0; i <= 4; i++) {
             const tBox = document.getElementById(`tier-box-${i}`);
@@ -112,10 +205,8 @@
             const limit = limits[i];
             
             tCount.innerText = `${current} / ${limit}`;
-            total += current;
 
             tBox.classList.remove('count-ok', 'count-error');
-            // Если меньше или равно лимиту — всё ок
             if (current <= limit) {
                 tBox.classList.add('count-ok');
             } else {
@@ -136,7 +227,6 @@
             totalEl.style.color = '#fff';
         }
 
-        // Кнопка активна, если нет ошибок и выбран хотя бы 1 персонаж
         document.getElementById('save-box-btn').disabled = !(allValid && total > 0);
     }
 
@@ -168,6 +258,11 @@
             btn.disabled = false;
         }
     }
+
+    // Рендерим при загрузке страницы
+    document.addEventListener('DOMContentLoaded', () => {
+        renderGrid();
+    });
 </script>
 
 <%- include('../partials/footer') %>
