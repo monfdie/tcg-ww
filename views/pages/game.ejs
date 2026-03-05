@@ -16,11 +16,12 @@
     .leave-seat { background: transparent; border: 1px solid #ff6b6b; color: #ff6b6b; }
     .leave-seat:hover { background: rgba(255, 107, 107, 0.2); }
 
+    /* Опасити изменена на 0.35, чтобы боксы всегда были отчетливо видны */
     #char-pool-container .char-option.disabled { pointer-events: none !important; opacity: 0.35; filter: grayscale(100%); }
     #char-pool-container .char-option.immunity-highlight { border: 3px solid #d4af37 !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important; opacity: 1 !important; filter: none !important; }
 
     .turn-timer { transition: opacity 0.3s ease; }
-    .draft-area { display: flex; justify-content: center; gap: 60px; padding: 20px; border-radius: 12px; }
+    .draft-area { display: flex; justify-content: center; gap: 60px; }
 
     .game-header { position: relative; width: 100%; display: flex; justify-content: center; align-items: center; }
     .home-logo-link { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); z-index: 100; text-decoration: none; display: flex; align-items: center; }
@@ -31,19 +32,6 @@
     .box-label { position: absolute; top: -15px; font-size: 11px; color: #8da4c4; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
     .left-box-label { left: 40px; }
     .right-box-label { right: 40px; }
-    
-    /* Стили для кнопки загрузки картинки */
-    #download-btn {
-        background: linear-gradient(135deg, #b28dff, #ff6b6b);
-        color: #fff;
-        border: none;
-        box-shadow: 0 0 15px rgba(178, 141, 255, 0.5);
-        cursor: pointer;
-    }
-    #download-btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 25px rgba(178, 141, 255, 0.8);
-    }
 </style>
 
 <div id="game-screen">
@@ -58,7 +46,7 @@
          </div>
     </div>
 
-     <div class="draft-area" id="capture-area">
+     <div class="draft-area">
          <div id="immunity-top-display" class="immunity-top-container" style="display: none;">
              <div class="im-label">IMMUNE</div>
              <div class="im-row" id="immunity-icons-row"></div>
@@ -103,14 +91,10 @@
      <div class="controls-area" style="min-height: 40px;">
          <button id="skip-btn" class="round-btn" onclick="skipTurn()" style="display: none;">SKIP</button>
          <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled style="display: none;">SELECT</button>
-         
-         <button id="download-btn" class="round-btn" onclick="downloadResult()" style="display: none;">📸 SHARE RESULT</button>
      </div>
 
      <div class="char-pool" id="char-pool-container"></div>
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/draft-rules.js"></script>
@@ -124,7 +108,7 @@
     let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
     let charsData = {}, selectedCharId = null, currentState = null;
     let isDraftFinishedLocal = false;
-    let lastBlueBoxHash = '', lastRedBoxHash = ''; 
+    let lastBlueBoxHash = '', lastRedBoxHash = ''; // Для кэширования отрисовки
     
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
@@ -171,7 +155,7 @@
 
         socket.on('update_state', updateUI);
         socket.on('game_started', () => { isGameStarted = true; });
-        socket.on('game_over', (state) => { updateUI(state); });
+        socket.on('game_over', (state) => { updateUI(state); alert("Draft is complete and saved!"); });
         socket.on('error_msg', (msg) => { alert(msg); });
         
         socket.on('timer_tick', (data) => {
@@ -182,43 +166,6 @@
                  document.getElementById('blue-res').innerText = formatTime(data.blueReserve);
                  document.getElementById('red-res').innerText = formatTime(data.redReserve);
             }
-        });
-    }
-
-    // --- ФУНКЦИЯ СОЗДАНИЯ СКРИНШОТА ---
-    function downloadResult() {
-        const btn = document.getElementById('download-btn');
-        btn.innerText = '📸 Generating...';
-        btn.disabled = true;
-
-        const captureTarget = document.getElementById('capture-area');
-        
-        // Временно задаем темный фон зоне пиков для красивой картинки
-        const originalBackground = captureTarget.style.background;
-        captureTarget.style.background = '#0b0d17';
-
-        html2canvas(captureTarget, {
-            scale: 2, // Высокое разрешение
-            useCORS: true, // Позволяет загружать аватарки из Discord
-            allowTaint: true,
-            backgroundColor: '#0b0d17'
-        }).then(canvas => {
-            // Возвращаем фон как было
-            captureTarget.style.background = originalBackground;
-
-            const link = document.createElement('a');
-            link.download = `GITCG_Draft_${currentRoom}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-
-            btn.innerText = '📸 SHARE RESULT';
-            btn.disabled = false;
-        }).catch(err => {
-            console.error('Screenshot error:', err);
-            alert('Error generating image. Wait a moment and try again.');
-            captureTarget.style.background = originalBackground;
-            btn.innerText = '📸 SHARE RESULT';
-            btn.disabled = false;
         });
     }
 
@@ -235,6 +182,7 @@
         isDraftFinishedLocal = state.draftFinished;
         const isMyTurn = (myRole === state.currentTeam);
 
+        // Перерисовка сетки, если изменились боксы в режиме abyss
         if (state.draftType === 'abyss_box') {
             const currentBlueHash = (state.blueBox || []).join(',');
             const currentRedHash = (state.redBox || []).join(',');
@@ -270,9 +218,6 @@
         
         const confirmBtn = document.getElementById('confirm-btn');
         const skipBtn = document.getElementById('skip-btn');
-        const downloadBtn = document.getElementById('download-btn');
-
-        // Отображение кнопок действий
         if (state.gameStarted && !state.draftFinished && !savedData && isMyTurn) {
             confirmBtn.style.display = 'inline-block';
             if (state.immunityPhaseActive) {
@@ -281,13 +226,6 @@
             } else skipBtn.style.display = 'none';
         } else {
             confirmBtn.style.display = 'none'; skipBtn.style.display = 'none';
-        }
-
-        // Показываем кнопку скриншота, если игра окончена
-        if (state.draftFinished || savedData) {
-            downloadBtn.style.display = 'inline-block';
-        } else {
-            downloadBtn.style.display = 'none';
         }
 
         document.getElementById('blue-ready-switch').style.display = (state.gameStarted || !state.isBlueTaken) ? 'none' : 'flex';
@@ -326,7 +264,7 @@
         document.querySelectorAll('.char-option').forEach(el => {
             el.classList.remove('disabled', 'immunity-highlight');
             if (state.draftFinished) { el.classList.add('disabled'); return; }
-            if (!state.gameStarted) return; 
+            if (!state.gameStarted) return; // До старта всё ярко светится!
 
             const charId = el.getAttribute('data-id');
             const side = el.id.includes('-left-') ? 'left' : (el.id.includes('-right-') ? 'right' : 'none');
@@ -346,9 +284,11 @@
                     if (state.bans.some(b => b.id === charId)) el.classList.add('disabled');
                     
                     if (isPickPhase) {
+                        // ВО ВРЕМЯ ПИКА: чужой бокс становится неактивным, но остается видимым
                         if (side === 'right') el.classList.add('disabled'); 
                         if (!isImmuneStep && immuneChars.includes(charId)) el.classList.add('disabled');
                     } else {
+                        // ВО ВРЕМЯ БАНА: оба бокса (и left и right) полностью активны!
                         if (immuneChars.includes(charId)) el.classList.add('disabled');
                     }
                     
