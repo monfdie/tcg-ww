@@ -1,5 +1,3 @@
-// public/draft-rules.js
-
 const DRAFT_RULES = {
     'gitcg': [
         { team: 'blue', type: 'ban' }, { team: 'blue', type: 'ban' },
@@ -30,27 +28,16 @@ const DRAFT_RULES = {
         { team: 'red', type: 'pick' }, { team: 'blue', type: 'pick' },     
         { team: 'blue', type: 'pick' }, { team: 'red', type: 'pick' }       
     ],
-    // Generals 2 (бывший Heavy Ban)
-    // 6 Банов, 3 Пика
     'generals_2': [
-        { team: 'blue', type: 'ban' },
-        { team: 'red', type: 'ban' },
-        { team: 'blue', type: 'ban' },
-        { team: 'blue', type: 'ban' },
-        { team: 'red', type: 'ban' },
-        { team: 'red', type: 'ban' },
-        { team: 'blue', type: 'ban' },
-        { team: 'blue', type: 'pick' },
-        { team: 'red', type: 'ban' },
-        { team: 'red', type: 'ban' },
-        { team: 'red', type: 'pick' },
-        { team: 'blue', type: 'ban' },
-        { team: 'blue', type: 'ban' },
-        { team: 'blue', type: 'pick' },
-        { team: 'red', type: 'ban' },
-        { team: 'red', type: 'pick' },
-        { team: 'red', type: 'pick' },
-        { team: 'blue', type: 'pick' }
+        { team: 'blue', type: 'ban' }, { team: 'red', type: 'ban' },
+        { team: 'blue', type: 'ban' }, { team: 'blue', type: 'ban' },
+        { team: 'red', type: 'ban' }, { team: 'red', type: 'ban' },
+        { team: 'blue', type: 'ban' }, { team: 'blue', type: 'pick' },
+        { team: 'red', type: 'ban' }, { team: 'red', type: 'ban' },
+        { team: 'red', type: 'pick' }, { team: 'blue', type: 'ban' },
+        { team: 'blue', type: 'ban' }, { team: 'blue', type: 'pick' },
+        { team: 'red', type: 'ban' }, { team: 'red', type: 'pick' },
+        { team: 'red', type: 'pick' }, { team: 'blue', type: 'pick' }
     ]
 };
 
@@ -61,6 +48,9 @@ gitcg2[14].immunity = true;
 gitcg2[25].immunity = true; 
 gitcg2[27].immunity = true;
 DRAFT_RULES['gitcg_cup_2'] = gitcg2;
+
+// --- НОВЫЙ РЕЖИМ (ABYSS BOX) ИСПОЛЬЗУЕТ ТЕ ЖЕ ПРАВИЛА ---
+DRAFT_RULES['abyss_box'] = gitcg2;
 
 const IMMUNITY_ORDER = [
     { team: 'blue', type: 'immunity_ban' },
