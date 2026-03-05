@@ -1,0 +1,135 @@
+<%- include('../partials/header') %>
+
+<style>
+    .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3c4566; padding-bottom: 20px; margin-bottom: 20px; }
+    
+    .limits-panel { display: flex; gap: 15px; flex-wrap: wrap; background: rgba(16, 20, 32, 0.8); padding: 20px; border-radius: 8px; border: 1px solid #2a3454; margin-bottom: 20px; align-items: center; }
+    .limit-box { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .limit-box label { color: #8da4c4; font-weight: bold; font-size: 0.9em; text-transform: uppercase; }
+    .limit-box input { width: 60px; text-align: center; background: #0b0d17; border: 1px solid #4facfe; color: #fff; font-family: 'Cinzel', serif; font-size: 1.2em; padding: 5px; border-radius: 4px; }
+
+    .char-grid { background: rgba(16, 20, 32, 0.6); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .element-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; }
+    
+    .char-box { width: 65px; height: 65px; border-radius: 8px; cursor: pointer; border: 2px solid #8da4c4; position: relative; background: #111; transition: 0.2s; overflow: hidden; user-select: none; }
+    .char-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: 0.2s; }
+    .char-box:hover img { opacity: 1; transform: scale(1.1); }
+    
+    .tier-badge { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.8); color: #fff; font-size: 12px; padding: 2px 6px; border-top-left-radius: 6px; font-weight: bold; font-family: 'Segoe UI', sans-serif; pointer-events: none; }
+
+    /* Цвета для разных тиров */
+    .tier-4 { border-color: #d4af37 !important; box-shadow: 0 0 10px rgba(212, 175, 55, 0.5); }
+    .tier-4 .tier-badge { color: #d4af37; }
+    
+    .tier-3 { border-color: #b28dff !important; box-shadow: 0 0 10px rgba(178, 141, 255, 0.5); }
+    .tier-3 .tier-badge { color: #b28dff; }
+    
+    .tier-2 { border-color: #4facfe !important; box-shadow: 0 0 10px rgba(79, 172, 254, 0.5); }
+    .tier-2 .tier-badge { color: #4facfe; }
+    
+    .tier-1 { border-color: #50b36b !important; box-shadow: 0 0 10px rgba(80, 179, 107, 0.5); }
+    .tier-1 .tier-badge { color: #50b36b; }
+    
+    .tier-0 { border-color: #333 !important; }
+    .tier-0 .tier-badge { color: #888; }
+
+    .save-btn { padding: 12px 30px; font-size: 1.1em; background: #28a745; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; text-transform: uppercase; }
+    .save-btn:hover { background: #34d058; box-shadow: 0 0 15px rgba(40, 167, 69, 0.5); transform: translateY(-2px); }
+</style>
+
+<div class="page-container" style="max-width: 1000px;">
+    <div class="admin-header">
+        <h1 style="color: #fff; margin: 0; font-family: 'Cinzel', serif;">Manage Tiers</h1>
+        <button class="save-btn" id="save-tiers-btn" onclick="saveTiers()">💾 Save Changes</button>
+    </div>
+
+    <div class="limits-panel">
+        <h3 style="color: #fff; margin: 0 20px 0 0;">Box Limits:</h3>
+        <% [4, 3, 2, 1, 0].forEach(tier => { %>
+            <div class="limit-box">
+                <label>Tier <%= tier %></label>
+                <input type="number" id="limit-<%= tier %>" value="<%= tiers.limits[tier] !== undefined ? tiers.limits[tier] : 0 %>" min="0" max="50">
+            </div>
+        <% }) %>
+        <div style="color: #8da4c4; font-size: 0.8em; margin-left: auto;">* Max characters allowed per tier in user's box</div>
+    </div>
+
+    <div style="color: #8da4c4; margin-bottom: 10px;">Click on a character to change their tier (0 ➔ 1 ➔ 2 ➔ 3 ➔ 4 ➔ 0).</div>
+
+    <div class="char-grid">
+        <% ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => { %>
+            <div class="element-row">
+                <% if(chars[elem]) { chars[elem].forEach(char => { %>
+                    <% const t = tiers.characters[char.id] !== undefined ? tiers.characters[char.id] : 0; %>
+                    <div class="char-box tier-<%= t %>" data-id="<%= char.id %>" data-tier="<%= t %>" onclick="cycleTier(this)">
+                        <img src="<%= char.img %>" alt="<%= char.id %>">
+                        <div class="tier-badge">T<span class="t-val"><%= t %></span></div>
+                    </div>
+                <% })} %>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+<script>
+    // Функция переключения тира по клику
+    function cycleTier(element) {
+        let currentTier = parseInt(element.getAttribute('data-tier'));
+        let nextTier = currentTier + 1;
+        if (nextTier > 4) nextTier = 0; // Сбрасываем после 4
+        
+        // Обновляем данные и интерфейс
+        element.setAttribute('data-tier', nextTier);
+        element.querySelector('.t-val').innerText = nextTier;
+        
+        // Обновляем классы цветов
+        element.className = `char-box tier-${nextTier}`;
+    }
+
+    async function saveTiers() {
+        const btn = document.getElementById('save-tiers-btn');
+        btn.innerText = 'Saving...';
+        btn.disabled = true;
+
+        // Собираем лимиты
+        const limits = {
+            "4": parseInt(document.getElementById('limit-4').value) || 0,
+            "3": parseInt(document.getElementById('limit-3').value) || 0,
+            "2": parseInt(document.getElementById('limit-2').value) || 0,
+            "1": parseInt(document.getElementById('limit-1').value) || 0,
+            "0": parseInt(document.getElementById('limit-0').value) || 0
+        };
+
+        // Собираем персонажей (сохраняем только тех, кто не Т0, для экономии места)
+        const characters = {};
+        document.querySelectorAll('.char-box').forEach(el => {
+            const id = el.getAttribute('data-id');
+            const tier = parseInt(el.getAttribute('data-tier'));
+            if (tier > 0) {
+                characters[id] = tier;
+            }
+        });
+
+        try {
+            const res = await fetch('/admin/tiers/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limits, characters })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Tiers successfully updated!');
+            } else {
+                alert('Error saving tiers.');
+            }
+        } catch(e) {
+            console.error(e);
+            alert('Server connection error.');
+        } finally {
+            btn.innerText = '💾 Save Changes';
+            btn.disabled = false;
+        }
+    }
+</script>
+
+<%- include('../partials/footer') %>
