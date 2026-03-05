@@ -1,81 +1,113 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* Шапка профиля */
-    .profile-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: rgba(16, 20, 32, 0.8); padding: 15px 25px; border: 1px solid #2a3454; border-radius: 8px; }
+    .profile-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: rgba(16, 20, 32, 0.8); padding: 15px 25px; border: 1px solid #2a3454; border-radius: 8px; }
     .profile-title-container { display: flex; align-items: center; gap: 15px; }
     .profile-title { font-family: 'Cinzel', serif; font-size: 1.8em; color: #fff; margin: 0; text-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
     
-    /* Кнопка-шестеренка для режима редактирования */
-    .edit-gear-btn { background: transparent; border: none; font-size: 1.5em; cursor: pointer; transition: 0.3s; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); outline: none; padding: 0; }
-    .edit-gear-btn:hover { transform: rotate(90deg) scale(1.1); filter: drop-shadow(0 0 10px #4facfe); }
-    .edit-gear-btn.active { filter: drop-shadow(0 0 15px #d4af37); color: #d4af37; }
+    /* Иконка-кнопка настроек */
+    .edit-gear-btn { background: transparent; border: none; cursor: pointer; transition: 0.3s; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); outline: none; padding: 0; display: flex; align-items: center; justify-content: center; color: #fff; }
+    .edit-gear-btn svg { width: 28px; height: 28px; transition: 0.3s; }
+    .edit-gear-btn:hover svg { transform: rotate(90deg) scale(1.1); filter: drop-shadow(0 0 10px #4facfe); color: #4facfe; }
+    .edit-gear-btn.active svg { filter: drop-shadow(0 0 15px #d4af37); color: #d4af37; }
 
-    /* Переключатель сортировки */
-    .sort-wrapper { display: flex; align-items: center; gap: 10px; }
-    .sort-label { color: #8da4c4; font-weight: bold; text-transform: uppercase; font-size: 0.85em; letter-spacing: 1px; }
-    .sort-select { background: #0b0d17; color: #4facfe; border: 1px solid #4facfe; padding: 6px 12px; border-radius: 4px; font-family: 'Segoe UI', sans-serif; cursor: pointer; outline: none; font-weight: bold; transition: 0.3s; }
-    .sort-select:hover { box-shadow: 0 0 10px rgba(79, 172, 254, 0.3); }
+    /* ВКЛАДКИ БОКСОВ */
+    .box-tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #2a3454; padding-bottom: 5px; overflow-x: auto; }
+    .box-tab { background: transparent; color: #8da4c4; border: none; padding: 8px 20px; font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer; transition: 0.2s; border-radius: 4px 4px 0 0; font-size: 1.1em; letter-spacing: 1px; }
+    .box-tab:hover { background: rgba(79,172,254,0.1); color: #fff; }
+    .box-tab.active { background: #2a3454; color: #4facfe; border-bottom: 3px solid #4facfe; }
+    .box-tab.add-btn { color: #50b36b; }
 
-    /* Панель редактирования (с окошками) */
+    /* ПАНЕЛЬ ФИЛЬТРОВ КНОПКАМИ */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; background: rgba(16, 20, 32, 0.6); padding: 15px; border-radius: 8px; border: 1px solid #2a3454; }
+    .filter-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .filter-group-label { color: #8da4c4; font-weight: bold; font-size: 0.8em; text-transform: uppercase; margin-right: 5px; }
+    
+    .f-btn { background: #161c30; border: 1px solid #3c4566; color: #8da4c4; padding: 6px 12px; border-radius: 20px; cursor: pointer; transition: 0.2s; font-weight: bold; font-size: 0.85em; letter-spacing: 1px; }
+    .f-btn:hover { background: #2a3454; color: #fff; }
+    .f-btn.active { background: #4facfe; color: #000; border-color: #4facfe; box-shadow: 0 0 10px rgba(79,172,254,0.5); }
+    
+    /* Цвета стихий для кнопок */
+    .f-btn[data-val="cryo"] { color: #99ffff; } .f-btn[data-val="hydro"] { color: #4facfe; } .f-btn[data-val="pyro"] { color: #ff6b6b; }
+    .f-btn[data-val="electro"] { color: #b28dff; } .f-btn[data-val="anemo"] { color: #50b3b3; } .f-btn[data-val="geo"] { color: #d4af37; } .f-btn[data-val="dendro"] { color: #50b36b; }
+    .f-btn.active { color: #000 !important; }
+
+    /* Панель редактирования */
     .edit-panel { display: none; flex-direction: column; gap: 15px; margin-bottom: 20px; background: rgba(16, 20, 32, 0.9); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-    
     .tiers-panel { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-    .tier-box { background: rgba(10, 12, 20, 0.9); border: 1px solid #3c4566; padding: 10px 20px; border-radius: 8px; text-align: center; min-width: 90px; transition: 0.3s; }
-    .tier-box h3 { margin: 0 0 5px 0; font-size: 0.8em; color: #8da4c4; text-transform: uppercase; letter-spacing: 1px; }
+    .tier-box { background: rgba(10, 12, 20, 0.9); border: 1px solid #3c4566; padding: 10px 20px; border-radius: 8px; text-align: center; min-width: 90px; }
+    .tier-box h3 { margin: 0 0 5px 0; font-size: 0.8em; color: #8da4c4; text-transform: uppercase; }
     .tier-count { font-size: 1.5em; font-weight: bold; font-family: 'Cinzel', serif; color: #fff; }
-    
-    .count-ok { color: #50b36b !important; text-shadow: 0 0 10px rgba(80, 179, 107, 0.5); border-color: #50b36b; }
-    .count-error { color: #ff6b6b !important; text-shadow: 0 0 10px rgba(255, 107, 107, 0.5); border-color: #ff6b6b; }
+    .count-ok { color: #50b36b !important; border-color: #50b36b; } .count-error { color: #ff6b6b !important; border-color: #ff6b6b; }
 
     .controls-panel { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #3c4566; padding-top: 15px; margin-top: 5px; }
-    .total-counter { font-size: 1.1em; color: #8da4c4; }
-    .total-counter span { font-size: 1.4em; font-weight: bold; color: #fff; margin-left: 8px; }
+    .total-counter { font-size: 1.1em; color: #8da4c4; } .total-counter span { font-size: 1.4em; font-weight: bold; color: #fff; margin-left: 8px; }
 
-    /* Новая красивая кнопка Save */
-    .save-btn { padding: 10px 30px; font-size: 1em; background: linear-gradient(135deg, #4facfe, #00f2fe); color: #000; border: none; border-radius: 25px; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-weight: bold; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
+    .save-btn { padding: 10px 30px; font-size: 1em; background: linear-gradient(135deg, #4facfe, #00f2fe); color: #000; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; transition: 0.3s; text-transform: uppercase; box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
     .save-btn:disabled { background: #444; color: #888; box-shadow: none; cursor: not-allowed; }
     .save-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(79, 172, 254, 0.8); }
+    .delete-btn { background: transparent; border: 1px solid #ff4444; color: #ff4444; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+    .delete-btn:hover { background: rgba(255,68,68,0.2); }
 
-    /* СЕТКА ПЕРСОНАЖЕЙ: Сплошной поток (flex-wrap), без разделения на ряды */
+    /* СЕТКА ПЕРСОНАЖЕЙ (БЕЗ ЗОЛОТЫХ РАМОК) */
     .char-grid { background: rgba(16, 20, 32, 0.6); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-content: flex-start; min-height: 200px; }
     
-    .char-option-box { width: 62px; height: 62px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; position: relative; background: #111; overflow: hidden; }
+    .char-option-box { width: 65px; height: 65px; border-radius: 8px; cursor: pointer; border: none; transition: 0.2s; position: relative; background: #111; overflow: hidden; }
     .char-option-box img { width: 100%; height: 100%; object-fit: cover; opacity: 1; transition: 0.2s; }
     
-    /* Режим просмотра: курсор обычный, все персонажи яркие */
-    .char-grid:not(.edit-mode-active) .char-option-box { cursor: default; border-color: #d4af37; box-shadow: 0 0 12px rgba(212, 175, 55, 0.3); }
+    /* В режиме просмотра просто показываем выбранных (опасити 1) */
+    .char-grid:not(.edit-mode-active) .char-option-box { cursor: default; }
 
-    /* Режим редактирования: невыбранные становятся полупрозрачными */
+    /* В режиме редактирования: тусклые невыбранные, яркие с галочкой выбранные */
     .edit-mode-active .char-option-box img { opacity: 0.3; }
     .edit-mode-active .char-option-box:hover img { opacity: 0.8; transform: scale(1.05); }
-    
-    /* Выделенные персонажи в режиме редактирования */
-    .char-option-box.in-box { border-color: #d4af37; box-shadow: 0 0 12px rgba(212, 175, 55, 0.6); transform: translateY(-2px); }
     .edit-mode-active .char-option-box.in-box img { opacity: 1 !important; }
-
-    /* Заголовки при сортировке по тирам */
-    .tier-section-title { width: 100%; color: #8da4c4; font-weight: bold; font-family: 'Cinzel', serif; font-size: 1.2em; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(141, 164, 196, 0.3); border-bottom: 1px solid rgba(60, 69, 102, 0.5); padding-bottom: 5px; text-align: left; }
+    
+    /* Зеленая галочка вместо золотой рамки */
+    .edit-mode-active .char-option-box.in-box::after { content: '✔'; position: absolute; top: 4px; left: 4px; background: #50b36b; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 5px rgba(0,0,0,0.8); font-family: sans-serif; pointer-events: none; }
 </style>
 
 <div class="page-container">
+    
+    <div class="box-tabs" id="box-tabs">
+        </div>
+
     <div class="profile-header">
         <div class="profile-title-container">
-            <h1 class="profile-title">My Abyss Box</h1>
-            <button id="gear-btn" class="edit-gear-btn" onclick="toggleEditMode()" title="Edit Box">⚙️</button>
+            <h1 class="profile-title" id="current-box-title">My Abyss Box</h1>
+            <button id="gear-btn" class="edit-gear-btn" onclick="toggleEditMode()" title="Edit Box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
         </div>
-        <div class="sort-wrapper">
-            <span class="sort-label">Sort By:</span>
-            <select id="sort-select" class="sort-select" onchange="changeSort(this.value)">
-                <option value="element">Elements</option>
-                <option value="tier">Tiers</option>
-            </select>
+    </div>
+
+    <div class="filter-bar">
+        <div class="filter-group">
+            <span class="filter-group-label">Elements:</span>
+            <button class="f-btn elem-btn active" data-val="all">ALL</button>
+            <button class="f-btn elem-btn" data-val="cryo">❄️ CRYO</button>
+            <button class="f-btn elem-btn" data-val="hydro">💧 HYDRO</button>
+            <button class="f-btn elem-btn" data-val="pyro">🔥 PYRO</button>
+            <button class="f-btn elem-btn" data-val="electro">⚡ ELEC</button>
+            <button class="f-btn elem-btn" data-val="anemo">🌪️ ANEMO</button>
+            <button class="f-btn elem-btn" data-val="geo">🪨 GEO</button>
+            <button class="f-btn elem-btn" data-val="dendro">🌿 DENDRO</button>
+        </div>
+        <div class="filter-group" style="margin-left: 20px;">
+            <span class="filter-group-label">Tiers:</span>
+            <button class="f-btn tier-btn active" data-val="all">ALL T</button>
+            <button class="f-btn tier-btn" data-val="4">T4</button>
+            <button class="f-btn tier-btn" data-val="3">T3</button>
+            <button class="f-btn tier-btn" data-val="2">T2</button>
+            <button class="f-btn tier-btn" data-val="1">T1</button>
+            <button class="f-btn tier-btn" data-val="0">T0</button>
         </div>
     </div>
 
     <div id="edit-panel" class="edit-panel">
-        <div style="color: #8da4c4; font-size: 0.9em; text-align: center; margin-bottom: 5px;">Select characters to fill your box. Save when ready.</div>
-        
         <div class="tiers-panel">
             <% [4, 3, 2, 1, 0].forEach(tier => { %>
                 <div class="tier-box" id="tier-box-<%= tier %>">
@@ -87,7 +119,10 @@
 
         <div class="controls-panel">
             <div class="total-counter">Total Size: <span id="total-count">0 / 0</span></div>
-            <button id="save-box-btn" class="save-btn" disabled onclick="saveBox()">Save Box</button>
+            <div>
+                <button class="delete-btn" onclick="deleteCurrentBox()" style="margin-right: 15px;">🗑️ Delete Box</button>
+                <button id="save-box-btn" class="save-btn" disabled onclick="saveBox()">Save Profile</button>
+            </div>
         </div>
     </div>
 
@@ -99,92 +134,129 @@
     const tiersData = <%- JSON.stringify(tiers.characters) %>;
     const limits = <%- JSON.stringify(tiers.limits) %>;
     
-    let selectedBox = <%- JSON.stringify(user.box || []) %>;
-    let currentSort = 'element';
+    let boxes = <%- JSON.stringify(user.boxes) %>;
+    if (!boxes || boxes.length === 0) boxes = [{ name: 'Box 1', characters: [] }];
+    let activeBoxIndex = <%- user.activeBoxIndex || 0 %>;
+    if (activeBoxIndex >= boxes.length) activeBoxIndex = 0;
+    
+    let selectedBox = [...boxes[activeBoxIndex].characters];
     let isEditMode = false;
+    let elemFilter = 'all';
+    let tierFilter = 'all';
     
-    // Динамический подсчет максимального размера бокса из базы тиров
     const maxBoxSize = Object.values(limits).reduce((sum, val) => sum + parseInt(val || 0), 0);
-    
     const elementsOrder = ['cryo', 'hydro', 'pyro', 'electro', 'anemo', 'geo', 'dendro'];
     
-    // Создаем единый массив
     let allChars = [];
     elementsOrder.forEach(elem => {
         if(charsData[elem]) {
             charsData[elem].forEach(c => {
-                allChars.push({
-                    id: c.id, name: c.name, img: c.img, element: elem,
-                    tier: tiersData[c.id] !== undefined ? tiersData[c.id] : 0
-                });
+                allChars.push({ id: c.id, name: c.name, img: c.img, element: elem, tier: tiersData[c.id] !== undefined ? tiersData[c.id] : 0 });
             });
         }
     });
 
-    // Переключение режима редактирования (Шестеренка)
+    // --- ЛОГИКА ВКЛАДОК ---
+    function renderTabs() {
+        const container = document.getElementById('box-tabs');
+        container.innerHTML = '';
+        boxes.forEach((box, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'box-tab ' + (i === activeBoxIndex ? 'active' : '');
+            btn.innerText = box.name;
+            btn.onclick = () => switchBox(i);
+            container.appendChild(btn);
+        });
+        if (boxes.length < 5) {
+            const addBtn = document.createElement('button');
+            addBtn.className = 'box-tab add-btn';
+            addBtn.innerText = '+ Add Box';
+            addBtn.onclick = () => addBox();
+            container.appendChild(addBtn);
+        }
+        document.getElementById('current-box-title').innerText = boxes[activeBoxIndex].name;
+    }
+
+    function switchBox(index) {
+        if (isEditMode) toggleEditMode(); // Выходим из редактирования при смене
+        boxes[activeBoxIndex].characters = [...selectedBox]; // сохраняем текущий в массив
+        activeBoxIndex = index;
+        selectedBox = [...boxes[activeBoxIndex].characters];
+        renderTabs();
+        renderGrid();
+    }
+
+    function addBox() {
+        boxes.push({ name: 'Box ' + (boxes.length + 1), characters: [] });
+        switchBox(boxes.length - 1);
+        toggleEditMode(); // Сразу открываем редактирование нового бокса
+    }
+
+    function deleteCurrentBox() {
+        if (boxes.length <= 1) return alert("You must have at least one box!");
+        if (confirm("Are you sure you want to delete this box entirely?")) {
+            boxes.splice(activeBoxIndex, 1);
+            switchBox(0);
+            saveBoxData(); // Авто-сохраняем удаление в БД
+        }
+    }
+
+    // --- ЛОГИКА ФИЛЬТРОВ ---
+    document.querySelectorAll('.elem-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.elem-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            elemFilter = btn.getAttribute('data-val');
+            renderGrid();
+        };
+    });
+    document.querySelectorAll('.tier-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            tierFilter = btn.getAttribute('data-val');
+            renderGrid();
+        };
+    });
+
+    // --- ЛОГИКА РЕДАКТИРОВАНИЯ ---
     function toggleEditMode() {
         isEditMode = !isEditMode;
-        
         const btn = document.getElementById('gear-btn');
         const panel = document.getElementById('edit-panel');
         const grid = document.getElementById('char-grid');
         
         if (isEditMode) {
-            btn.classList.add('active');
-            panel.style.display = 'flex';
-            grid.classList.add('edit-mode-active');
+            btn.classList.add('active'); panel.style.display = 'flex'; grid.classList.add('edit-mode-active');
         } else {
-            btn.classList.remove('active');
-            panel.style.display = 'none';
-            grid.classList.remove('edit-mode-active');
-            
-            // Если выходим без сохранения, возвращаем сохраненный в БД бокс
-            selectedBox = <%- JSON.stringify(user.box || []) %>;
+            btn.classList.remove('active'); panel.style.display = 'none'; grid.classList.remove('edit-mode-active');
+            selectedBox = [...boxes[activeBoxIndex].characters]; // Откат если не сохранили
         }
-        
         renderGrid();
     }
 
-    // Смена сортировки
-    function changeSort(val) {
-        currentSort = val;
-        renderGrid();
-    }
-
-    // Отрисовка сплошной сетки
     function renderGrid() {
         const grid = document.getElementById('char-grid');
         grid.innerHTML = '';
 
-        let charsToRender = allChars;
+        // Применяем фильтры
+        let visibleChars = allChars.filter(c => {
+            if (elemFilter !== 'all' && c.element !== elemFilter) return false;
+            if (tierFilter !== 'all' && c.tier !== parseInt(tierFilter)) return false;
+            return true;
+        });
 
-        // Если не режим редактирования, показываем ТОЛЬКО выбранных персонажей
+        // Если режим просмотра - показываем только тех, кто в боксе
         if (!isEditMode) {
-            charsToRender = allChars.filter(c => selectedBox.includes(c.id));
-            if (charsToRender.length === 0) {
-                grid.innerHTML = '<div style="width:100%; text-align:center; color:#8da4c4; padding: 40px; font-family:\'Cinzel\', serif; font-size:1.2em;">Your box is empty. Click the gear icon ⚙️ to assemble your team.</div>';
+            visibleChars = visibleChars.filter(c => selectedBox.includes(c.id));
+            if (visibleChars.length === 0) {
+                grid.innerHTML = '<div style="width:100%; text-align:center; color:#8da4c4; padding: 40px; font-family:\'Cinzel\', serif;">Box is empty or no characters match filters.</div>';
                 return;
             }
         }
 
-        if (currentSort === 'element') {
-            charsToRender.sort((a, b) => elementsOrder.indexOf(a.element) - elementsOrder.indexOf(b.element));
-            // Сплошной поток без заголовков
-            charsToRender.forEach(c => grid.appendChild(createCharBox(c)));
-        } else if (currentSort === 'tier') {
-            [4, 3, 2, 1, 0].forEach(t => {
-                const tierChars = charsToRender.filter(c => c.tier === t).sort((a, b) => elementsOrder.indexOf(a.element) - elementsOrder.indexOf(b.element));
-                if(tierChars.length === 0) return;
-
-                // Заголовок тира (он сломает сплошной поток и начнет с новой строки)
-                const title = document.createElement('div');
-                title.className = 'tier-section-title';
-                title.innerText = `Tier ${t}`;
-                grid.appendChild(title);
-                
-                tierChars.forEach(c => grid.appendChild(createCharBox(c)));
-            });
-        }
+        visibleChars.sort((a, b) => elementsOrder.indexOf(a.element) - elementsOrder.indexOf(b.element));
+        visibleChars.forEach(c => grid.appendChild(createCharBox(c)));
         
         updateVisualSelection();
     }
@@ -193,22 +265,14 @@
         const div = document.createElement('div');
         div.className = 'char-option-box';
         div.setAttribute('data-id', c.id);
-        
-        div.onclick = function() { 
-            if (isEditMode) toggleChar(this, c.id); 
-        };
-        
-        // Значок T0 убран, только портрет
-        div.innerHTML = `<img src="${c.img}" alt="${c.name}" title="${c.name}">`;
+        div.onclick = function() { if (isEditMode) toggleChar(this, c.id); };
+        div.innerHTML = `<img src="${c.img}" alt="${c.name}" title="${c.name} (T${c.tier})">`;
         return div;
     }
 
     function toggleChar(element, charId) {
-        if (selectedBox.includes(charId)) {
-            selectedBox = selectedBox.filter(id => id !== charId);
-        } else {
-            selectedBox.push(charId);
-        }
+        if (selectedBox.includes(charId)) selectedBox = selectedBox.filter(id => id !== charId);
+        else selectedBox.push(charId);
         updateVisualSelection();
     }
 
@@ -222,76 +286,51 @@
 
     function updateCounters() {
         let counts = { "0": 0, "1": 0, "2": 0, "3": 0, "4": 0 };
-        
-        selectedBox.forEach(id => {
-            const charObj = allChars.find(c => c.id === id);
-            if(charObj) counts[charObj.tier]++;
-        });
+        selectedBox.forEach(id => { const charObj = allChars.find(c => c.id === id); if(charObj) counts[charObj.tier]++; });
 
-        let allValid = true;
-        let total = selectedBox.length;
+        let allValid = true; let total = selectedBox.length;
 
         for (let i = 0; i <= 4; i++) {
-            const tBox = document.getElementById(`tier-box-${i}`);
-            const tCount = document.getElementById(`count-t${i}`);
-            const current = counts[i];
-            const limit = limits[i] || 0;
-            
+            const tBox = document.getElementById(`tier-box-${i}`); const tCount = document.getElementById(`count-t${i}`);
+            const current = counts[i]; const limit = limits[i] || 0;
             if (tCount) tCount.innerText = `${current} / ${limit}`;
-
             if (tBox) {
                 tBox.classList.remove('count-ok', 'count-error');
-                if (current <= limit) tBox.classList.add('count-ok');
-                else { tBox.classList.add('count-error'); allValid = false; }
+                if (current <= limit) tBox.classList.add('count-ok'); else { tBox.classList.add('count-error'); allValid = false; }
             }
         }
 
         const totalEl = document.getElementById('total-count');
         if (totalEl) {
             totalEl.innerText = `${total} / ${maxBoxSize}`;
-            if (total > 0 && total <= maxBoxSize) totalEl.style.color = '#50b36b';
-            else if (total > maxBoxSize) { totalEl.style.color = '#ff6b6b'; allValid = false; }
-            else totalEl.style.color = '#fff';
+            if (total > 0 && total <= maxBoxSize) totalEl.style.color = '#50b36b'; else if (total > maxBoxSize) { totalEl.style.color = '#ff6b6b'; allValid = false; } else totalEl.style.color = '#fff';
         }
-
         const btn = document.getElementById('save-box-btn');
         if (btn) btn.disabled = !(allValid && total > 0);
     }
 
+    async function saveBoxData() {
+        boxes[activeBoxIndex].characters = [...selectedBox];
+        try {
+            const res = await fetch('/profile/save-box', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boxes: boxes, activeBoxIndex: activeBoxIndex }) });
+            return await res.json();
+        } catch(e) { console.error(e); return {success: false}; }
+    }
+
     async function saveBox() {
         const btn = document.getElementById('save-box-btn');
-        btn.innerText = 'Saving...';
-        btn.disabled = true;
-
-        try {
-            const res = await fetch('/profile/save-box', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ box: selectedBox })
-            });
-            const data = await res.json();
-            if (data.success) {
-                // При успешном сохранении выходим из режима редактирования
-                toggleEditMode();
-                alert('Box successfully saved!');
-                btn.innerText = 'Save Box';
-                btn.disabled = false;
-            } else {
-                alert('Error saving box.');
-                btn.innerText = 'Save Box';
-                btn.disabled = false;
-            }
-        } catch(e) {
-            console.error(e);
-            alert('Server connection error.');
-            btn.innerText = 'Save Box';
-            btn.disabled = false;
+        btn.innerText = 'Saving...'; btn.disabled = true;
+        const data = await saveBoxData();
+        if (data.success) {
+            toggleEditMode();
+            btn.innerText = 'Save Profile'; btn.disabled = false;
+        } else {
+            alert('Error saving box.');
+            btn.innerText = 'Save Profile'; btn.disabled = false;
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        renderGrid();
-    });
+    document.addEventListener('DOMContentLoaded', () => { renderTabs(); renderGrid(); });
 </script>
 
 <%- include('../partials/footer') %>
