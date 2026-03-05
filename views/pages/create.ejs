@@ -12,15 +12,15 @@
         <div class="input-group">
             <label>DRAFT MODE</label>
             <select name="draftType" id="draftType">
-    <option value="gitcg">GITCG Cup</option>
-    <option value="gitcg_cup_2">GITCG Cup 2</option>
-    <option value="abyss_box">Abyss Box</option>
-    <option value="classic">Classic</option>
-    <option value="generals_2">Generals 2</option>
+                <option value="gitcg">GITCG Cup</option>
+                <option value="gitcg_cup_2">GITCG Cup 2</option>
+                <option value="abyss_box">Abyss Box</option>
+                <option value="classic">Classic</option>
+                <option value="generals_2">Generals 2</option>
             </select>
         </div>
         <button class="btn-primary" onclick="createGame()">Create Game</button>
-        
+     
         <div class="separator"><span>OR JOIN</span></div>
         
         <div class="input-group">
@@ -47,7 +47,8 @@
 
     function createGame() { 
         const nick = document.getElementById('nickname-input').value.trim() || 'Player 1';
-        const type = document.getElementById('draft-type-select').value;
+        // ИСПРАВЛЕН ID ТУТ:
+        const type = document.getElementById('draftType').value;
         
         socket.emit('create_game', { 
             nickname: nick, 
@@ -55,7 +56,7 @@
             userId: myUserId,
             discordId: discordId,
             avatar: avatar
-        }); 
+        });
     }
 
     function joinGame() {
