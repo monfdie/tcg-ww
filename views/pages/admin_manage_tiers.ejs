@@ -2,38 +2,21 @@
 
 <style>
     .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3c4566; padding-bottom: 20px; margin-bottom: 20px; }
-    
     .limits-panel { display: flex; gap: 15px; flex-wrap: wrap; background: rgba(16, 20, 32, 0.8); padding: 20px; border-radius: 8px; border: 1px solid #2a3454; margin-bottom: 20px; align-items: center; }
     .limit-box { display: flex; flex-direction: column; align-items: center; gap: 5px; }
     .limit-box label { color: #8da4c4; font-weight: bold; font-size: 0.9em; text-transform: uppercase; }
     .limit-box input { width: 60px; text-align: center; background: #0b0d17; border: 1px solid #4facfe; color: #fff; font-family: 'Cinzel', serif; font-size: 1.2em; padding: 5px; border-radius: 4px; transition: 0.2s; }
-    .limit-box input:focus { box-shadow: 0 0 10px rgba(79, 172, 254, 0.5); outline: none; }
-
     .char-grid { background: rgba(16, 20, 32, 0.6); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
     .element-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; }
-    
     .char-box { width: 65px; height: 65px; border-radius: 8px; cursor: pointer; border: 2px solid #8da4c4; position: relative; background: #111; transition: 0.2s; overflow: hidden; user-select: none; }
     .char-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: 0.2s; }
     .char-box:hover img { opacity: 1; transform: scale(1.1); }
-    
     .tier-badge { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.8); color: #fff; font-size: 12px; padding: 2px 6px; border-top-left-radius: 6px; font-weight: bold; font-family: 'Segoe UI', sans-serif; pointer-events: none; }
-
-    /* Цвета для разных тиров */
-    .tier-4 { border-color: #d4af37 !important; box-shadow: 0 0 10px rgba(212, 175, 55, 0.5); }
-    .tier-4 .tier-badge { color: #d4af37; }
-    
-    .tier-3 { border-color: #b28dff !important; box-shadow: 0 0 10px rgba(178, 141, 255, 0.5); }
-    .tier-3 .tier-badge { color: #b28dff; }
-    
-    .tier-2 { border-color: #4facfe !important; box-shadow: 0 0 10px rgba(79, 172, 254, 0.5); }
-    .tier-2 .tier-badge { color: #4facfe; }
-    
-    .tier-1 { border-color: #50b36b !important; box-shadow: 0 0 10px rgba(80, 179, 107, 0.5); }
-    .tier-1 .tier-badge { color: #50b36b; }
-    
-    .tier-0 { border-color: #333 !important; }
-    .tier-0 .tier-badge { color: #888; }
-
+    .tier-4 { border-color: #d4af37 !important; box-shadow: 0 0 10px rgba(212, 175, 55, 0.5); } .tier-4 .tier-badge { color: #d4af37; }
+    .tier-3 { border-color: #b28dff !important; box-shadow: 0 0 10px rgba(178, 141, 255, 0.5); } .tier-3 .tier-badge { color: #b28dff; }
+    .tier-2 { border-color: #4facfe !important; box-shadow: 0 0 10px rgba(79, 172, 254, 0.5); } .tier-2 .tier-badge { color: #4facfe; }
+    .tier-1 { border-color: #50b36b !important; box-shadow: 0 0 10px rgba(80, 179, 107, 0.5); } .tier-1 .tier-badge { color: #50b36b; }
+    .tier-0 { border-color: #333 !important; } .tier-0 .tier-badge { color: #888; }
     .save-btn { padding: 12px 30px; font-size: 1.1em; background: #28a745; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; text-transform: uppercase; }
 </style>
 
@@ -42,7 +25,6 @@
         <h1 style="color: #fff; margin: 0; font-family: 'Cinzel', serif;">Manage Tiers</h1>
         <button class="save-btn" id="save-tiers-btn" onclick="autoSaveTiers(true)">💾 All Saved</button>
     </div>
-
     <div class="limits-panel">
         <h3 style="color: #fff; margin: 0 20px 0 0;">Box Limits:</h3>
         <% [4, 3, 2, 1, 0].forEach(tier => { %>
@@ -51,11 +33,8 @@
                 <input type="number" id="limit-<%= tier %>" value="<%= tiers.limits[tier] !== undefined ? tiers.limits[tier] : 0 %>" min="0" max="50" oninput="autoSaveTiers()">
             </div>
         <% }) %>
-        <div style="color: #8da4c4; font-size: 0.8em; margin-left: auto;">* Changes save automatically</div>
+        <div style="color: #8da4c4; font-size: 0.8em; margin-left: auto;">* Changes save to Database automatically</div>
     </div>
-
-    <div style="color: #8da4c4; margin-bottom: 10px;">Click on a character to change their tier (0 ➔ 1 ➔ 2 ➔ 3 ➔ 4 ➔ 0).</div>
-
     <div class="char-grid">
         <% ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => { %>
             <div class="element-row">
@@ -73,80 +52,35 @@
 
 <script>
     let saveTimeout;
-
-    // Функция переключения тира по клику
     function cycleTier(element) {
         let currentTier = parseInt(element.getAttribute('data-tier'));
         let nextTier = currentTier + 1;
-        if (nextTier > 4) nextTier = 0; // Сбрасываем после 4
-        
-        // Обновляем данные и интерфейс
+        if (nextTier > 4) nextTier = 0; 
         element.setAttribute('data-tier', nextTier);
         element.querySelector('.t-val').innerText = nextTier;
-        
-        // Обновляем классы цветов
         element.className = `char-box tier-${nextTier}`;
-
-        // ВЫЗЫВАЕМ АВТОСОХРАНЕНИЕ
         autoSaveTiers();
     }
-
     function autoSaveTiers(instant = false) {
         const btn = document.getElementById('save-tiers-btn');
-        btn.innerText = 'Saving...';
-        btn.style.background = '#4facfe'; // Синий цвет в процессе сохранения
-
+        btn.innerText = 'Saving...'; btn.style.background = '#4facfe';
         clearTimeout(saveTimeout);
-
         const executeSave = async () => {
-            // Собираем лимиты
-            const limits = {
-                "4": parseInt(document.getElementById('limit-4').value) || 0,
-                "3": parseInt(document.getElementById('limit-3').value) || 0,
-                "2": parseInt(document.getElementById('limit-2').value) || 0,
-                "1": parseInt(document.getElementById('limit-1').value) || 0,
-                "0": parseInt(document.getElementById('limit-0').value) || 0
-            };
-
-            // Собираем персонажей
+            const limits = { "4": parseInt(document.getElementById('limit-4').value) || 0, "3": parseInt(document.getElementById('limit-3').value) || 0, "2": parseInt(document.getElementById('limit-2').value) || 0, "1": parseInt(document.getElementById('limit-1').value) || 0, "0": parseInt(document.getElementById('limit-0').value) || 0 };
             const characters = {};
             document.querySelectorAll('.char-box').forEach(el => {
-                const id = el.getAttribute('data-id');
-                const tier = parseInt(el.getAttribute('data-tier'));
-                if (tier > 0) {
-                    characters[id] = tier;
-                }
+                const id = el.getAttribute('data-id'); const tier = parseInt(el.getAttribute('data-tier'));
+                if (tier > 0) characters[id] = tier;
             });
-
             try {
-                const res = await fetch('/admin/tiers/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ limits, characters })
-                });
-                
-                const data = await res.json();
-                if (data.success) {
-                    btn.innerText = '✅ Saved';
-                    btn.style.background = '#28a745'; // Зеленый цвет при успехе
+                const res = await fetch('/admin/tiers/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ limits, characters }) });
+                if ((await res.json()).success) {
+                    btn.innerText = '✅ Saved'; btn.style.background = '#28a745';
                     setTimeout(() => { btn.innerText = '💾 All Saved'; }, 2000);
-                } else {
-                    btn.innerText = '❌ Error';
-                    btn.style.background = '#ff4444';
-                }
-            } catch(e) {
-                console.error(e);
-                btn.innerText = '❌ Error';
-                btn.style.background = '#ff4444';
-            }
+                } else { btn.innerText = '❌ Error'; btn.style.background = '#ff4444'; }
+            } catch(e) { btn.innerText = '❌ Error'; btn.style.background = '#ff4444'; }
         };
-
-        if (instant) {
-            executeSave();
-        } else {
-            // Ждем 500мс после последнего клика, чтобы не спамить сервер запросами
-            saveTimeout = setTimeout(executeSave, 500); 
-        }
+        if (instant) executeSave(); else saveTimeout = setTimeout(executeSave, 500); 
     }
 </script>
 
