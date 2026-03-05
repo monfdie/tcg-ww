@@ -30,6 +30,10 @@ app.use(session({
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI })
 }));
 
+// ДОБАВЬ ЭТИ ДВЕ СТРОЧКИ:
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(passport.initialize());
 app.use(passport.session());
 
