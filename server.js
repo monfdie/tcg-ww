@@ -85,10 +85,10 @@ io.on('connection', (socket) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = draftType || 'gitcg';
         sessions[roomId] = {
-            id: roomId, bluePlayer: socket.id, blueUserId: userId, 
-            blueDiscordId: discordId, blueAvatar: avatar, blueBox: [],
+            id: roomId, 
+            bluePlayer: null, blueUserId: null, blueDiscordId: null, blueAvatar: null, blueBox: [], // <-- ИСПРАВЛЕНО: создатель теперь тоже зритель
             redPlayer: null, redUserId: null, redDiscordId: null, redAvatar: null, redBox: [],
-            spectators: [], blueName: nickname || 'Player 1', redName: 'Waiting...',
+            spectators: [socket.id], blueName: 'Waiting...', redName: 'Waiting...',
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
             immunityPhaseActive: false, immunityStepIndex: 0, immunityPool: [], immunityBans: [],
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
@@ -97,7 +97,8 @@ io.on('connection', (socket) => {
             draftFinished: false, finishedAt: null
         };
         socket.join(roomId);
-        socket.emit('init_game', { roomId, role: 'blue', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
+        // Заходим зрителем, чтобы потом нажать SIT HERE и загрузить бокс
+        socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
     });
 
     socket.on('join_game', ({roomId}) => {
@@ -129,7 +130,6 @@ io.on('connection', (socket) => {
         socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    // --- ЛОГИКА ВЫБОРА МЕСТА С ПРОВЕРКОЙ БОКСА ---
     socket.on('take_seat', async ({ roomId, userId, side, nickname, discordId, avatar }) => {
         const session = sessions[roomId];
         if (!session || session.gameStarted) return;
@@ -233,20 +233,16 @@ io.on('connection', (socket) => {
         const isBlue = session.currentTeam === 'blue';
         if ((isBlue && socket.id !== session.bluePlayer) || (!isBlue && socket.id !== session.redPlayer)) return;
 
-        // ВАЛИДАЦИЯ АБИСС БОКСА
         if (session.draftType === 'abyss_box') {
             const isImmunePhase = session.immunityPhaseActive;
             const myBox = isBlue ? session.blueBox : session.redBox;
             
             if (isImmunePhase) {
-                // В иммун фазе персонаж должен быть у обоих
                 if (!session.blueBox.includes(charId) || !session.redBox.includes(charId)) return;
             } else {
                 if (session.currentAction === 'ban') {
-                    // Банить можно любого, кто есть хотя бы у одного
                     if (!session.blueBox.includes(charId) && !session.redBox.includes(charId)) return;
                 } else {
-                    // Пикать можно только из своего
                     if (!myBox.includes(charId)) return;
                 }
             }
@@ -275,7 +271,6 @@ io.on('connection', (socket) => {
             const iHaveIt = isBlue ? session.bluePicks.includes(charId) : session.redPicks.includes(charId);
             if (iHaveIt) return; 
 
-            // Обычные пики уникальны! (Зеркальные разрешены только для имунов)
             const enemyHasIt = isBlue ? session.redPicks.includes(charId) : session.bluePicks.includes(charId);
             if (enemyHasIt && !isImmune) return;
 
@@ -437,7 +432,7 @@ function getPublicState(session) {
         blueDiscordId: session.blueDiscordId, redDiscordId: session.redDiscordId, 
         blueAvatar: session.blueAvatar, redAvatar: session.redAvatar,
         isBlueTaken: !!session.blueUserId, isRedTaken: !!session.redUserId,
-        blueBox: session.blueBox || [], redBox: session.redBox || [], // <-- Отдаем боксы
+        blueBox: session.blueBox || [], redBox: session.redBox || [], 
         immunityPhaseActive: session.immunityPhaseActive,
         immunityPool: session.immunityPool || [], immunityBans: session.immunityBans || [],
         draftFinished: session.draftFinished, ready: session.ready, gameStarted: session.gameStarted
