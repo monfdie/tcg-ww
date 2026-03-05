@@ -1,0 +1,66 @@
+<%- include('../partials/header') %>
+
+<style>
+    .lb-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3c4566; padding-bottom: 20px; margin-bottom: 20px; }
+    .lb-title { color: #fff; margin: 0; font-family: 'Cinzel', serif; font-size: 2.2em; text-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
+    
+    .lb-table { width: 100%; border-collapse: collapse; background: rgba(16, 20, 32, 0.6); border-radius: 8px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+    .lb-table th { background: #2a3454; color: #8da4c4; text-align: left; padding: 15px 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9em; }
+    .lb-table td { padding: 15px 20px; border-bottom: 1px solid #2a3454; color: #fff; vertical-align: middle; }
+    
+    .lb-row { transition: 0.2s; cursor: pointer; text-decoration: none; }
+    .lb-row:hover { background: rgba(79, 172, 254, 0.1); transform: scale(1.01); }
+    
+    .lb-rank { font-family: 'Cinzel', serif; font-size: 1.5em; font-weight: bold; color: #4facfe; }
+    .rank-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+    .rank-2 { color: #c0c0c0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.5); }
+    .rank-3 { color: #cd7f32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.5); }
+
+    .lb-user-info { display: flex; align-items: center; gap: 15px; }
+    .lb-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #3c4566; }
+    .lb-username { font-weight: bold; font-size: 1.1em; }
+    
+    .lb-games { font-size: 1.2em; font-weight: bold; font-family: 'Cinzel', serif; }
+</style>
+
+<div class="page-container" style="max-width: 900px;">
+    <div class="lb-header">
+        <h1 class="lb-title">Global Leaderboard</h1>
+    </div>
+
+    <% if (users && users.length > 0) { %>
+        <table class="lb-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">Rank</th>
+                    <th>Player</th>
+                    <th style="text-align: right;">Matches Played</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach((u, index) => { %>
+                    <tr class="lb-row" onclick="window.location.href='/player/<%= u.discordId %>'">
+                        <td>
+                            <span class="lb-rank <%= index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : (index === 2 ? 'rank-3' : '')) %>">
+                                #<%= index + 1 %>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="lb-user-info">
+                                <img class="lb-avatar" src="https://cdn.discordapp.com/avatars/<%= u.discordId %>/<%= u.avatar %>.png" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+                                <span class="lb-username"><%= u.username %></span>
+                            </div>
+                        </td>
+                        <td style="text-align: right;">
+                            <span class="lb-games"><%= u.gamesPlayed %></span>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <div style="text-align: center; padding: 40px; color: #8da4c4;">No players have completed any matches yet!</div>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %>
