@@ -4,7 +4,6 @@ const passport = require('passport');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const User = require('../models/User');
 const Match = require('../models/Match');
 const Tournament = require('../models/Tournament');
 const CHARACTERS_BY_ELEMENT = require('../characters.json');
@@ -105,70 +104,6 @@ router.get('/history', async (req, res) => {
 
 const TierConfig = require('../models/TierConfig'); // <--- ВАЖНО! ДОБАВИТЬ НАВЕРХ!
 
-// ==========================================
-// LEADERBOARD & PLAYER STATS
-// ==========================================
-router.get('/leaderboard', async (req, res) => {
-    try {
-        // Берем топ-50 игроков по количеству игр
-        const topUsers = await User.find({ gamesPlayed: { $gt: 0 } })
-                                   .sort({ gamesPlayed: -1 })
-                                   .limit(50);
-        res.render('pages/leaderboard', { title: 'Leaderboard', users: topUsers });
-    } catch (e) {
-        console.error(e);
-        res.render('pages/leaderboard', { title: 'Leaderboard', users: [] });
-    }
-});
-
-router.get('/player/:discordId', async (req, res) => {
-    try {
-        const targetUser = await User.findOne({ discordId: req.params.discordId });
-        if (!targetUser) return res.status(404).send('User not found');
-
-        // Ищем все матчи этого игрока
-        const matches = await Match.find({
-            $or: [{ blueDiscordId: targetUser.discordId }, { redDiscordId: targetUser.discordId }]
-        }).sort({ date: -1 });
-
-        let pickCounts = {};
-        let banCounts = {};
-
-        matches.forEach(m => {
-            const isBlue = m.blueDiscordId === targetUser.discordId;
-            const myPicks = isBlue ? m.bluePicks : m.redPicks;
-            
-            // Баны в БД хранятся как { id: "charId", team: "blue" }
-            const myBans = m.bans.filter(b => b.team === (isBlue ? 'blue' : 'red')).map(b => b.id);
-
-            myPicks.forEach(p => { if(p) pickCounts[p] = (pickCounts[p] || 0) + 1; });
-            myBans.forEach(b => { if(b) banCounts[b] = (banCounts[b] || 0) + 1; });
-        });
-
-        // Сортируем и берем топ-5
-        const topPicks = Object.entries(pickCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-        const topBans = Object.entries(banCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-
-        // Создаем плоский словарь персонажей для удобного вывода картинок
-        let flatChars = {};
-        Object.values(CHARACTERS_BY_ELEMENT).forEach(arr => {
-            arr.forEach(c => flatChars[c.id] = c);
-        });
-
-        res.render('pages/player_stats', {
-            title: `${targetUser.username} - Stats`,
-            player: targetUser,
-            matchesCount: matches.length,
-            topPicks,
-            topBans,
-            flatChars
-        });
-    } catch (e) {
-        console.error(e);
-        res.status(500).send('Error loading stats');
-    }
-});
-// ==========================================
 // ==========================================
 // ПРОФИЛЬ И СБОРКА БОКСА
 // ==========================================
