@@ -251,6 +251,16 @@ router.get('/game/:id', async (req, res) => {
         res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id, savedData: match || null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true });
     } catch (e) { res.render('pages/game', { title: "Error", roomId: req.params.id, savedData: null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true }); }
 });
+// ==========================================
+// СЕКРЕТНЫЙ ГЕНЕРАТОР ПРЕВЬЮ ДЛЯ YOUTUBE
+// ==========================================
+router.get('/thumbnail', (req, res) => {
+    // Не требуем логина, просто отдаем страницу
+    res.render('pages/thumbnail', { 
+        title: 'YouTube Thumbnail Generator', 
+        chars: CHARACTERS_BY_ELEMENT 
+    });
+});
 
 router.get('/auth/discord', passport.authenticate('discord'));
 router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => { res.redirect('/'); });
