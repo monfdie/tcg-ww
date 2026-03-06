@@ -415,43 +415,25 @@ function autoPick(roomId) {
 }
 
 async function saveMatchImmediately(s) {
+    io.to(s.id).emit('update_state', getPublicState(s)); 
+    io.to(s.id).emit('game_over', getPublicState(s)); 
     try {
-        // Создаем запись о матче
         await Match.create({
-            roomId: s.id, 
-            draftType: s.draftType, 
-            blueName: s.blueName, 
-            redName: s.redName,
-            blueDiscordId: s.blueDiscordId, 
-            redDiscordId: s.redDiscordId,
-            blueAvatar: s.blueAvatar, 
-            redAvatar: s.redAvatar, 
-            bans: s.bans, 
-            bluePicks: s.bluePicks, 
-            redPicks: s.redPicks,
-            immunityPool: s.immunityPool, 
-            immunityBans: s.immunityBans
+            roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
+            blueDiscordId: s.blueDiscordId, redDiscordId: s.redDiscordId,
+            blueAvatar: s.blueAvatar, redAvatar: s.redAvatar, 
+            bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks,
+            immunityPool: s.immunityPool, immunityBans: s.immunityBans
         });
+        if (s.blueDiscordId) await User.updateOne({ discordId: s.blueDiscordId }, { $inc: { gamesPlayed: 1 } });
+        if (s.redDiscordId) await User.updateOne({ discordId: s.redDiscordId }, { $inc: { gamesPlayed: 1 } });
 
-        // ОБНОВЛЯЕМ СТАТИСТИКУ ИГРОКОВ
-        // Ищем пользователя по Discord ID и увеличиваем gamesPlayed на 1
-        if (s.blueDiscordId) {
-            await User.findOneAndUpdate(
-                { discordId: s.blueDiscordId }, 
-                { $inc: { gamesPlayed: 1 } }
-            );
+        const count = await Match.countDocuments();
+        if (count > 10000) {
+            const oldOnes = await Match.find().sort({ date: 1 }).limit(count - 10000);
+            await Match.deleteMany({ _id: { $in: oldOnes.map(m => m._id) } });
         }
-        if (s.redDiscordId) {
-            await User.findOneAndUpdate(
-                { discordId: s.redDiscordId }, 
-                { $inc: { gamesPlayed: 1 } }
-            );
-        }
-
-        console.log(`[Database] Match ${s.id} saved and players stats updated.`);
-    } catch (e) {
-        console.error('[Database Error] Failed to save match or update stats:', e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 function getPublicState(session) {
