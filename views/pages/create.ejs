@@ -14,7 +14,6 @@
             <select name="draftType" id="draftType">
                 <option value="gitcg">GITCG CUP</option>
                 <option value="gitcg_cup_2">GITCG CUP 2</option>
-                <option value="abyss_box">Abyss Box (Beta)</option>
                 <option value="classic">Classic</option>
                 <option value="generals_2">Generals 2</option>
             </select>
@@ -35,7 +34,6 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io({ transports: ['websocket'] });
-    
     // Данные из Discord для отправки на сервер
     const discordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const avatar = '<%= locals.user ? locals.user.avatar : "" %>';
@@ -49,7 +47,6 @@
         const nick = document.getElementById('nickname-input').value.trim() || 'Player 1';
         // ИСПРАВЛЕН ID ТУТ:
         const type = document.getElementById('draftType').value;
-        
         socket.emit('create_game', { 
             nickname: nick, 
             draftType: type, 
