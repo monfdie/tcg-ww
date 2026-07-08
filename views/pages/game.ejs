@@ -257,7 +257,9 @@
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
         const isImmunePhase = state.immunityPhaseActive;
-        const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] || {};
+        // Для Chaos используем классические правила
+        const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
+        const currentStepData = DRAFT_RULES[rulesType][state.stepIndex - 1] || {};
         const isImmuneStep = currentStepData.immunity === true;
         const isPickPhase = state.currentAction && state.currentAction.includes('pick');
 
@@ -340,7 +342,10 @@
         }
 
         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
-        const schema = DRAFT_RULES[currentDraftType];
+        // Для Chaos используем классические правила
+        const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
+        const schema = DRAFT_RULES[rulesType];
+        
         if(schema) {
             schema.forEach((step, i) => {
                 const d = document.createElement('div');
@@ -354,10 +359,13 @@
             container.appendChild(ladder);
         }
 
+        // Если это Chaos Draft, используем переданный пул
+        const renderData = (currentDraftType === 'chaos' && state && state.chaosPool) ? state.chaosPool : charsData;
+
         ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
             const row = document.createElement('div'); row.className = `element-row row-${elem}`;
-            const chars = charsData[elem];
-            if(!chars) return; 
+            const chars = renderData[elem];
+            if(!chars || chars.length === 0) return; 
             
             const l = document.createElement('div'); l.className = 'row-half left-half';
             const r = document.createElement('div'); r.className = 'row-half right-half';
@@ -432,7 +440,10 @@
     }
 
     function renderSlots(state) {
-         const currentSchema = DRAFT_RULES[currentDraftType];
+         // Для Chaos используем классические правила
+         const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
+         const currentSchema = DRAFT_RULES[rulesType];
+         
          if (!currentSchema) return;
          const getStepsFor = (schema, team, type) => schema.map((step, index) => ({ ...step, globalIndex: index + 1 })).filter(step => step.team === team && step.type === type).map(step => ({ num: step.globalIndex, immunity: step.immunity }));
          const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban'); const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
@@ -456,7 +467,7 @@
              });
          };
          fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true); fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
-         if (currentDraftType === 'generals_2' || currentDraftType === 'classic') {
+         if (currentDraftType === 'generals_2' || currentDraftType === 'classic' || currentDraftType === 'chaos') {
              fill('blue-picks-1', state.bluePicks, bluePickSteps, false); fill('blue-picks-2', [], [], false); 
              fill('red-picks-1', state.redPicks, redPickSteps, false); fill('red-picks-2', [], [], false);
          } else {
