@@ -30,7 +30,6 @@ app.use(session({
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI })
 }));
 
-// ДОБАВЬ ЭТИ ДВЕ СТРОЧКИ:
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -77,6 +76,44 @@ app.use(express.static(path.join(__dirname, 'public')));
 const CHARACTERS_BY_ELEMENT = require('./characters.json');
 const { DRAFT_RULES, IMMUNITY_ORDER } = require('./public/draft-rules.js'); 
 
+// --- ФУНКЦИИ ДЛЯ CHAOS DRAFT ---
+function shuffleArray(array) {
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function generateChaosPool() {
+    let pool = { cryo: [], hydro: [], pyro: [], electro: [], anemo: [], geo: [], dendro: [] };
+    let remainingToPickFrom = [];
+    
+    // 1. Берем по 3 случайных из каждой стихии
+    for (let element in CHARACTERS_BY_ELEMENT) {
+        let shuffled = shuffleArray(CHARACTERS_BY_ELEMENT[element]);
+        pool[element] = shuffled.slice(0, 3); // Гарантированные 3
+        
+        // Остальных скидываем в общую "корзину" для добора
+        let leftovers = shuffled.slice(3).map(c => ({ ...c, element }));
+        remainingToPickFrom = remainingToPickFrom.concat(leftovers);
+    }
+    
+    // 2. Перемешиваем общую корзину и берем оставшиеся 13 персонажей (21 + 13 = 34)
+    remainingToPickFrom = shuffleArray(remainingToPickFrom);
+    let extraChars = remainingToPickFrom.slice(0, 13);
+    
+    // 3. Раскидываем эти 13 случайных персонажей обратно по их стихиям в пуле
+    extraChars.forEach(c => {
+        const charData = { id: c.id, name: c.name, img: c.img };
+        pool[c.element].push(charData);
+    });
+    
+    return pool;
+}
+// ---------------------------------
+
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 
@@ -88,20 +125,27 @@ io.on('connection', (socket) => {
     socket.on('create_game', ({ nickname, draftType, userId, discordId, avatar }) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = draftType || 'gitcg';
+        // Если это хаос, временно берем правила от classic, чтобы игра не крашилась
+        const orderType = type === 'chaos' ? 'classic' : type; 
+        
         sessions[roomId] = {
             id: roomId, 
-            bluePlayer: null, blueUserId: null, blueDiscordId: null, blueAvatar: null, blueBox: [], // <-- ИСПРАВЛЕНО: создатель теперь тоже зритель
+            bluePlayer: null, blueUserId: null, blueDiscordId: null, blueAvatar: null, blueBox: [],
             redPlayer: null, redUserId: null, redDiscordId: null, redAvatar: null, redBox: [],
             spectators: [socket.id], blueName: 'Waiting...', redName: 'Waiting...',
-            draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
+            draftType: type, draftOrder: DRAFT_RULES[orderType], gameStarted: false,
             immunityPhaseActive: false, immunityStepIndex: 0, immunityPool: [], immunityBans: [],
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
             bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false },
             draftFinished: false, finishedAt: null
         };
+
+        if (type === 'chaos') {
+            sessions[roomId].chaosPool = generateChaosPool();
+        }
+
         socket.join(roomId);
-        // Заходим зрителем, чтобы потом нажать SIT HERE и загрузить бокс
         socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
     });
 
@@ -143,12 +187,11 @@ io.on('connection', (socket) => {
             try {
                 const userDb = await User.findOne({ discordId: discordId });
                 let activeBox = [];
-                // Берем персонажей из активного бокса (вкладки)
                 if (userDb && userDb.boxes && userDb.boxes.length > 0) {
                     const idx = userDb.activeBoxIndex || 0;
                     activeBox = userDb.boxes[idx]?.characters || [];
                 } else if (userDb && userDb.box) {
-                    activeBox = userDb.box; // резерв
+                    activeBox = userDb.box;
                 }
                 
                 if (!activeBox || activeBox.length === 0) {
@@ -347,12 +390,19 @@ function startTimer(roomId) {
 
 function autoPick(roomId) {
     const session = sessions[roomId];
-    let allFlat = [];
-    Object.values(CHARACTERS_BY_ELEMENT).forEach(arr => allFlat.push(...arr));
+    let available = [];
+    
+    // Если это chaos draft, выбираем из сгенерированного пула, иначе из всех персонажей
+    if (session.draftType === 'chaos' && session.chaosPool) {
+        Object.values(session.chaosPool).forEach(arr => available.push(...arr));
+    } else {
+        Object.values(CHARACTERS_BY_ELEMENT).forEach(arr => available.push(...arr));
+    }
+    
     session.lastActive = Date.now();
 
     if (session.immunityPhaseActive) {
-        const available = allFlat.filter(c => {
+        available = available.filter(c => {
             if (session.draftType === 'abyss_box' && (!session.blueBox.includes(c.id) || !session.redBox.includes(c.id))) return false;
             return !session.immunityBans.includes(c.id) && !session.immunityPool.includes(c.id);
         });
@@ -372,7 +422,7 @@ function autoPick(roomId) {
     const currentConfig = session.draftOrder[session.stepIndex];
     const isImmunityTurn = !!currentConfig.immunity;
 
-    const available = allFlat.filter(c => {
+    available = available.filter(c => {
         if (session.draftType === 'abyss_box') {
             if (session.currentAction === 'ban') {
                 if (!session.blueBox.includes(c.id) && !session.redBox.includes(c.id)) return false;
@@ -448,6 +498,7 @@ function getPublicState(session) {
         blueBox: session.blueBox || [], redBox: session.redBox || [], 
         immunityPhaseActive: session.immunityPhaseActive,
         immunityPool: session.immunityPool || [], immunityBans: session.immunityBans || [],
+        chaosPool: session.chaosPool || null, // <-- ПЕРЕДАЕМ ПУЛ КЛИЕНТАМ
         draftFinished: session.draftFinished, ready: session.ready, gameStarted: session.gameStarted
     };
 }
