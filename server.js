@@ -93,7 +93,7 @@ function generateChaosPool() {
     // 1. Берем по 5 случайных из каждой стихии (5 * 7 = 35)
     for (let element in CHARACTERS_BY_ELEMENT) {
         let shuffled = shuffleArray(CHARACTERS_BY_ELEMENT[element]);
-        pool[element] = shuffled.slice(0, 5); // Гарантированные 5
+        pool[element] = shuffled.slice(0, 4); // Гарантированные 5
         
         // Остальных скидываем в общую "корзину" для добора
         let leftovers = shuffled.slice(5).map(c => ({ ...c, element }));
@@ -102,7 +102,7 @@ function generateChaosPool() {
     
     // 2. Перемешиваем общую корзину и берем оставшиеся 11 персонажей (35 + 11 = 46)
     remainingToPickFrom = shuffleArray(remainingToPickFrom);
-    let extraChars = remainingToPickFrom.slice(0, 11);
+    let extraChars = remainingToPickFrom.slice(0, 7);
     
     // 3. Раскидываем эти 11 случайных персонажей обратно по их стихиям в пуле
     extraChars.forEach(c => {
