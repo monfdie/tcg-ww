@@ -90,21 +90,21 @@ function generateChaosPool() {
     let pool = { cryo: [], hydro: [], pyro: [], electro: [], anemo: [], geo: [], dendro: [] };
     let remainingToPickFrom = [];
     
-    // 1. Берем по 3 случайных из каждой стихии
+    // 1. Берем по 5 случайных из каждой стихии (5 * 7 = 35)
     for (let element in CHARACTERS_BY_ELEMENT) {
         let shuffled = shuffleArray(CHARACTERS_BY_ELEMENT[element]);
-        pool[element] = shuffled.slice(0, 3); // Гарантированные 3
+        pool[element] = shuffled.slice(0, 5); // Гарантированные 5
         
         // Остальных скидываем в общую "корзину" для добора
-        let leftovers = shuffled.slice(3).map(c => ({ ...c, element }));
+        let leftovers = shuffled.slice(5).map(c => ({ ...c, element }));
         remainingToPickFrom = remainingToPickFrom.concat(leftovers);
     }
     
-    // 2. Перемешиваем общую корзину и берем оставшиеся 13 персонажей (21 + 13 = 34)
+    // 2. Перемешиваем общую корзину и берем оставшиеся 11 персонажей (35 + 11 = 46)
     remainingToPickFrom = shuffleArray(remainingToPickFrom);
-    let extraChars = remainingToPickFrom.slice(0, 13);
+    let extraChars = remainingToPickFrom.slice(0, 11);
     
-    // 3. Раскидываем эти 13 случайных персонажей обратно по их стихиям в пуле
+    // 3. Раскидываем эти 11 случайных персонажей обратно по их стихиям в пуле
     extraChars.forEach(c => {
         const charData = { id: c.id, name: c.name, img: c.img };
         pool[c.element].push(charData);
@@ -498,7 +498,7 @@ function getPublicState(session) {
         blueBox: session.blueBox || [], redBox: session.redBox || [], 
         immunityPhaseActive: session.immunityPhaseActive,
         immunityPool: session.immunityPool || [], immunityBans: session.immunityBans || [],
-        chaosPool: session.chaosPool || null, // <-- ПЕРЕДАЕМ ПУЛ КЛИЕНТАМ
+        chaosPool: session.chaosPool || null,
         draftFinished: session.draftFinished, ready: session.ready, gameStarted: session.gameStarted
     };
 }
