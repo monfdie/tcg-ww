@@ -33,15 +33,8 @@
     .left-box-label { left: 40px; }
     .right-box-label { right: 40px; }
 
-    /* Новые стили для хронологической линии драфта */
-    .sequence-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; max-width: 450px; }
-    .slot-card { width: 65px; height: 95px; border-radius: 6px; background: rgba(255,255,255,0.05); border: 2px solid #3c4566; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; transition: 0.3s; }
-    .slot-card.ban-card { border-color: #ff4757; background: linear-gradient(to bottom, rgba(255, 71, 87, 0.2), transparent); }
-    .slot-card.pick-card { border-color: #8da4c4; background: linear-gradient(to bottom, rgba(141, 164, 196, 0.2), transparent); }
-    .slot-card.active-slot { box-shadow: 0 0 15px #d4af37; border-color: #d4af37; transform: translateY(-5px); }
-    .slot-card img { width: 100%; height: 100%; object-fit: cover; }
-    .slot-card .step-number { position: absolute; top: 4px; left: 4px; font-size: 16px; font-weight: bold; color: rgba(255,255,255,0.7); font-family: 'Segoe UI', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 2; }
-    .slot-card.ban-card img { filter: grayscale(80%) sepia(50%) hue-rotate(-50deg) saturate(300%) contrast(1.2); opacity: 0.8; }
+    /* Контейнер для хронологической линии кружков */
+    .sequence-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px; max-width: 420px; }
 </style>
 
 <div id="game-screen">
@@ -61,6 +54,7 @@
              <div class="im-label">IMMUNE</div>
              <div class="im-row" id="immunity-icons-row"></div>
          </div>
+         
          <div class="team-side blue-side">
              <div class="player-header">
                  <div id="blue-timer" class="turn-timer">45</div>
@@ -113,7 +107,7 @@
     let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
     let charsData = {}, selectedCharId = null, currentState = null;
     let isDraftFinishedLocal = false;
-    let lastBlueBoxHash = '', lastRedBoxHash = ''; // Для кэширования отрисовки
+    let lastBlueBoxHash = '', lastRedBoxHash = ''; 
     
     const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
     const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
@@ -181,7 +175,7 @@
         isGameStarted = state.gameStarted;
         isDraftFinishedLocal = state.draftFinished;
         const isMyTurn = (myRole === state.currentTeam);
-        // Перерисовка сетки, если изменились боксы в режиме abyss
+        
         if (state.draftType === 'abyss_box') {
             const currentBlueHash = (state.blueBox || []).join(',');
             const currentRedHash = (state.redBox || []).join(',');
@@ -208,11 +202,13 @@
 
         document.getElementById('blue-timer').style.opacity = (!state.gameStarted || state.draftFinished || state.currentTeam !== 'blue') ? '0' : '1';
         document.getElementById('red-timer').style.opacity = (!state.gameStarted || state.draftFinished || state.currentTeam !== 'red') ? '0' : '1';
+        
         document.querySelectorAll('.ladder-step').forEach((el, idx) => {
             el.classList.remove('step-active', 'step-done');
             if (idx < state.stepIndex - 1) el.classList.add('step-done');
             else if (idx === state.stepIndex - 1 && state.gameStarted && !state.draftFinished && !state.immunityPhaseActive) el.classList.add('step-active');
         });
+        
         const confirmBtn = document.getElementById('confirm-btn');
         const skipBtn = document.getElementById('skip-btn');
         if (state.gameStarted && !state.draftFinished && !savedData && isMyTurn) {
@@ -237,12 +233,10 @@
         document.getElementById('red-name-display').innerText = state.redName;
         
         const blueAv = document.getElementById('blue-avatar');
-        if (state.blueAvatar && state.blueDiscordId && state.isBlueTaken) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block';
-        } else { blueAv.style.display = 'none'; }
+        if (state.blueAvatar && state.blueDiscordId && state.isBlueTaken) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block'; } else { blueAv.style.display = 'none'; }
         
         const redAv = document.getElementById('red-avatar');
-        if (state.redAvatar && state.redDiscordId && state.isRedTaken) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; } else { redAv.style.display = 'none';
-        }
+        if (state.redAvatar && state.redDiscordId && state.isRedTaken) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; } else { redAv.style.display = 'none'; }
         
         let txt = "WAITING...";
         if (state.draftFinished) txt = "DRAFT FINISHED";
@@ -251,19 +245,20 @@
         document.getElementById('status').innerText = txt.toUpperCase();
 
         updateImmunityTop(state);
-        renderSlots(state); // Обновленный рендер слотов
+        renderSlots(state); // Вызываем обновленный рендер слотов
         
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
         const isImmunePhase = state.immunityPhaseActive;
-        const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] || {};
+        const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
+        const currentStepData = DRAFT_RULES[rulesType][state.stepIndex - 1] || {};
         const isImmuneStep = currentStepData.immunity === true;
         const isPickPhase = state.currentAction && state.currentAction.includes('pick');
 
         document.querySelectorAll('.char-option').forEach(el => {
             el.classList.remove('disabled', 'immunity-highlight');
             if (state.draftFinished) { el.classList.add('disabled'); return; }
-            if (!state.gameStarted) return; // До старта всё ярко светится!
+            if (!state.gameStarted) return; 
 
             const charId = el.getAttribute('data-id');
             const side = el.id.includes('-left-') ? 'left' : (el.id.includes('-right-') ? 'right' : 'none');
@@ -281,12 +276,11 @@
                     if (immunityBans.includes(charId)) el.classList.add('disabled');
                 } else {
                     if (state.bans.some(b => b.id === charId)) el.classList.add('disabled');
+                    
                     if (isPickPhase) {
-                        // ВО ВРЕМЯ ПИКА: чужой бокс становится неактивным, но остается видимым
-                        if (side === 'right') el.classList.add('disabled');
+                        if (side === 'right') el.classList.add('disabled'); 
                         if (!isImmuneStep && immuneChars.includes(charId)) el.classList.add('disabled');
                     } else {
-                        // ВО ВРЕМЯ БАНА: оба бокса (и left и right) полностью активны!
                         if (immuneChars.includes(charId)) el.classList.add('disabled');
                     }
                     
@@ -311,13 +305,12 @@
                     if (state.bans.some(b => b.id === charId)) el.classList.add('disabled');
                     if (isPickPhase && !isImmuneStep && immuneChars.includes(charId)) el.classList.add('disabled');
                     if (!isPickPhase && immuneChars.includes(charId)) el.classList.add('disabled');
+                    
                     if (state.bluePicks.includes(charId)) {
-                        if (myRole === 'blue') el.classList.add('disabled');
-                        else if (!immuneChars.includes(charId)) el.classList.add('disabled');
+                        if (myRole === 'blue') el.classList.add('disabled'); else if (!immuneChars.includes(charId)) el.classList.add('disabled');
                     }
                     if (state.redPicks.includes(charId)) {
-                        if (myRole === 'red') el.classList.add('disabled');
-                        else if (!immuneChars.includes(charId)) el.classList.add('disabled');
+                        if (myRole === 'red') el.classList.add('disabled'); else if (!immuneChars.includes(charId)) el.classList.add('disabled');
                     }
                 }
             }
@@ -339,7 +332,9 @@
         }
 
         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
-        const schema = DRAFT_RULES[currentDraftType];
+        const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
+        const schema = DRAFT_RULES[rulesType];
+        
         if(schema) {
             schema.forEach((step, i) => {
                 const d = document.createElement('div');
@@ -353,7 +348,6 @@
             container.appendChild(ladder);
         }
 
-        // Если это Chaos Draft, используем переданный пул
         const renderData = (currentDraftType === 'chaos' && state && state.chaosPool) ? state.chaosPool : charsData;
 
         ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
@@ -377,8 +371,7 @@
                 chars.slice(mid).forEach(c => r.appendChild(createChar(c, 'right')));
             }
      
-            const gap = document.createElement('div');
-            gap.className = 'row-gap';
+            const gap = document.createElement('div'); gap.className = 'row-gap';
             row.appendChild(l); row.appendChild(gap); row.appendChild(r);
             container.appendChild(row);
         });
@@ -390,8 +383,10 @@
         el.id = `char-${side}-${char.id}`;
         el.setAttribute('data-id', char.id);
         el.innerHTML = `<img src="${char.img}">`;
+        
         el.onclick = () => {
             if(!isGameStarted || myRole === 'spectator' || savedData || isDraftFinishedLocal) return;
+            
             if (currentDraftType === 'abyss_box' && currentState) {
                 const isPick = currentState.currentAction.includes('pick');
                 if (isPick && side === 'right') return; 
@@ -415,8 +410,7 @@
 
     function updateImmunityTop(state) {
          const topDisp = document.getElementById('immunity-top-display');
-         if(state.draftType !== 'gitcg_cup_2' && state.draftType !== 'abyss_box') { topDisp.style.display = 'none'; return;
-         }
+         if(state.draftType !== 'gitcg_cup_2' && state.draftType !== 'abyss_box') { topDisp.style.display = 'none'; return; }
          topDisp.style.display = 'flex';
          const row = document.getElementById('immunity-icons-row'); row.innerHTML = '';
          const bans = state.immunityBans || []; const picks = state.immunityPool || [];
@@ -433,14 +427,13 @@
          });
     }
 
-    // НОВАЯ ФУНКЦИЯ ОТРИСОВКИ СЛОТОВ ДРАФТА
+    // НОВАЯ ФУНКЦИЯ ДЛЯ ОТРИСОВКИ КРУЖОЧКОВ ПО ПОРЯДКУ
     function renderSlots(state) {
         const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
         const currentSchema = DRAFT_RULES[rulesType];
         
         if (!currentSchema) return;
 
-        // Функция отрисовки единой линии для конкретной команды
         const renderSequence = (team, containerId) => {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -449,20 +442,21 @@
             let teamPicksIndex = 0;
             let teamBansIndex = 0;
 
-            // Проходимся по всей схеме драфта по порядку
             currentSchema.forEach((step, globalIndex) => {
-                if (step.team !== team) return; // Отрисовываем только шаги этой команды
+                if (step.team !== team) return;
                 
                 const isBan = step.type.includes('ban');
                 const slot = document.createElement('div');
-                slot.className = `slot-card ${isBan ? 'ban-card' : 'pick-card'}`;
+                slot.className = 'slot-circle'; // Используем твои родные кружки
                 
-                // Подсветка активного слота
+                if (isBan) slot.classList.add('slot-ban');
+                if (step.immunity) slot.classList.add('slot-immunity-pick');
+                
+                // Подсвечиваем кружок, если сейчас его очередь
                 if (!state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && (globalIndex + 1) === state.stepIndex) {
                     slot.classList.add('active-slot');
                 }
 
-                // Ищем, выбран ли уже персонаж для этого слота в состоянии (state)
                 let charId = null;
                 if (isBan) {
                     const teamBans = state.bans.filter(b => b.team === team);
@@ -478,16 +472,15 @@
                     }
                 }
 
-                // Отрисовка внутренностей карточки (Картинка + Номер шага)
                 if (charId) {
                     let allFlat = []; 
                     Object.values(charsData).forEach(arr => allFlat.push(...arr));
                     const char = allFlat.find(c => c.id === charId);
                     if (char) {
-                        slot.innerHTML = `<img src="${char.img}"><span class="step-number">${globalIndex + 1}</span>`;
+                        slot.innerHTML = `<img src="${char.img}">`; // Кружок с портретом
                     }
                 } else {
-                    slot.innerHTML = `<span class="step-number">${globalIndex + 1}</span>`;
+                    slot.innerHTML = `<span class="step-number">${globalIndex + 1}</span>`; // Пустой кружок с номером
                 }
                 container.appendChild(slot);
             });
