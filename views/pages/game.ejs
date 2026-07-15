@@ -32,6 +32,16 @@
     .box-label { position: absolute; top: -15px; font-size: 11px; color: #8da4c4; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
     .left-box-label { left: 40px; }
     .right-box-label { right: 40px; }
+
+    /* Новые стили для хронологической линии драфта */
+    .sequence-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; max-width: 450px; }
+    .slot-card { width: 65px; height: 95px; border-radius: 6px; background: rgba(255,255,255,0.05); border: 2px solid #3c4566; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; transition: 0.3s; }
+    .slot-card.ban-card { border-color: #ff4757; background: linear-gradient(to bottom, rgba(255, 71, 87, 0.2), transparent); }
+    .slot-card.pick-card { border-color: #8da4c4; background: linear-gradient(to bottom, rgba(141, 164, 196, 0.2), transparent); }
+    .slot-card.active-slot { box-shadow: 0 0 15px #d4af37; border-color: #d4af37; transform: translateY(-5px); }
+    .slot-card img { width: 100%; height: 100%; object-fit: cover; }
+    .slot-card .step-number { position: absolute; top: 4px; left: 4px; font-size: 16px; font-weight: bold; color: rgba(255,255,255,0.7); font-family: 'Segoe UI', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 2; }
+    .slot-card.ban-card img { filter: grayscale(80%) sepia(50%) hue-rotate(-50deg) saturate(300%) contrast(1.2); opacity: 0.8; }
 </style>
 
 <div id="game-screen">
@@ -64,9 +74,7 @@
                      <div class="switch-circle"></div>
                  </div>
              </div>
-             <div class="ban-row" id="blue-bans"></div>
-             <div class="pick-row" id="blue-picks-1"></div>
-             <div class="pick-row-small" id="blue-picks-2"></div>
+             <div class="sequence-row" id="blue-sequence"></div>
          </div>
          
          <div class="team-side red-side">
@@ -82,9 +90,7 @@
                  </div>
                  <div id="red-timer" class="turn-timer">45</div>
              </div>
-             <div class="ban-row" id="red-bans"></div>
-             <div class="pick-row" id="red-picks-1"></div>
-             <div class="pick-row-small" id="red-picks-2"></div>
+             <div class="sequence-row" id="red-sequence"></div>
          </div>
      </div>
 
@@ -104,7 +110,6 @@
     const currentRoom = '<%= roomId %>';
     const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
     sessionStorage.setItem('draft_user_id', myUserId);
-    
     let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
     let charsData = {}, selectedCharId = null, currentState = null;
     let isDraftFinishedLocal = false;
@@ -115,7 +120,6 @@
     const myNick = <%- locals.user ? JSON.stringify(locals.user.username) : '""' %>;
     const localNick = sessionStorage.getItem('draft_nickname') || 'Player';
     const finalNick = myNick || localNick;
-
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
 
@@ -141,23 +145,19 @@
                 socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId, discordId: myRealDiscordId, avatar: myAvatarHash, nickname: finalNick });
             }
         });
-        
         socket.on('init_game', (data) => {
             myRole = data.role; charsData = data.chars; currentDraftType = data.state.draftType || 'gitcg';
             document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
             renderRows(data.state); updateUI(data.state);
         });
-
         socket.on('role_update', (newRole) => {
             myRole = newRole;
             document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
         });
-
         socket.on('update_state', updateUI);
         socket.on('game_started', () => { isGameStarted = true; });
         socket.on('game_over', (state) => { updateUI(state); alert("Draft is complete and saved!"); });
         socket.on('error_msg', (msg) => { alert(msg); });
-        
         socket.on('timer_tick', (data) => {
             const t = typeof data === 'object' ? data.main : data;
             document.getElementById('blue-timer').innerText = t; 
@@ -181,13 +181,13 @@
         isGameStarted = state.gameStarted;
         isDraftFinishedLocal = state.draftFinished;
         const isMyTurn = (myRole === state.currentTeam);
-
         // Перерисовка сетки, если изменились боксы в режиме abyss
         if (state.draftType === 'abyss_box') {
             const currentBlueHash = (state.blueBox || []).join(',');
             const currentRedHash = (state.redBox || []).join(',');
             if (currentBlueHash !== lastBlueBoxHash || currentRedHash !== lastRedBoxHash) {
-                lastBlueBoxHash = currentBlueHash; lastRedBoxHash = currentRedHash;
+                lastBlueBoxHash = currentBlueHash;
+                lastRedBoxHash = currentRedHash;
                 renderRows(state);
             }
         }
@@ -196,7 +196,6 @@
         const redJoinBtn = document.getElementById('join-red-btn');
         const blueLeaveBtn = document.getElementById('leave-blue-btn');
         const redLeaveBtn = document.getElementById('leave-red-btn');
-
         if (!state.gameStarted && !state.draftFinished) {
             blueJoinBtn.style.display = (!state.isBlueTaken && myRole !== 'blue') ? 'block' : 'none';
             blueLeaveBtn.style.display = (myRole === 'blue') ? 'block' : 'none';
@@ -209,13 +208,11 @@
 
         document.getElementById('blue-timer').style.opacity = (!state.gameStarted || state.draftFinished || state.currentTeam !== 'blue') ? '0' : '1';
         document.getElementById('red-timer').style.opacity = (!state.gameStarted || state.draftFinished || state.currentTeam !== 'red') ? '0' : '1';
-
         document.querySelectorAll('.ladder-step').forEach((el, idx) => {
             el.classList.remove('step-active', 'step-done');
             if (idx < state.stepIndex - 1) el.classList.add('step-done');
             else if (idx === state.stepIndex - 1 && state.gameStarted && !state.draftFinished && !state.immunityPhaseActive) el.classList.add('step-active');
         });
-        
         const confirmBtn = document.getElementById('confirm-btn');
         const skipBtn = document.getElementById('skip-btn');
         if (state.gameStarted && !state.draftFinished && !savedData && isMyTurn) {
@@ -240,10 +237,12 @@
         document.getElementById('red-name-display').innerText = state.redName;
         
         const blueAv = document.getElementById('blue-avatar');
-        if (state.blueAvatar && state.blueDiscordId && state.isBlueTaken) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block'; } else { blueAv.style.display = 'none'; }
+        if (state.blueAvatar && state.blueDiscordId && state.isBlueTaken) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block';
+        } else { blueAv.style.display = 'none'; }
         
         const redAv = document.getElementById('red-avatar');
-        if (state.redAvatar && state.redDiscordId && state.isRedTaken) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; } else { redAv.style.display = 'none'; }
+        if (state.redAvatar && state.redDiscordId && state.isRedTaken) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; } else { redAv.style.display = 'none';
+        }
         
         let txt = "WAITING...";
         if (state.draftFinished) txt = "DRAFT FINISHED";
@@ -252,14 +251,12 @@
         document.getElementById('status').innerText = txt.toUpperCase();
 
         updateImmunityTop(state);
-        renderSlots(state);
+        renderSlots(state); // Обновленный рендер слотов
         
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
         const isImmunePhase = state.immunityPhaseActive;
-        // Для Chaos используем классические правила
-        const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
-        const currentStepData = DRAFT_RULES[rulesType][state.stepIndex - 1] || {};
+        const currentStepData = DRAFT_RULES[state.draftType][state.stepIndex - 1] || {};
         const isImmuneStep = currentStepData.immunity === true;
         const isPickPhase = state.currentAction && state.currentAction.includes('pick');
 
@@ -275,7 +272,7 @@
                 let leftBox = myRole === 'red' ? state.redBox : state.blueBox;
                 let rightBox = myRole === 'red' ? state.blueBox : state.redBox;
                 if (myRole === 'spectator') { leftBox = state.blueBox; rightBox = state.redBox; }
-                
+                 
                 let inBoth = leftBox.includes(charId) && rightBox.includes(charId);
 
                 if (isImmunePhase) {
@@ -284,10 +281,9 @@
                     if (immunityBans.includes(charId)) el.classList.add('disabled');
                 } else {
                     if (state.bans.some(b => b.id === charId)) el.classList.add('disabled');
-                    
                     if (isPickPhase) {
                         // ВО ВРЕМЯ ПИКА: чужой бокс становится неактивным, но остается видимым
-                        if (side === 'right') el.classList.add('disabled'); 
+                        if (side === 'right') el.classList.add('disabled');
                         if (!isImmuneStep && immuneChars.includes(charId)) el.classList.add('disabled');
                     } else {
                         // ВО ВРЕМЯ БАНА: оба бокса (и left и right) полностью активны!
@@ -315,12 +311,13 @@
                     if (state.bans.some(b => b.id === charId)) el.classList.add('disabled');
                     if (isPickPhase && !isImmuneStep && immuneChars.includes(charId)) el.classList.add('disabled');
                     if (!isPickPhase && immuneChars.includes(charId)) el.classList.add('disabled');
-                    
                     if (state.bluePicks.includes(charId)) {
-                        if (myRole === 'blue') el.classList.add('disabled'); else if (!immuneChars.includes(charId)) el.classList.add('disabled');
+                        if (myRole === 'blue') el.classList.add('disabled');
+                        else if (!immuneChars.includes(charId)) el.classList.add('disabled');
                     }
                     if (state.redPicks.includes(charId)) {
-                        if (myRole === 'red') el.classList.add('disabled'); else if (!immuneChars.includes(charId)) el.classList.add('disabled');
+                        if (myRole === 'red') el.classList.add('disabled');
+                        else if (!immuneChars.includes(charId)) el.classList.add('disabled');
                     }
                 }
             }
@@ -342,10 +339,7 @@
         }
 
         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
-        // Для Chaos используем классические правила
-        const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
-        const schema = DRAFT_RULES[rulesType];
-        
+        const schema = DRAFT_RULES[currentDraftType];
         if(schema) {
             schema.forEach((step, i) => {
                 const d = document.createElement('div');
@@ -383,7 +377,8 @@
                 chars.slice(mid).forEach(c => r.appendChild(createChar(c, 'right')));
             }
      
-            const gap = document.createElement('div'); gap.className = 'row-gap';
+            const gap = document.createElement('div');
+            gap.className = 'row-gap';
             row.appendChild(l); row.appendChild(gap); row.appendChild(r);
             container.appendChild(row);
         });
@@ -395,10 +390,8 @@
         el.id = `char-${side}-${char.id}`;
         el.setAttribute('data-id', char.id);
         el.innerHTML = `<img src="${char.img}">`;
-        
         el.onclick = () => {
             if(!isGameStarted || myRole === 'spectator' || savedData || isDraftFinishedLocal) return;
-            
             if (currentDraftType === 'abyss_box' && currentState) {
                 const isPick = currentState.currentAction.includes('pick');
                 if (isPick && side === 'right') return; 
@@ -422,7 +415,8 @@
 
     function updateImmunityTop(state) {
          const topDisp = document.getElementById('immunity-top-display');
-         if(state.draftType !== 'gitcg_cup_2' && state.draftType !== 'abyss_box') { topDisp.style.display = 'none'; return; }
+         if(state.draftType !== 'gitcg_cup_2' && state.draftType !== 'abyss_box') { topDisp.style.display = 'none'; return;
+         }
          topDisp.style.display = 'flex';
          const row = document.getElementById('immunity-icons-row'); row.innerHTML = '';
          const bans = state.immunityBans || []; const picks = state.immunityPool || [];
@@ -439,41 +433,68 @@
          });
     }
 
+    // НОВАЯ ФУНКЦИЯ ОТРИСОВКИ СЛОТОВ ДРАФТА
     function renderSlots(state) {
-         // Для Chaos используем классические правила
-         const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
-         const currentSchema = DRAFT_RULES[rulesType];
-         
-         if (!currentSchema) return;
-         const getStepsFor = (schema, team, type) => schema.map((step, index) => ({ ...step, globalIndex: index + 1 })).filter(step => step.team === team && step.type === type).map(step => ({ num: step.globalIndex, immunity: step.immunity }));
-         const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban'); const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
-         const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick'); const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
-         const fill = (containerId, items, stepData, isBan) => {
-             const div = document.getElementById(containerId);
-             if(!div) return; div.innerHTML = ''; 
-             stepData.forEach((step, i) => {
-                 const slot = document.createElement('div'); slot.className = 'slot-circle';
-                 if (isBan) slot.classList.add('slot-ban');
-                 if (step.immunity) slot.classList.add('slot-immunity-pick');
-                 if (!state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && step.num === state.stepIndex) slot.classList.add('active-slot');
-  
-                let charId = null; if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
-                 if (charId) {
-                     let allFlat = []; Object.values(charsData).forEach(arr => allFlat.push(...arr));
-                     const char = allFlat.find(c => c.id === charId);
-                     if (char) slot.innerHTML = `<img src="${char.img}">`;
-                 } else slot.innerHTML = `<span class="step-number">${step.num}</span>`;
-                 div.appendChild(slot);
-             });
-         };
-         fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true); fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
-         if (currentDraftType === 'generals_2' || currentDraftType === 'classic' || currentDraftType === 'chaos') {
-             fill('blue-picks-1', state.bluePicks, bluePickSteps, false); fill('blue-picks-2', [], [], false); 
-             fill('red-picks-1', state.redPicks, redPickSteps, false); fill('red-picks-2', [], [], false);
-         } else {
-             fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false); fill('blue-picks-2', state.bluePicks.slice(5, 9), bluePickSteps.slice(5, 9), false);
-             fill('red-picks-1', state.redPicks.slice(0, 5), redPickSteps.slice(0, 5), false); fill('red-picks-2', state.redPicks.slice(5, 9), redPickSteps.slice(5, 9), false);
-         }
+        const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
+        const currentSchema = DRAFT_RULES[rulesType];
+        
+        if (!currentSchema) return;
+
+        // Функция отрисовки единой линии для конкретной команды
+        const renderSequence = (team, containerId) => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+
+            let teamPicksIndex = 0;
+            let teamBansIndex = 0;
+
+            // Проходимся по всей схеме драфта по порядку
+            currentSchema.forEach((step, globalIndex) => {
+                if (step.team !== team) return; // Отрисовываем только шаги этой команды
+                
+                const isBan = step.type.includes('ban');
+                const slot = document.createElement('div');
+                slot.className = `slot-card ${isBan ? 'ban-card' : 'pick-card'}`;
+                
+                // Подсветка активного слота
+                if (!state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && (globalIndex + 1) === state.stepIndex) {
+                    slot.classList.add('active-slot');
+                }
+
+                // Ищем, выбран ли уже персонаж для этого слота в состоянии (state)
+                let charId = null;
+                if (isBan) {
+                    const teamBans = state.bans.filter(b => b.team === team);
+                    if (teamBans[teamBansIndex]) {
+                        charId = teamBans[teamBansIndex].id;
+                        teamBansIndex++;
+                    }
+                } else {
+                    const teamPicks = team === 'blue' ? state.bluePicks : state.redPicks;
+                    if (teamPicks[teamPicksIndex]) {
+                        charId = teamPicks[teamPicksIndex];
+                        teamPicksIndex++;
+                    }
+                }
+
+                // Отрисовка внутренностей карточки (Картинка + Номер шага)
+                if (charId) {
+                    let allFlat = []; 
+                    Object.values(charsData).forEach(arr => allFlat.push(...arr));
+                    const char = allFlat.find(c => c.id === charId);
+                    if (char) {
+                        slot.innerHTML = `<img src="${char.img}"><span class="step-number">${globalIndex + 1}</span>`;
+                    }
+                } else {
+                    slot.innerHTML = `<span class="step-number">${globalIndex + 1}</span>`;
+                }
+                container.appendChild(slot);
+            });
+        };
+
+        renderSequence('blue', 'blue-sequence');
+        renderSequence('red', 'red-sequence');
     }
 </script>
 
