@@ -1,0 +1,128 @@
+<%- include('../partials/header') %>
+
+<style>
+    .tierlist-wrapper { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
+    .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #2a3454; padding-bottom: 15px; }
+    .tl-title { font-family: 'Cinzel', serif; color: #d4af37; font-size: 2.2em; margin: 0; text-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+    
+    .btn-action { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #050b14; font-weight: bold; border: none; padding: 10px 22px; border-radius: 6px; cursor: pointer; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
+    .btn-action:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(79, 172, 254, 0.7); }
+
+    #capture-tierlist { background: #0d111a; border: 2px solid #2a3454; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); }
+    .tier-row { display: flex; border-bottom: 2px solid #161c2d; min-height: 80px; background: rgba(16, 22, 36, 0.6); }
+    .tier-row:last-child { border-bottom: none; }
+    
+    .tier-label { width: 100px; min-width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-size: 26px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); user-select: none; }
+    .tier-t0 { background: linear-gradient(135deg, #00f2fe, #4facfe); color: #050b14; }
+    .tier-t1 { background: linear-gradient(135deg, #38ef7d, #11998e); color: #050b14; }
+    .tier-t2 { background: linear-gradient(135deg, #fce38a, #f38181); color: #050b14; }
+    .tier-t3 { background: linear-gradient(135deg, #667eea, #764ba2); color: #ffffff; }
+    .tier-t4 { background: linear-gradient(135deg, #434343, #282828); color: #8da4c4; }
+    .tier-dropzone { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; align-content: center; min-height: 80px; }
+
+    .player-card { position: relative; width: 125px; height: 38px; background: linear-gradient(135deg, #182238, #101726); border: 1px solid #3c4b70; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0 8px; user-select: none; transition: 0.15s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+    .player-card.draggable { cursor: grab; }
+    .player-card.draggable:active { cursor: grabbing; }
+    .player-card:hover { border-color: #00f2fe; }
+
+    .player-name { color: #e6edf8; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; width: 100%; }
+    
+    /* Индикаторы стрелочек */
+    .trend-icon { position: absolute; right: 4px; top: -6px; font-size: 14px; font-weight: bold; background: #0d111a; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+    .trend-up { color: #38ef7d; }
+    .trend-down { color: #ff4757; }
+    .trend-none { display: none; }
+
+    .pool-section { margin-top: 30px; background: rgba(16, 22, 36, 0.9); border: 1px dashed #3c4b70; border-radius: 8px; padding: 15px; display: none; }
+    .pool-title { color: #8da4c4; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+    .pool-dropzone { display: flex; flex-wrap: wrap; gap: 8px; min-height: 90px; }
+
+    .create-own-box { text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #2a3454; }
+</style>
+
+<div class="tierlist-wrapper">
+    <div class="tl-header">
+        <h1 class="tl-title" id="page-title">OFFICIAL PLAYER TIERLIST</h1>
+        <button class="btn-action" onclick="downloadTierlist()">📸 Save Image</button>
+    </div>
+
+    <div id="capture-tierlist">
+        <% const tiers = ['t0', 't1', 't2', 't3', 't4']; %>
+        <% tiers.forEach((tier, index) => { %>
+        <div class="tier-row">
+            <div class="tier-label tier-<%= tier %>">T<%= index %></div>
+            <div class="tier-dropzone" id="<%= tier %>">
+                <% tierlistData[tier].forEach(player => { %>
+                    <div class="player-card">
+                        <span class="player-name"><%= player.name %></span>
+                        <div class="trend-icon trend-<%= player.trend %>"><%= player.trend === 'up' ? '▲' : (player.trend === 'down' ? '▼' : '') %></div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+        <% }) %>
+    </div>
+
+    <!-- Пул нераспределенных игроков (изначально скрыт) -->
+    <div class="pool-section" id="pool-container">
+        <div class="pool-title">Unassigned Players</div>
+        <div class="pool-dropzone" id="unassigned">
+            <% tierlistData.unassigned.forEach(player => { %>
+                <div class="player-card">
+                    <span class="player-name"><%= player.name %></span>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+
+    <div class="create-own-box" id="create-own-container">
+        <p style="color: #8da4c4; margin-bottom: 15px;">Want to share your own vision of the meta?</p>
+        <button class="btn-action" style="background: transparent; border: 1px solid #4facfe; color: #4facfe;" onclick="enableBuilderMode()">✨ Create Your Own Tierlist</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+    function enableBuilderMode() {
+        document.getElementById('page-title').innerText = "MY TIERLIST";
+        document.getElementById('pool-container').style.display = 'block';
+        document.getElementById('create-own-container').style.display = 'none';
+
+        const unassignedPool = document.getElementById('unassigned');
+        
+        // 1. Убираем стрелочки и перекидываем всех в анранкед
+        document.querySelectorAll('.player-card').forEach(card => {
+            const trend = card.querySelector('.trend-icon');
+            if(trend) trend.remove();
+            
+            card.classList.add('draggable');
+            if(card.parentElement.id !== 'unassigned') {
+                unassignedPool.appendChild(card);
+            }
+        });
+
+        // 2. Включаем Drag & Drop
+        const zones = ['t0', 't1', 't2', 't3', 't4', 'unassigned'].map(id => document.getElementById(id));
+        zones.forEach(zone => {
+            new Sortable(zone, {
+                group: 'tierlist',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                touchStartThreshold: 5
+            });
+        });
+    }
+
+    async function downloadTierlist() {
+        const area = document.getElementById('capture-tierlist');
+        const canvas = await html2canvas(area, { backgroundColor: '#0d111a', scale: 2 });
+        const link = document.createElement('a');
+        link.download = 'gitcg_tierlist.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+</script>
+
+<%- include('../partials/footer') %>
