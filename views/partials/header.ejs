@@ -6,7 +6,7 @@
     <title><%= locals.title || 'GITCG' %></title>
     
     <link rel="icon" type="image/png" href="/logo.png">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <meta name="referrer" content="no-referrer">
 </head>
@@ -21,13 +21,18 @@
         <div class="sidebar-links">
             <a href="/" class="<%= locals.path === '/' ? 'active' : '' %>">HOME</a>
             <a href="/create" class="<%= locals.path === '/create' ? 'active' : '' %>">Create Game</a>
+            <a href="/tierlist" class="<%= locals.path === '/tierlist' ? 'active' : '' %>" style="color: #4facfe;">Tierlist</a>
             <a href="/tournaments" class="<%= locals.path === '/tournaments' ? 'active' : '' %>">Tournaments</a>            
             <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">History</a>
             <% if (locals.isAdmin) { %>
                 <div style="margin: 15px 15px 5px 15px; border-top: 1px solid #2a3454;"></div>
                 
-                <a href="/admin/dashboard" class="<%= locals.path && locals.path.startsWith('/admin') ? 'active' : '' %>" style="color: #4facfe; border-color: rgba(79, 172, 254, 0.3);">
+                <a href="/admin/dashboard" class="<%= locals.path && locals.path.startsWith('/admin/dashboard') ? 'active' : '' %>" style="color: #4facfe; border-color: rgba(79, 172, 254, 0.3);">
                     ADMIN PANEL
+                </a>
+
+                <a href="/admin/tierlist" class="<%= locals.path === '/admin/tierlist' ? 'active' : '' %>" style="color: #00f2fe; border-color: rgba(0, 242, 254, 0.3);">
+                    EDIT TIERLIST
                 </a>
                 
                 <a href="/promo.html" style="color: #b28dff; border-color: rgba(178, 141, 255, 0.3);">
