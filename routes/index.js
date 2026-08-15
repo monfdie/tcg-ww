@@ -36,37 +36,44 @@ router.use((req, res, next) => {
 });
 
 // ==========================================
-// ЛОГИКА TIERLIST
+// ЛОГИКА TIERLIST (MongoDB)
 // ==========================================
-const PLAYERS_FILE = path.join(__dirname, '../players.json');
+const PlayerTierlist = require('../models/PlayerTierlist');
 
-function getTierlistData() {
+async function getTierlistData() {
     try {
-        if (!fs.existsSync(PLAYERS_FILE)) {
+        let doc = await PlayerTierlist.findOne({ key: 'official' });
+        if (!doc) {
             const defaultData = { t0: [], t1: [], t2: [], t3: [], t4: [], unassigned: [] };
-            fs.writeFileSync(PLAYERS_FILE, JSON.stringify(defaultData, null, 2));
+            doc = await PlayerTierlist.create({ key: 'official', data: defaultData });
         }
-        return JSON.parse(fs.readFileSync(PLAYERS_FILE, 'utf-8'));
+        return doc.data;
     } catch (e) {
-        console.error("Error reading players.json:", e);
+        console.error("Error reading tierlist from DB:", e);
         return { t0: [], t1: [], t2: [], t3: [], t4: [], unassigned: [] };
     }
 }
 
 // Публичная страница тирлиста
-router.get('/tierlist', (req, res) => {
-    res.render('pages/tierlist', { title: 'Player Tierlist', tierlistData: getTierlistData() });
+router.get('/tierlist', async (req, res) => {
+    const tierlistData = await getTierlistData();
+    res.render('pages/tierlist', { title: 'Player Tierlist', tierlistData });
 });
 
 // Админка тирлиста (Drag & Drop + Стрелочки)
-router.get('/admin/tierlist', isAdmin, (req, res) => {
-    res.render('pages/admin_tierlist', { title: 'Manage Tierlist', tierlistData: getTierlistData() });
+router.get('/admin/tierlist', isAdmin, async (req, res) => {
+    const tierlistData = await getTierlistData();
+    res.render('pages/admin_tierlist', { title: 'Manage Tierlist', tierlistData });
 });
 
-// Сохранение тирлиста из админки
-router.post('/admin/tierlist/save', isAdmin, express.json(), (req, res) => {
+// Сохранение тирлиста из админки (теперь в БД)
+router.post('/admin/tierlist/save', isAdmin, express.json(), async (req, res) => {
     try {
-        fs.writeFileSync(PLAYERS_FILE, JSON.stringify(req.body, null, 2));
+        await PlayerTierlist.findOneAndUpdate(
+            { key: 'official' },
+            { data: req.body },
+            { upsert: true }
+        );
         res.json({ success: true });
     } catch (e) {
         console.error(e);
