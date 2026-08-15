@@ -1,86 +1,173 @@
 <%- include('../partials/header') %>
 
 <style>
-    .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3c4566; padding-bottom: 20px; margin-bottom: 20px; }
-    .limits-panel { display: flex; gap: 15px; flex-wrap: wrap; background: rgba(16, 20, 32, 0.8); padding: 20px; border-radius: 8px; border: 1px solid #2a3454; margin-bottom: 20px; align-items: center; }
-    .limit-box { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-    .limit-box label { color: #8da4c4; font-weight: bold; font-size: 0.9em; text-transform: uppercase; }
-    .limit-box input { width: 60px; text-align: center; background: #0b0d17; border: 1px solid #4facfe; color: #fff; font-family: 'Cinzel', serif; font-size: 1.2em; padding: 5px; border-radius: 4px; transition: 0.2s; }
-    .char-grid { background: rgba(16, 20, 32, 0.6); border: 1px solid #2a3454; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-    .element-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; }
-    .char-box { width: 65px; height: 65px; border-radius: 8px; cursor: pointer; border: 2px solid #8da4c4; position: relative; background: #111; transition: 0.2s; overflow: hidden; user-select: none; }
-    .char-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: 0.2s; }
-    .char-box:hover img { opacity: 1; transform: scale(1.1); }
-    .tier-badge { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.8); color: #fff; font-size: 12px; padding: 2px 6px; border-top-left-radius: 6px; font-weight: bold; font-family: 'Segoe UI', sans-serif; pointer-events: none; }
-    .tier-4 { border-color: #d4af37 !important; box-shadow: 0 0 10px rgba(212, 175, 55, 0.5); } .tier-4 .tier-badge { color: #d4af37; }
-    .tier-3 { border-color: #b28dff !important; box-shadow: 0 0 10px rgba(178, 141, 255, 0.5); } .tier-3 .tier-badge { color: #b28dff; }
-    .tier-2 { border-color: #4facfe !important; box-shadow: 0 0 10px rgba(79, 172, 254, 0.5); } .tier-2 .tier-badge { color: #4facfe; }
-    .tier-1 { border-color: #50b36b !important; box-shadow: 0 0 10px rgba(80, 179, 107, 0.5); } .tier-1 .tier-badge { color: #50b36b; }
-    .tier-0 { border-color: #333 !important; } .tier-0 .tier-badge { color: #888; }
-    .save-btn { padding: 12px 30px; font-size: 1.1em; background: #28a745; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; text-transform: uppercase; }
+    .tierlist-wrapper { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
+    .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #2a3454; padding-bottom: 15px; }
+    .tl-title { font-family: 'Cinzel', serif; color: #fff; font-size: 2em; margin: 0; }
+    
+    .btn-save { background: #4facfe; color: #000; font-weight: bold; border: none; padding: 10px 22px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+    .btn-save:hover { background: #fff; box-shadow: 0 0 15px rgba(79,172,254,0.6); }
+    
+    #capture-tierlist { background: #0d111a; border: 2px solid #2a3454; border-radius: 0; overflow: hidden; }
+    .tier-row { display: flex; border-bottom: 1px solid #1a2235; min-height: 80px; background: rgba(16, 22, 36, 0.6); }
+    .tier-row:last-child { border-bottom: none; }
+    
+    .tier-label { width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; font-size: 24px; font-weight: 800; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); user-select: none; border-right: 1px solid rgba(0,0,0,0.3); }
+    
+    .tier-t0 { background: linear-gradient(135deg, #00c6ff, #0072ff); }
+    .tier-t1 { background: linear-gradient(135deg, #38ef7d, #11998e); }
+    .tier-t2 { background: linear-gradient(135deg, #f5af19, #f12711); }
+    .tier-t3 { background: linear-gradient(135deg, #8E2DE2, #4A00E0); }
+    .tier-t4 { background: linear-gradient(135deg, #606c88, #3f4c6b); }
+    
+    .tier-dropzone, .pool-dropzone { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; align-content: center; min-height: 80px; }
+    
+    .player-card { position: relative; width: 120px; height: 36px; background: #1a2235; border: 1px solid #2e3b52; border-radius: 2px; display: flex; align-items: center; justify-content: center; padding: 0 8px; cursor: grab; user-select: none; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
+    .player-card:active { cursor: grabbing; border-color: #4facfe; }
+    .player-name { color: #d1d9e6; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
+    
+    /* Кнопка смены стрелочки */
+    .trend-toggle { position: absolute; right: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%; background: #0d111a; border: 1px solid #2e3b52; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 10; transition: 0.2s;}
+    .trend-toggle:hover { transform: scale(1.1); }
+    .trend-up { color: #2ecc71; border-color: #2ecc71; }
+    .trend-down { color: #e74c3c; border-color: #e74c3c; }
+    .trend-none { color: #8da4c4; }
+
+    /* Кнопка удаления */
+    .delete-btn { position: absolute; left: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%; background: #e74c3c; border: 1px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; z-index: 10; transition: 0.2s; color: #fff; }
+    .delete-btn:hover { background: #c0392b; transform: scale(1.1); }
+
+    .pool-section { margin-top: 30px; background: rgba(16, 22, 36, 0.6); border: 1px solid #2a3454; border-radius: 4px; padding: 15px; }
+    .add-player-box { margin-top: 20px; display: flex; gap: 10px; }
+    .add-player-box input { flex: 1; padding: 12px; background: #0b0d17; color: #fff; border: 1px solid #2a3454; border-radius: 4px; outline: none; }
+    .add-player-box input:focus { border-color: #4facfe; }
 </style>
 
-<div class="page-container" style="max-width: 1000px;">
-    <div class="admin-header">
-        <h1 style="color: #fff; margin: 0; font-family: 'Cinzel', serif;">Manage Tiers</h1>
-        <button class="save-btn" id="save-tiers-btn" onclick="autoSaveTiers(true)">💾 All Saved</button>
+<div class="tierlist-wrapper">
+    <div class="tl-header">
+        <h1 class="tl-title">ADMIN: Edit Official Tierlist</h1>
+        <button class="btn-save" onclick="saveTierlist()">💾 Publish Changes</button>
     </div>
-    <div class="limits-panel">
-        <h3 style="color: #fff; margin: 0 20px 0 0;">Box Limits:</h3>
-        <% [4, 3, 2, 1, 0].forEach(tier => { %>
-            <div class="limit-box">
-                <label>Tier <%= tier %></label>
-                <input type="number" id="limit-<%= tier %>" value="<%= tiers.limits[tier] !== undefined ? tiers.limits[tier] : 0 %>" min="0" max="50" oninput="autoSaveTiers()">
-            </div>
-        <% }) %>
-        <div style="color: #8da4c4; font-size: 0.8em; margin-left: auto;">* Changes save to Database automatically</div>
+
+    <div style="background: rgba(79, 172, 254, 0.1); border-left: 4px solid #4facfe; padding: 10px 15px; margin-bottom: 20px; color: #fff; font-size: 14px;">
+        <b>Instruction:</b> Drag players to tiers. Click the circle on the right to cycle trends. Click the Red ✖ on the left to delete a player.
     </div>
-    <div class="char-grid">
-        <% ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => { %>
-            <div class="element-row">
-                <% if(chars[elem]) { chars[elem].forEach(char => { %>
-                    <% const t = tiers.characters[char.id] !== undefined ? tiers.characters[char.id] : 0; %>
-                    <div class="char-box tier-<%= t %>" data-id="<%= char.id %>" data-tier="<%= t %>" onclick="cycleTier(this)">
-                        <img src="<%= char.img %>" alt="<%= char.id %>">
-                        <div class="tier-badge">T<span class="t-val"><%= t %></span></div>
+
+    <div id="capture-tierlist">
+        <% const tiers = ['t0', 't1', 't2', 't3', 't4']; %>
+        <% tiers.forEach((tier, index) => { %>
+        <div class="tier-row">
+            <div class="tier-label tier-<%= tier %>">T<%= index %></div>
+            <div class="tier-dropzone" id="<%= tier %>">
+                <% tierlistData[tier].forEach(player => { %>
+                    <div class="player-card" data-name="<%= player.name %>" data-trend="<%= player.trend %>">
+                        <div class="delete-btn" onclick="deletePlayer(this)">✖</div>
+                        <span class="player-name"><%= player.name %></span>
+                        <div class="trend-toggle trend-<%= player.trend %>" onclick="cycleTrend(this)"><%= player.trend === 'up' ? '▲' : (player.trend === 'down' ? '▼' : '-') %></div>
                     </div>
-                <% })} %>
+                <% }) %>
             </div>
+        </div>
         <% }) %>
+    </div>
+
+    <div class="pool-section">
+        <div style="color: #8da4c4; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 15px;">Unassigned Players</div>
+        <div class="pool-dropzone" id="unassigned">
+            <% tierlistData.unassigned.forEach(player => { %>
+                <div class="player-card" data-name="<%= player.name %>" data-trend="none">
+                    <div class="delete-btn" onclick="deletePlayer(this)">✖</div>
+                    <span class="player-name"><%= player.name %></span>
+                    <div class="trend-toggle trend-none" onclick="cycleTrend(this)">-</div>
+                </div>
+            <% }) %>
+        </div>
+
+        <div class="add-player-box">
+            <input type="text" id="new-player-input" placeholder="Type new player name here..." onkeypress="if(event.key === 'Enter') addPlayer()">
+            <button class="btn-save" onclick="addPlayer()">+ Add</button>
+        </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
 <script>
-    let saveTimeout;
-    function cycleTier(element) {
-        let currentTier = parseInt(element.getAttribute('data-tier'));
-        let nextTier = currentTier + 1;
-        if (nextTier > 4) nextTier = 0; 
-        element.setAttribute('data-tier', nextTier);
-        element.querySelector('.t-val').innerText = nextTier;
-        element.className = `char-box tier-${nextTier}`;
-        autoSaveTiers();
+    const zones = ['t0', 't1', 't2', 't3', 't4', 'unassigned'].map(id => document.getElementById(id));
+    zones.forEach(zone => {
+        new Sortable(zone, { 
+            group: 'tierlist', 
+            animation: 150,
+            filter: '.trend-toggle, .delete-btn',
+            preventOnFilter: false // ИСПРАВЛЕНИЕ: Позволяет кликам по кнопкам удаления срабатывать
+        });
+    });
+
+    function cycleTrend(btn) {
+        const card = btn.parentElement;
+        let current = card.dataset.trend;
+        let next = 'none'; let icon = '-';
+        
+        if (current === 'none') { next = 'up'; icon = '▲'; }
+        else if (current === 'up') { next = 'down'; icon = '▼'; }
+        else if (current === 'down') { next = 'none'; icon = '-'; }
+
+        card.dataset.trend = next;
+        btn.className = `trend-toggle trend-${next}`;
+        btn.innerText = icon;
     }
-    function autoSaveTiers(instant = false) {
-        const btn = document.getElementById('save-tiers-btn');
-        btn.innerText = 'Saving...'; btn.style.background = '#4facfe';
-        clearTimeout(saveTimeout);
-        const executeSave = async () => {
-            const limits = { "4": parseInt(document.getElementById('limit-4').value) || 0, "3": parseInt(document.getElementById('limit-3').value) || 0, "2": parseInt(document.getElementById('limit-2').value) || 0, "1": parseInt(document.getElementById('limit-1').value) || 0, "0": parseInt(document.getElementById('limit-0').value) || 0 };
-            const characters = {};
-            document.querySelectorAll('.char-box').forEach(el => {
-                const id = el.getAttribute('data-id'); const tier = parseInt(el.getAttribute('data-tier'));
-                if (tier > 0) characters[id] = tier;
+
+    function deletePlayer(btn) {
+        if(confirm("Delete this player?")) {
+            btn.parentElement.remove();
+        }
+    }
+
+    function addPlayer() {
+        const input = document.getElementById('new-player-input');
+        const name = input.value.trim();
+        if (!name) return;
+
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        card.dataset.name = name;
+        card.dataset.trend = 'none';
+        
+        card.innerHTML = `
+            <div class="delete-btn" onclick="deletePlayer(this)">✖</div>
+            <span class="player-name">${name}</span>
+            <div class="trend-toggle trend-none" onclick="cycleTrend(this)">-</div>
+        `;
+        
+        document.getElementById('unassigned').appendChild(card);
+        input.value = '';
+    }
+
+    async function saveTierlist() {
+        const data = { t0: [], t1: [], t2: [], t3: [], t4: [], unassigned: [] };
+        
+        Object.keys(data).forEach(tierId => {
+            const container = document.getElementById(tierId);
+            container.querySelectorAll('.player-card').forEach(card => {
+                data[tierId].push({
+                    name: card.dataset.name,
+                    trend: card.dataset.trend
+                });
             });
-            try {
-                const res = await fetch('/admin/tiers/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ limits, characters }) });
-                if ((await res.json()).success) {
-                    btn.innerText = '✅ Saved'; btn.style.background = '#28a745';
-                    setTimeout(() => { btn.innerText = '💾 All Saved'; }, 2000);
-                } else { btn.innerText = '❌ Error'; btn.style.background = '#ff4444'; }
-            } catch(e) { btn.innerText = '❌ Error'; btn.style.background = '#ff4444'; }
-        };
-        if (instant) executeSave(); else saveTimeout = setTimeout(executeSave, 500); 
+        });
+
+        try {
+            const res = await fetch('/admin/tierlist/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                alert('Official Tierlist has been successfully updated and published!');
+            } else {
+                alert('Error saving tierlist.');
+            }
+        } catch (e) { alert('Error: ' + e.message); }
     }
 </script>
 
