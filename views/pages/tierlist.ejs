@@ -5,9 +5,8 @@
     .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #2a3454; padding-bottom: 15px; }
     .tl-title { font-family: 'Cinzel', serif; color: #fff; font-size: 2.2em; margin: 0; }
     
-    /* Спокойные кнопки в стиле сайта */
-    .btn-action { background: #4facfe; color: #000; font-weight: bold; border: none; padding: 10px 22px; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
-    .btn-action:hover { background: #fff; box-shadow: 0 0 15px rgba(79,172,254,0.6); }
+    .btn-action { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #050b14; font-weight: bold; border: none; padding: 10px 22px; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .btn-action:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(79, 172, 254, 0.4); }
 
     /* Строгий прямоугольный тирлист */
     #capture-tierlist { background: #0d111a; border: 2px solid #2a3454; border-radius: 0; overflow: hidden; }
@@ -15,24 +14,24 @@
     .tier-row:last-child { border-bottom: none; }
     
     /* Шрифты тиров без обводок */
-    .tier-label { width: 100px; min-width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; font-size: 24px; font-weight: 800; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); user-select: none; border-right: 1px solid rgba(0,0,0,0.3); }
+    .tier-label { width: 100px; min-width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; font-size: 24px; font-weight: 800; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); user-select: none; border-right: 1px solid rgba(0,0,0,0.3); }
     
-    /* Яркие, но не ядовитые цвета */
-    .tier-t0 { background: linear-gradient(135deg, #00c6ff, #0072ff); } /* Голубой */
-    .tier-t1 { background: linear-gradient(135deg, #38ef7d, #11998e); } /* Зеленый */
-    .tier-t2 { background: linear-gradient(135deg, #f5af19, #f12711); } /* Оранжевый */
-    .tier-t3 { background: linear-gradient(135deg, #8E2DE2, #4A00E0); } /* Фиолетовый */
-    .tier-t4 { background: linear-gradient(135deg, #606c88, #3f4c6b); } /* Серый */
+    /* Цвета тиров из самой первой версии */
+    .tier-t0 { background: linear-gradient(135deg, #00f2fe, #4facfe); color: #050b14; }
+    .tier-t1 { background: linear-gradient(135deg, #38ef7d, #11998e); color: #050b14; }
+    .tier-t2 { background: linear-gradient(135deg, #fce38a, #f38181); color: #050b14; text-shadow: none; }
+    .tier-t3 { background: linear-gradient(135deg, #667eea, #764ba2); color: #ffffff; }
+    .tier-t4 { background: linear-gradient(135deg, #434343, #282828); color: #8da4c4; }
     
     .tier-dropzone { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; align-content: center; min-height: 80px; }
 
-    /* Новый строгий дизайн карточек */
-    .player-card { position: relative; width: 120px; height: 36px; background: #1a2235; border: 1px solid #2e3b52; border-radius: 2px; display: flex; align-items: center; justify-content: center; padding: 0 8px; user-select: none; transition: 0.15s ease; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
+    /* Карточки игроков */
+    .player-card { position: relative; width: 125px; height: 38px; background: linear-gradient(135deg, #182238, #101726); border: 1px solid #3c4b70; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0 8px; user-select: none; transition: 0.15s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
     .player-card.draggable { cursor: grab; }
     .player-card.draggable:active { cursor: grabbing; border-color: #4facfe; }
     .player-card:hover { border-color: #4facfe; background: #202a40; }
 
-    .player-name { color: #d1d9e6; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; width: 100%; }
+    .player-name { color: #e6edf8; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; width: 100%; }
     
     /* Индикаторы стрелочек */
     .trend-icon { position: absolute; right: -6px; top: -6px; font-size: 11px; font-weight: bold; background: #0d111a; border: 1px solid #2e3b52; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
@@ -40,7 +39,7 @@
     .trend-down { color: #e74c3c; border-color: #e74c3c; }
     .trend-none { display: none; }
 
-    .pool-section { margin-top: 30px; background: rgba(16, 22, 36, 0.6); border: 1px solid #2a3454; border-radius: 4px; padding: 15px; display: none; }
+    .pool-section { margin-top: 30px; background: rgba(16, 22, 36, 0.6); border: 1px dashed #3c4b70; border-radius: 4px; padding: 15px; display: none; }
     .pool-title { color: #8da4c4; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
     .pool-dropzone { display: flex; flex-wrap: wrap; gap: 8px; min-height: 90px; }
 
@@ -48,14 +47,14 @@
 
     /* Поле добавления игрока */
     .add-player-box { margin-top: 20px; display: flex; gap: 10px; display: none; }
-    .add-player-box input { flex: 1; padding: 12px; background: #0b0d17; color: #fff; border: 1px solid #2a3454; border-radius: 4px; outline: none; }
+    .add-player-box input { flex: 1; padding: 12px; background: #0b0d17; color: #fff; border: 1px solid #3c4b70; border-radius: 4px; outline: none; }
     .add-player-box input:focus { border-color: #4facfe; }
 </style>
 
 <div class="tierlist-wrapper">
     <div class="tl-header">
         <h1 class="tl-title" id="page-title">OFFICIAL TIERLIST</h1>
-        <button class="btn-action" onclick="downloadTierlist()">📸 Save Image</button>
+        <button class="btn-action" onclick="downloadTierlist()">SAVE IMAGE</button>
     </div>
 
     <div id="capture-tierlist">
@@ -87,13 +86,13 @@
 
         <div class="add-player-box" id="user-add-player-box">
             <input type="text" id="new-player-input" placeholder="Type new player name here to add them to your tierlist..." onkeypress="if(event.key === 'Enter') addPlayer()">
-            <button class="btn-action" onclick="addPlayer()">+ Add</button>
+            <button class="btn-action" onclick="addPlayer()">+ ADD</button>
         </div>
     </div>
 
     <div class="create-own-box" id="create-own-container">
         <p style="color: #8da4c4; margin-bottom: 15px; font-size: 16px;">Want to share your own vision of the meta?</p>
-        <button class="btn-action" style="background: transparent; border: 1px solid #4facfe; color: #4facfe;" onclick="enableBuilderMode()">✨ Create Your Own</button>
+        <button class="btn-action" style="background: transparent; border: 1px solid #4facfe; color: #4facfe; box-shadow: none;" onclick="enableBuilderMode()">CREATE YOUR OWN</button>
     </div>
 </div>
 
