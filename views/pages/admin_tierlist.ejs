@@ -2,33 +2,33 @@
 
 <style>
     .tierlist-wrapper { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
-    .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #2a3454; padding-bottom: 15px; }
+    .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #3c4b70; padding-bottom: 15px; }
     .tl-title { font-family: 'Cinzel', serif; color: #fff; font-size: 2em; margin: 0; }
     
     .btn-save { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #050b14; font-weight: bold; border: none; padding: 10px 22px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .btn-save:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(79, 172, 254, 0.4); }
     
-    #capture-tierlist { background: #0d111a; border: 2px solid #2a3454; border-radius: 0; overflow: hidden; }
-    .tier-row { display: flex; border-bottom: 1px solid #1a2235; min-height: 80px; background: rgba(16, 22, 36, 0.6); }
+    #capture-tierlist { background: #151b2b; border: 2px solid #3c4b70; border-radius: 0; overflow: hidden; }
+    .tier-row { display: flex; border-bottom: 1px solid #2a3454; min-height: 80px; background: rgba(30, 41, 59, 0.7); }
     .tier-row:last-child { border-bottom: none; }
     
-    .tier-label { width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; font-size: 24px; font-weight: 800; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); user-select: none; border-right: 1px solid rgba(0,0,0,0.3); }
+    .tier-label { width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; font-size: 24px; font-weight: 800; color: #333; user-select: none; border-right: 1px solid #151b2b; }
     
-    .tier-t0 { background: linear-gradient(135deg, #00f2fe, #4facfe); color: #050b14; }
-    .tier-t1 { background: linear-gradient(135deg, #38ef7d, #11998e); color: #050b14; }
-    .tier-t2 { background: linear-gradient(135deg, #fce38a, #f38181); color: #050b14; text-shadow: none; }
-    .tier-t3 { background: linear-gradient(135deg, #667eea, #764ba2); color: #ffffff; }
-    .tier-t4 { background: linear-gradient(135deg, #434343, #282828); color: #8da4c4; }
+    .tier-t0 { background: #ff7f7f; }
+    .tier-t1 { background: #ffbf7f; }
+    .tier-t2 { background: #ffdf7f; }
+    .tier-t3 { background: #ffff7f; }
+    .tier-t4 { background: #bfff7f; }
     
     .tier-dropzone, .pool-dropzone { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; align-content: center; min-height: 80px; }
     
-    .player-card { position: relative; width: 125px; height: 38px; background: linear-gradient(135deg, #182238, #101726); border: 1px solid #3c4b70; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0 8px; cursor: grab; user-select: none; box-shadow: 0 4px 10px rgba(0,0,0,0.4); transition: 0.15s ease; }
-    .player-card:active { cursor: grabbing; border-color: #4facfe; }
-    .player-card:hover { border-color: #4facfe; }
-    .player-name { color: #e6edf8; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
+    .player-card { position: relative; width: 125px; height: 38px; background: linear-gradient(135deg, #2c3a58, #1e293b); border: 1px solid #4facfe; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0 8px; cursor: grab; user-select: none; box-shadow: 0 4px 10px rgba(0,0,0,0.4); transition: 0.15s ease; }
+    .player-card:active { cursor: grabbing; border-color: #00f2fe; }
+    .player-card:hover { border-color: #00f2fe; background: #35466b;}
+    .player-name { color: #ffffff; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
     
     /* Кнопка смены стрелочки */
-    .trend-toggle { position: absolute; right: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%; background: #0d111a; border: 1px solid #2e3b52; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 10; transition: 0.2s;}
+    .trend-toggle { position: absolute; right: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%; background: #151b2b; border: 1px solid #3c4b70; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 10; transition: 0.2s;}
     .trend-toggle:hover { transform: scale(1.1); }
     .trend-up { color: #2ecc71; border-color: #2ecc71; }
     .trend-down { color: #e74c3c; border-color: #e74c3c; }
@@ -38,9 +38,9 @@
     .delete-btn { position: absolute; left: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%; background: #e74c3c; border: 1px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; z-index: 10; transition: 0.2s; color: #fff; font-family: sans-serif; font-weight: bold; }
     .delete-btn:hover { background: #c0392b; transform: scale(1.1); }
 
-    .pool-section { margin-top: 30px; background: rgba(16, 22, 36, 0.6); border: 1px dashed #3c4b70; border-radius: 4px; padding: 15px; }
+    .pool-section { margin-top: 30px; background: rgba(30, 41, 59, 0.7); border: 1px dashed #4facfe; border-radius: 4px; padding: 15px; }
     .add-player-box { margin-top: 20px; display: flex; gap: 10px; }
-    .add-player-box input { flex: 1; padding: 12px; background: #0b0d17; color: #fff; border: 1px solid #3c4b70; border-radius: 4px; outline: none; }
+    .add-player-box input { flex: 1; padding: 12px; background: #151b2b; color: #fff; border: 1px solid #3c4b70; border-radius: 4px; outline: none; }
     .add-player-box input:focus { border-color: #4facfe; }
 </style>
 
@@ -73,7 +73,7 @@
     </div>
 
     <div class="pool-section">
-        <div style="color: #8da4c4; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 15px;">Unassigned Players</div>
+        <div style="color: #4facfe; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 15px;">Unassigned Players</div>
         <div class="pool-dropzone" id="unassigned">
             <% tierlistData.unassigned.forEach(player => { %>
                 <div class="player-card" data-name="<%= player.name %>" data-trend="none">
