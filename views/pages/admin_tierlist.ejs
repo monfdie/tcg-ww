@@ -1,0 +1,155 @@
+<%- include('../partials/header') %>
+
+<style>
+    /* Стили почти идентичны обычным, но добавлены элементы управления */
+    .tierlist-wrapper { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
+    .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #2a3454; padding-bottom: 15px; }
+    .tl-title { font-family: 'Cinzel', serif; color: #fff; font-size: 2em; margin: 0; }
+    
+    .btn-save { background: linear-gradient(135deg, #38ef7d, #11998e); color: #000; font-weight: bold; border: none; padding: 10px 22px; border-radius: 6px; cursor: pointer; text-transform: uppercase; }
+    
+    .tier-row { display: flex; border-bottom: 2px solid #161c2d; min-height: 80px; background: rgba(16, 22, 36, 0.6); }
+    .tier-label { width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-size: 26px; font-weight: bold; color: #050b14; user-select: none; }
+    .tier-t0 { background: linear-gradient(135deg, #00f2fe, #4facfe); }
+    .tier-t1 { background: linear-gradient(135deg, #38ef7d, #11998e); }
+    .tier-t2 { background: linear-gradient(135deg, #fce38a, #f38181); }
+    .tier-t3 { background: linear-gradient(135deg, #667eea, #764ba2); color:#fff; }
+    .tier-t4 { background: linear-gradient(135deg, #434343, #282828); color:#8da4c4;}
+    
+    .tier-dropzone, .pool-dropzone { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; align-content: center; min-height: 80px; }
+    
+    .player-card { position: relative; width: 125px; height: 38px; background: linear-gradient(135deg, #182238, #101726); border: 1px solid #3c4b70; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0 8px; cursor: grab; user-select: none; }
+    .player-name { color: #e6edf8; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
+    
+    /* Кнопка смены стрелочки */
+    .trend-toggle { position: absolute; right: -5px; top: -10px; width: 22px; height: 22px; border-radius: 50%; background: #2a3454; border: 1px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; z-index: 10; transition: 0.2s;}
+    .trend-toggle:hover { transform: scale(1.2); }
+    .trend-up { color: #38ef7d; border-color: #38ef7d; }
+    .trend-down { color: #ff4757; border-color: #ff4757; }
+    .trend-none { color: #8da4c4; border-color: #8da4c4; }
+
+    .pool-section { margin-top: 30px; background: rgba(16, 22, 36, 0.9); border: 1px dashed #3c4b70; border-radius: 8px; padding: 15px; }
+    
+    .add-player-box { margin-top: 20px; display: flex; gap: 10px; }
+    .add-player-box input { flex: 1; padding: 10px; background: #0b0d17; color: #fff; border: 1px solid #3c4566; border-radius: 4px; }
+</style>
+
+<div class="tierlist-wrapper">
+    <div class="tl-header">
+        <h1 class="tl-title">ADMIN: Edit Official Tierlist</h1>
+        <button class="btn-save" onclick="saveTierlist()">💾 Publish Changes</button>
+    </div>
+
+    <div style="background: rgba(255, 107, 107, 0.1); border-left: 4px solid #ff4757; padding: 10px 15px; margin-bottom: 20px; color: #fff; font-size: 14px;">
+        <b>Instruction:</b> Drag players. Click the little circle on top-right of a card to cycle trends (Up ▲ / Down ▼ / Neutral -).
+    </div>
+
+    <div id="capture-tierlist" style="border: 2px solid #2a3454; border-radius: 8px; overflow: hidden;">
+        <% const tiers = ['t0', 't1', 't2', 't3', 't4']; %>
+        <% tiers.forEach((tier, index) => { %>
+        <div class="tier-row">
+            <div class="tier-label tier-<%= tier %>">T<%= index %></div>
+            <div class="tier-dropzone" id="<%= tier %>">
+                <% tierlistData[tier].forEach(player => { %>
+                    <div class="player-card" data-name="<%= player.name %>" data-trend="<%= player.trend %>">
+                        <span class="player-name"><%= player.name %></span>
+                        <div class="trend-toggle trend-<%= player.trend %>" onclick="cycleTrend(this)"><%= player.trend === 'up' ? '▲' : (player.trend === 'down' ? '▼' : '-') %></div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+        <% }) %>
+    </div>
+
+    <div class="pool-section">
+        <div style="color: #8da4c4; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 12px;">Unassigned Players</div>
+        <div class="pool-dropzone" id="unassigned">
+            <% tierlistData.unassigned.forEach(player => { %>
+                <div class="player-card" data-name="<%= player.name %>" data-trend="none">
+                    <span class="player-name"><%= player.name %></span>
+                    <div class="trend-toggle trend-none" onclick="cycleTrend(this)">-</div>
+                </div>
+            <% }) %>
+        </div>
+
+        <div class="add-player-box">
+            <input type="text" id="new-player-input" placeholder="Type new player name here...">
+            <button class="btn-save" style="background: #4facfe;" onclick="addPlayer()">+ Add</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script>
+    // Инициализация DND
+    const zones = ['t0', 't1', 't2', 't3', 't4', 'unassigned'].map(id => document.getElementById(id));
+    zones.forEach(zone => {
+        new Sortable(zone, { group: 'tierlist', animation: 150 });
+    });
+
+    // Смена стрелочек по кругу
+    function cycleTrend(btn) {
+        const card = btn.parentElement;
+        let current = card.dataset.trend;
+        let next = 'none'; let icon = '-';
+        
+        if (current === 'none') { next = 'up'; icon = '▲'; }
+        else if (current === 'up') { next = 'down'; icon = '▼'; }
+        else if (current === 'down') { next = 'none'; icon = '-'; }
+
+        card.dataset.trend = next;
+        btn.className = `trend-toggle trend-${next}`;
+        btn.innerText = icon;
+    }
+
+    // Добавление новой плашки
+    function addPlayer() {
+        const input = document.getElementById('new-player-input');
+        const name = input.value.trim();
+        if (!name) return;
+
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        card.dataset.name = name;
+        card.dataset.trend = 'none';
+        
+        card.innerHTML = `
+            <span class="player-name">${name}</span>
+            <div class="trend-toggle trend-none" onclick="cycleTrend(this)">-</div>
+        `;
+        
+        document.getElementById('unassigned').appendChild(card);
+        input.value = '';
+    }
+
+    // Сбор данных и отправка на сервер
+    async function saveTierlist() {
+        const data = { t0: [], t1: [], t2: [], t3: [], t4: [], unassigned: [] };
+        
+        Object.keys(data).forEach(tierId => {
+            const container = document.getElementById(tierId);
+            container.querySelectorAll('.player-card').forEach(card => {
+                data[tierId].push({
+                    name: card.dataset.name,
+                    trend: card.dataset.trend
+                });
+            });
+        });
+
+        try {
+            const res = await fetch('/admin/tierlist/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                alert('Official Tierlist has been successfully updated and published!');
+            } else {
+                alert('Error saving tierlist.');
+            }
+        } catch (e) { alert('Error: ' + e.message); }
+    }
+</script>
+
+<%- include('../partials/footer') %>
