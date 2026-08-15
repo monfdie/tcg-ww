@@ -35,6 +35,46 @@ router.use((req, res, next) => {
     next();
 });
 
+// ==========================================
+// ЛОГИКА TIERLIST
+// ==========================================
+const PLAYERS_FILE = path.join(__dirname, '../players.json');
+
+function getTierlistData() {
+    try {
+        if (!fs.existsSync(PLAYERS_FILE)) {
+            const defaultData = { t0: [], t1: [], t2: [], t3: [], t4: [], unassigned: [] };
+            fs.writeFileSync(PLAYERS_FILE, JSON.stringify(defaultData, null, 2));
+        }
+        return JSON.parse(fs.readFileSync(PLAYERS_FILE, 'utf-8'));
+    } catch (e) {
+        console.error("Error reading players.json:", e);
+        return { t0: [], t1: [], t2: [], t3: [], t4: [], unassigned: [] };
+    }
+}
+
+// Публичная страница тирлиста
+router.get('/tierlist', (req, res) => {
+    res.render('pages/tierlist', { title: 'Player Tierlist', tierlistData: getTierlistData() });
+});
+
+// Админка тирлиста (Drag & Drop + Стрелочки)
+router.get('/admin/tierlist', isAdmin, (req, res) => {
+    res.render('pages/admin_tierlist', { title: 'Manage Tierlist', tierlistData: getTierlistData() });
+});
+
+// Сохранение тирлиста из админки
+router.post('/admin/tierlist/save', isAdmin, express.json(), (req, res) => {
+    try {
+        fs.writeFileSync(PLAYERS_FILE, JSON.stringify(req.body, null, 2));
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Failed to save tierlist' });
+    }
+});
+// ==========================================
+
 router.get('/', async (req, res) => {
     try {
         const today = new Date();
@@ -102,7 +142,7 @@ router.get('/history', async (req, res) => {
     } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
 });
 
-const TierConfig = require('../models/TierConfig'); // <--- ВАЖНО! ДОБАВИТЬ НАВЕРХ!
+const TierConfig = require('../models/TierConfig'); 
 
 // ==========================================
 // ПРОФИЛЬ И СБОРКА БОКСА
@@ -110,11 +150,9 @@ const TierConfig = require('../models/TierConfig'); // <--- ВАЖНО! ДОБА
 router.get('/profile', async (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     
-    // Достаем тиры из БД (если нет, создаем)
     let config = await TierConfig.findOne({ settingsKey: 'main' });
     if (!config) { config = await TierConfig.create({ settingsKey: 'main' }); }
     
-    // Перенос старых данных, если у пользователя был только 1 бокс в старой системе
     if (req.user.boxes.length === 1 && req.user.boxes[0].characters.length === 0 && req.user.box && req.user.box.length > 0) {
         req.user.boxes[0].characters = req.user.box;
         await req.user.save();
@@ -129,7 +167,6 @@ router.post('/profile/save-box', express.json(), async (req, res) => {
         const { boxes, activeBoxIndex } = req.body;
         req.user.boxes = boxes;
         req.user.activeBoxIndex = activeBoxIndex;
-        // Для обратной совместимости с сервером
         if (boxes[activeBoxIndex]) req.user.box = boxes[activeBoxIndex].characters;
         await req.user.save();
         res.json({ success: true });
@@ -140,7 +177,7 @@ router.post('/profile/save-box', express.json(), async (req, res) => {
 });
 
 // ==========================================
-// АДМИНКА: УПРАВЛЕНИЕ ТИРАМИ ИЗ БД
+// АДМИНКА
 // ==========================================
 router.get('/admin/tiers', isAdmin, async (req, res) => {
     let config = await TierConfig.findOne({ settingsKey: 'main' });
@@ -251,7 +288,6 @@ router.get('/game/:id', async (req, res) => {
         res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id, savedData: match || null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true });
     } catch (e) { res.render('pages/game', { title: "Error", roomId: req.params.id, savedData: null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true }); }
 });
-
 
 router.get('/auth/discord', passport.authenticate('discord'));
 router.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }), (req, res) => { res.redirect('/'); });
