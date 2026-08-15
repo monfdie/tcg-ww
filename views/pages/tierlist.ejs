@@ -2,51 +2,51 @@
 
 <style>
     .tierlist-wrapper { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
-    .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #3c4b70; padding-bottom: 15px; }
+    .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #2a3454; padding-bottom: 15px; }
     .tl-title { font-family: 'Cinzel', serif; color: #fff; font-size: 2.2em; margin: 0; }
     
     .btn-action { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #050b14; font-weight: bold; border: none; padding: 10px 22px; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .btn-action:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(79, 172, 254, 0.4); }
 
-    /* Острые углы и более светлый фон самого тирлиста */
-    #capture-tierlist { background: #151b2b; border: 2px solid #3c4b70; border-radius: 0; overflow: hidden; }
-    .tier-row { display: flex; border-bottom: 1px solid #2a3454; min-height: 80px; background: rgba(30, 41, 59, 0.7); }
+    /* Темный строгий фон тирлиста (как в первой версии) */
+    #capture-tierlist { background-color: #0d111a; border: 2px solid #2a3454; border-radius: 0; overflow: hidden; }
+    .tier-row { display: flex; border-bottom: 1px solid #1a2235; min-height: 80px; background-color: rgba(16, 22, 36, 0.6); }
     .tier-row:last-child { border-bottom: none; }
     
     /* Шрифты тиров классические, темный текст */
-    .tier-label { width: 100px; min-width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; font-size: 24px; font-weight: 800; color: #333; user-select: none; border-right: 1px solid #151b2b; }
+    .tier-label { width: 100px; min-width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; font-size: 24px; font-weight: 800; color: #222; user-select: none; border-right: 1px solid #0d111a; }
     
-    /* Классические цвета TierMaker */
-    .tier-t0 { background: #ff7f7f; } /* S - Красный/Лососевый */
-    .tier-t1 { background: #ffbf7f; } /* A - Оранжевый */
-    .tier-t2 { background: #ffdf7f; } /* B - Желто-оранжевый */
-    .tier-t3 { background: #ffff7f; } /* C - Желтый */
-    .tier-t4 { background: #bfff7f; } /* D - Светло-зеленый */
+    /* Классические цвета TierMaker (с защитой от бага html2canvas) */
+    .tier-t0 { background-color: #ff7f7f !important; background-image: none !important; } /* S - Лососевый */
+    .tier-t1 { background-color: #ffbf7f !important; background-image: none !important; } /* A - Оранжевый */
+    .tier-t2 { background-color: #ffdf7f !important; background-image: none !important; } /* B - Желто-оранжевый */
+    .tier-t3 { background-color: #ffff7f !important; background-image: none !important; } /* C - Желтый */
+    .tier-t4 { background-color: #bfff7f !important; background-image: none !important; } /* D - Светло-зеленый */
     
     .tier-dropzone { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; align-content: center; min-height: 80px; }
 
-    /* Более светлые карточки игроков */
-    .player-card { position: relative; width: 125px; height: 38px; background: linear-gradient(135deg, #2c3a58, #1e293b); border: 1px solid #4facfe; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0 8px; user-select: none; transition: 0.15s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+    /* Темные карточки игроков (как в первой версии) */
+    .player-card { position: relative; width: 125px; height: 38px; background: linear-gradient(135deg, #182238, #101726); border: 1px solid #3c4b70; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0 8px; user-select: none; transition: 0.15s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
     .player-card.draggable { cursor: grab; }
-    .player-card.draggable:active { cursor: grabbing; border-color: #00f2fe; }
-    .player-card:hover { border-color: #00f2fe; background: #35466b; }
+    .player-card.draggable:active { cursor: grabbing; border-color: #4facfe; }
+    .player-card:hover { border-color: #4facfe; background: #202a40; }
 
-    .player-name { color: #ffffff; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; width: 100%; }
+    .player-name { color: #e6edf8; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; width: 100%; }
     
     /* Индикаторы стрелочек */
-    .trend-icon { position: absolute; right: -6px; top: -6px; font-size: 11px; font-weight: bold; background: #151b2b; border: 1px solid #3c4b70; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+    .trend-icon { position: absolute; right: -6px; top: -6px; font-size: 11px; font-weight: bold; background: #0d111a; border: 1px solid #2e3b52; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
     .trend-up { color: #2ecc71; border-color: #2ecc71; }
     .trend-down { color: #e74c3c; border-color: #e74c3c; }
     .trend-none { display: none; }
 
-    .pool-section { margin-top: 30px; background: rgba(30, 41, 59, 0.7); border: 1px dashed #4facfe; border-radius: 4px; padding: 15px; display: none; }
-    .pool-title { color: #4facfe; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+    .pool-section { margin-top: 30px; background: rgba(16, 22, 36, 0.6); border: 1px dashed #3c4b70; border-radius: 4px; padding: 15px; display: none; }
+    .pool-title { color: #8da4c4; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
     .pool-dropzone { display: flex; flex-wrap: wrap; gap: 8px; min-height: 90px; }
 
-    .create-own-box { text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #3c4b70; }
+    .create-own-box { text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #2a3454; }
 
     .add-player-box { margin-top: 20px; display: flex; gap: 10px; display: none; }
-    .add-player-box input { flex: 1; padding: 12px; background: #151b2b; color: #fff; border: 1px solid #3c4b70; border-radius: 4px; outline: none; }
+    .add-player-box input { flex: 1; padding: 12px; background: #0b0d17; color: #fff; border: 1px solid #3c4b70; border-radius: 4px; outline: none; }
     .add-player-box input:focus { border-color: #4facfe; }
 </style>
 
@@ -58,9 +58,10 @@
 
     <div id="capture-tierlist">
         <% const tiers = ['t0', 't1', 't2', 't3', 't4']; %>
+        <% const tierLabels = ['S', 'A', 'B', 'C', 'D']; %>
         <% tiers.forEach((tier, index) => { %>
         <div class="tier-row">
-            <div class="tier-label tier-<%= tier %>">T<%= index %></div>
+            <div class="tier-label tier-<%= tier %>"><%= tierLabels[index] %></div>
             <div class="tier-dropzone" id="<%= tier %>">
                 <% tierlistData[tier].forEach(player => { %>
                     <div class="player-card">
@@ -143,7 +144,7 @@
 
     async function downloadTierlist() {
         const area = document.getElementById('capture-tierlist');
-        const canvas = await html2canvas(area, { backgroundColor: '#151b2b', scale: 2 });
+        const canvas = await html2canvas(area, { backgroundColor: '#0d111a', scale: 2 });
         const link = document.createElement('a');
         link.download = 'gitcg_tierlist.png';
         link.href = canvas.toDataURL('image/png');
