@@ -272,6 +272,7 @@ router.post('/admin/edit/:id', isAdmin, upload.single('image'), async (req, res)
         
         if (req.file) updateData.image = req.file.filename;
 
+        // Обработка матчей
         let newMatches = [];
         if (req.body.matchStage) {
             let stages = Array.isArray(req.body.matchStage) ? req.body.matchStage : [req.body.matchStage];
@@ -284,6 +285,20 @@ router.post('/admin/edit/:id', isAdmin, upload.single('image'), async (req, res)
             }
         }
         updateData.matches = newMatches;
+
+        // Обработка групп (добавлено)
+        let newGroups = [];
+        if (req.body.groupName) {
+            let gNames = Array.isArray(req.body.groupName) ? req.body.groupName : [req.body.groupName];
+            let gLinks = Array.isArray(req.body.groupLink) ? req.body.groupLink : [req.body.groupLink];
+            for (let i = 0; i < gNames.length; i++) {
+                if (gNames[i]) {
+                    newGroups.push({ name: gNames[i].trim(), link: gLinks[i] ? gLinks[i].trim() : '' });
+                }
+            }
+        }
+        updateData.groups = newGroups;
+
         await Tournament.findByIdAndUpdate(req.params.id, updateData);
         res.redirect('/admin/dashboard');
     } catch (err) { res.status(500).send('Error: ' + err.message); }
