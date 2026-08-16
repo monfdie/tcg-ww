@@ -1,91 +1,178 @@
 <%- include('../partials/header') %>
-<div class="page-container" style="max-width: 800px;">
-    <h2>Edit Tournament</h2>
-    <form action="/admin/edit/<%= tour._id %>" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
+
+<div class="container mt-5 mb-5">
+    <h2>Edit Tournament: <%= tour.title %></h2>
+    <hr>
+    
+    <form action="/admin/edit/<%= tour._id %>" method="POST" enctype="multipart/form-data">
         
-        <div style="display: flex; gap: 20px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 4px; border: 1px dashed #4facfe; flex-wrap: wrap;">
-            <label style="color: #fff; cursor: pointer; flex: 1;">
-                <input type="checkbox" name="isMine" <%= tour.isMine ? 'checked' : '' %>> <b>Is this "My" Tournament?</b>
-            </label>
-            <label style="color: #fff; cursor: pointer; flex: 1;">
-                <input type="checkbox" name="isLive" <%= tour.isLive ? 'checked' : '' %>> <b>Active / Live</b> (Uncheck to move to Archive)
-            </label>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Title</label>
+                <input type="text" name="title" class="form-control" value="<%= tour.title %>" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Slug (URL)</label>
+                <input type="text" name="slug" class="form-control" value="<%= tour.slug %>" required>
+            </div>
         </div>
 
-        <input type="text" name="title" value="<%= tour.title %>" placeholder="Title" required class="form-input">
-        <input type="text" name="slug" value="<%= tour.slug %>" placeholder="Slug" required class="form-input">
-        
-        <div style="display: flex; gap: 15px;">
-            <input type="text" name="date" value="<%= tour.date %>" placeholder="Date" class="form-input" style="flex: 1;">
-            <input type="text" name="prize" value="<%= tour.prize %>" placeholder="Prize Pool" class="form-input" style="flex: 1;">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Date</label>
+                <input type="text" name="date" class="form-control" value="<%= tour.date %>">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Prize</label>
+                <input type="text" name="prize" class="form-control" value="<%= tour.prize %>">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Region</label>
+                <input type="text" name="region" class="form-control" value="<%= tour.region %>">
+            </div>
         </div>
 
-        <div style="display: flex; gap: 15px;">
-            <select name="region" class="form-input" style="flex: 1;">
-                <option value="Global" <%= tour.region === 'Global' ? 'selected' : '' %>>Global</option>
-                <option value="EU" <%= tour.region === 'EU' ? 'selected' : '' %>>EU</option>
-                <option value="AS" <%= tour.region === 'AS' ? 'selected' : '' %>>AS</option>
-                <option value="NA" <%= tour.region === 'NA' ? 'selected' : '' %>>NA</option>
-            </select>
-            <select name="format" class="form-input" style="flex: 1;">
-                <option value="Draft" <%= tour.format === 'Draft' ? 'selected' : '' %>>Draft</option>
-                <option value="All Pick" <%= tour.format === 'All Pick' ? 'selected' : '' %>>All Pick</option>
-            </select>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Format</label>
+                <input type="text" name="format" class="form-control" value="<%= tour.format %>">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Image (Upload new to replace)</label>
+                <input type="file" name="image" class="form-control" accept="image/*">
+                <% if(tour.image) { %>
+                    <small class="text-muted">Current image: <%= tour.image %></small>
+                <% } %>
+            </div>
         </div>
 
-        <textarea name="description" placeholder="Description" class="form-input" rows="4"><%= tour.description || '' %></textarea>
-
-        <h4 style="margin-bottom: 0; color: #4facfe;">Links</h4>
-        <input type="text" name="regLink" value="<%= tour.regLink || '' %>" placeholder="Registration Link" class="form-input">
-        <input type="text" name="bracketLink" value="<%= tour.bracketLink || '' %>" placeholder="Bracket Link" class="form-input">
-        <div style="display: flex; gap: 15px;">
-            <input type="text" name="rulesLink" value="<%= tour.rulesLink || '' %>" placeholder="Rules (RU) Link" class="form-input" style="flex: 1;">
-            <input type="text" name="rulesEnLink" value="<%= tour.rulesEnLink || '' %>" placeholder="Rules (EN) Link" class="form-input" style="flex: 1;">
-        </div>
-        <div style="display: flex; gap: 15px;">
-            <input type="text" name="discordLink" value="<%= tour.discordLink || '' %>" placeholder="Discord" class="form-input" style="flex: 1;">
-            <input type="text" name="telegramLink" value="<%= tour.telegramLink || '' %>" placeholder="Telegram" class="form-input" style="flex: 1;">
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="4"><%= tour.description %></textarea>
         </div>
 
-        <label style="color: #8da4c4;">New Banner Image (Leave empty to keep current):</label>
-        <input type="file" name="image" class="form-input" style="color: #fff;">
+        <h4 class="mt-4">Links</h4>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Registration Link</label>
+                <input type="text" name="regLink" class="form-control" value="<%= tour.regLink %>">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Rules Link (RU)</label>
+                <input type="text" name="rulesLink" class="form-control" value="<%= tour.rulesLink %>">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Rules Link (EN)</label>
+                <input type="text" name="rulesEnLink" class="form-control" value="<%= tour.rulesEnLink %>">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Discord Link</label>
+                <input type="text" name="discordLink" class="form-control" value="<%= tour.discordLink %>">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Telegram Link</label>
+                <input type="text" name="telegramLink" class="form-control" value="<%= tour.telegramLink %>">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Main Bracket Link</label>
+                <input type="text" name="bracketLink" class="form-control" value="<%= tour.bracketLink %>">
+            </div>
+        </div>
 
-        <hr style="border-color: #333; margin: 20px 0;">
-        
-        <h3 style="color: #d4af37;">Matches (For "My" Tournaments)</h3>
-        <div id="matches-container" style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="row mb-4 mt-2">
+            <div class="col-md-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="isMine" id="isMine" <%= tour.isMine ? 'checked' : '' %>>
+                    <label class="form-check-label" for="isMine">Is My Tournament</label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="isLive" id="isLive" <%= tour.isLive ? 'checked' : '' %>>
+                    <label class="form-check-label" for="isLive">Is Live</label>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- МАТЧИ -->
+        <h4 class="mt-4">Matches</h4>
+        <div id="matches-container">
             <% if(tour.matches && tour.matches.length > 0) { %>
-                <% tour.matches.forEach((m, idx) => { %>
-                    <div class="match-row" style="display: flex; gap: 10px;">
-                        <input type="text" name="matchStage" value="<%= m.stage %>" placeholder="Stage (e.g. 1/8)" class="form-input" style="width: 100px;" required>
-                        <input type="text" name="matchTitle" value="<%= m.title %>" placeholder="Match Title (P1 vs P2)" class="form-input" style="flex: 1;" required>
-                        <input type="text" name="matchRoomId" value="<%= m.roomId %>" placeholder="Room ID" class="form-input" style="width: 150px;" required>
-                        <button type="button" onclick="this.parentElement.remove()" style="background: #ff4444; color: white; border: none; padding: 0 15px; border-radius: 4px; cursor:pointer;">X</button>
+                <% tour.matches.forEach(m => { %>
+                    <div class="match-row row mb-2 align-items-center">
+                        <div class="col-md-3"><input type="text" name="matchStage" value="<%= m.stage %>" placeholder="Stage (e.g. Final)" class="form-control"></div>
+                        <div class="col-md-4"><input type="text" name="matchTitle" value="<%= m.title %>" placeholder="Title (e.g. Player A vs Player B)" class="form-control"></div>
+                        <div class="col-md-4"><input type="text" name="matchRoomId" value="<%= m.roomId %>" placeholder="Room ID" class="form-control"></div>
+                        <div class="col-md-1"><button type="button" class="btn btn-danger remove-btn">X</button></div>
                     </div>
                 <% }) %>
             <% } %>
         </div>
-        <button type="button" onclick="addMatchRow()" style="background: #2a3454; border: 1px dashed #4facfe; padding: 10px; color: #4facfe; cursor: pointer; border-radius: 4px; margin-top: 10px;">+ Add Match</button>
+        <button type="button" id="add-match-btn" class="btn btn-secondary btn-sm mb-4">+ Add Match</button>
 
-        <button type="submit" style="background: #4facfe; border: none; padding: 15px; color: #000; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 30px;">SAVE CHANGES</button>
+        <hr>
+
+        <!-- ГРУППЫ -->
+        <h4 class="mt-4">Groups</h4>
+        <p class="text-muted small">Добавьте названия групп и ссылки на их таблицы (Challonge, Google Sheets и т.д.)</p>
+        <div id="groups-container">
+            <% if(tour.groups && tour.groups.length > 0) { %>
+                <% tour.groups.forEach(g => { %>
+                    <div class="group-row row mb-2 align-items-center">
+                        <div class="col-md-4"><input type="text" name="groupName" value="<%= g.name %>" placeholder="Group Name (e.g. Group A)" class="form-control" required></div>
+                        <div class="col-md-7"><input type="text" name="groupLink" value="<%= g.link %>" placeholder="Group Link (https://...)" class="form-control"></div>
+                        <div class="col-md-1"><button type="button" class="btn btn-danger remove-btn">X</button></div>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+        <button type="button" id="add-group-btn" class="btn btn-secondary btn-sm mb-4">+ Add Group</button>
+
+        <hr>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success btn-lg">Save Changes</button>
+            <a href="/admin/dashboard" class="btn btn-outline-secondary btn-lg ms-2">Cancel</a>
+        </div>
     </form>
 </div>
 
 <script>
-    function addMatchRow() {
+    // Добавление новых строк для матчей
+    document.getElementById('add-match-btn').addEventListener('click', function() {
         const container = document.getElementById('matches-container');
         const row = document.createElement('div');
-        row.className = 'match-row';
-        row.style.cssText = 'display: flex; gap: 10px;';
+        row.className = 'match-row row mb-2 align-items-center';
         row.innerHTML = `
-            <input type="text" name="matchStage" placeholder="Stage (1/8, Final)" class="form-input" style="width: 100px;" required>
-            <input type="text" name="matchTitle" placeholder="Title (P1 vs P2)" class="form-input" style="flex: 1;" required>
-            <input type="text" name="matchRoomId" placeholder="Room ID" class="form-input" style="width: 150px;" required>
-            <button type="button" onclick="this.parentElement.remove()" style="background: #ff4444; color: white; border: none; padding: 0 15px; border-radius: 4px; cursor:pointer;">X</button>
+            <div class="col-md-3"><input type="text" name="matchStage" placeholder="Stage" class="form-control"></div>
+            <div class="col-md-4"><input type="text" name="matchTitle" placeholder="Title" class="form-control"></div>
+            <div class="col-md-4"><input type="text" name="matchRoomId" placeholder="Room ID" class="form-control"></div>
+            <div class="col-md-1"><button type="button" class="btn btn-danger remove-btn">X</button></div>
         `;
         container.appendChild(row);
-    }
+    });
+
+    // Добавление новых строк для групп
+    document.getElementById('add-group-btn').addEventListener('click', function() {
+        const container = document.getElementById('groups-container');
+        const row = document.createElement('div');
+        row.className = 'group-row row mb-2 align-items-center';
+        row.innerHTML = `
+            <div class="col-md-4"><input type="text" name="groupName" placeholder="Group Name (e.g. Group A)" class="form-control" required></div>
+            <div class="col-md-7"><input type="text" name="groupLink" placeholder="Group Link (https://...)" class="form-control"></div>
+            <div class="col-md-1"><button type="button" class="btn btn-danger remove-btn">X</button></div>
+        `;
+        container.appendChild(row);
+    });
+
+    // Удаление строк (как для матчей, так и для групп)
+    document.addEventListener('click', function(e) {
+        if(e.target && e.target.classList.contains('remove-btn')) {
+            e.target.closest('.row').remove();
+        }
+    });
 </script>
 
-<style> .form-input { padding: 12px; border-radius: 4px; border: 1px solid #3c4566; background: rgba(0,0,0,0.3); color: #fff; font-family: 'Segoe UI', sans-serif; } </style>
 <%- include('../partials/footer') %>
