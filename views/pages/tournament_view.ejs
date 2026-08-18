@@ -1,75 +1,61 @@
 <%- include('../partials/header') %>
 
 <style>
-    .tournament-header-bg { background: #151822; padding: 30px; border-radius: 8px; border: 1px solid #2a2e40; margin-bottom: 30px; }
-    .t-title { color: #00d2ff; font-weight: bold; margin-bottom: 15px; }
-    .t-info-list { list-style: none; padding: 0; margin: 0; color: #c4d0eb; }
-    .t-info-list li { padding: 8px 0; border-bottom: 1px solid #2a2e40; }
-    .t-info-list li:last-child { border-bottom: none; }
-    .t-info-list strong { color: white; margin-right: 10px; }
-    
-    .stage-switcher { display: flex; gap: 15px; margin: 30px 0 20px 0; justify-content: center; }
+    .stage-switcher { display: flex; gap: 15px; margin: 40px 0 20px 0; justify-content: center; }
     .stage-btn { background: #1b1e2b; border: 1px solid #3c445c; color: #8fa0c9; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; min-width: 150px; }
     .stage-btn.active { background: #00d2ff; color: #000; border-color: #00d2ff; }
     .stage-btn:hover:not(.active) { background: #2a2e40; color: white; }
     
-    .groups-grid { display: none; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .groups-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
     .groups-grid.active-grid { display: grid; }
     
     .public-group-card { background: #1b1e2b; border: 1px solid #3c445c; border-radius: 6px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; text-decoration: none; color: white; display: block; }
     .public-group-card:hover { border-color: #00d2ff; transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0, 210, 255, 0.1); color: white; text-decoration: none; }
     .public-group-title { font-weight: bold; margin-bottom: 15px; font-size: 18px; color: #00d2ff; }
     .public-group-player { font-size: 14px; margin-bottom: 5px; color: #c4d0eb; }
-    
-    @media (max-width: 992px) { .groups-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 576px) { .groups-grid { grid-template-columns: 1fr; } }
 </style>
 
 <div class="container mt-5 mb-5">
     
-    <div class="tournament-header-bg">
-        <div class="row">
-            <div class="col-md-4 mb-4 mb-md-0 text-center">
-                <% if(tour.image) { %>
-                    <img src="/uploads/<%= tour.image %>" class="img-fluid rounded" style="max-height: 300px; border: 1px solid #3c445c;" alt="<%= tour.title %>">
-                <% } else { %>
-                    <img src="/logo.png" class="img-fluid rounded" style="max-height: 300px;" alt="Logo">
-                <% } %>
+    <!-- Шапка турнира -->
+    <div class="row mb-5">
+        <div class="col-md-4 text-center">
+            <% if(tour.image) { %>
+                <img src="/uploads/<%= tour.image %>" class="img-fluid rounded" style="max-height: 300px; object-fit: contain;">
+            <% } else { %>
+                <img src="/logo.png" class="img-fluid rounded" style="max-height: 300px;">
+            <% } %>
+        </div>
+        <div class="col-md-8">
+            <h1 style="color: #00d2ff; font-weight: bold; margin-bottom: 20px;"><%= tour.title %></h1>
+            <p style="color: #c4d0eb; font-size: 16px;"><%= tour.description %></p>
+            
+            <div class="row mt-4 mb-4" style="color: #8fa0c9; font-size: 15px;">
+                <div class="col-md-6">
+                    <div class="mb-2"><strong class="text-white">Date:</strong> <%= tour.date || 'TBA' %></div>
+                    <div class="mb-2"><strong class="text-white">Prize Pool:</strong> <%= tour.prize || 'TBA' %></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-2"><strong class="text-white">Region:</strong> <%= tour.region || 'Any' %></div>
+                    <div class="mb-2"><strong class="text-white">Format:</strong> <%= tour.format || 'TBA' %></div>
+                </div>
             </div>
-            <div class="col-md-8">
-                <h1 class="t-title"><%= tour.title %></h1>
-                <p style="color: #8fa0c9; font-size: 15px;"><%= tour.description %></p>
-                
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <ul class="t-info-list">
-                            <li><strong>Date:</strong> <%= tour.date || 'TBA' %></li>
-                            <li><strong>Prize Pool:</strong> <%= tour.prize || 'TBA' %></li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <ul class="t-info-list">
-                            <li><strong>Region:</strong> <%= tour.region || 'Any' %></li>
-                            <li><strong>Format:</strong> <%= tour.format || 'TBA' %></li>
-                        </ul>
-                    </div>
-                </div>
 
-                <div class="d-flex gap-2 flex-wrap mt-4">
-                    <% if(tour.regLink) { %><a href="<%= tour.regLink %>" class="btn btn-primary" target="_blank">Register</a><% } %>
-                    <% if(tour.rulesLink) { %><a href="<%= tour.rulesLink %>" class="btn btn-outline-info" target="_blank">Rules (RU)</a><% } %>
-                    <% if(tour.rulesEnLink) { %><a href="<%= tour.rulesEnLink %>" class="btn btn-outline-info" target="_blank">Rules (EN)</a><% } %>
-                    <% if(tour.discordLink) { %><a href="<%= tour.discordLink %>" class="btn btn-outline-primary" target="_blank">Discord</a><% } %>
-                    <% if(tour.telegramLink) { %><a href="<%= tour.telegramLink %>" class="btn btn-outline-primary" target="_blank">Telegram</a><% } %>
-                    <% if(tour.bracketLink) { %><a href="<%= tour.bracketLink %>" class="btn btn-outline-warning" target="_blank">Bracket</a><% } %>
-                </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <% if(tour.regLink) { %><a href="<%= tour.regLink %>" class="btn btn-primary" target="_blank">Register</a><% } %>
+                <% if(tour.rulesLink) { %><a href="<%= tour.rulesLink %>" class="btn btn-outline-info" target="_blank">Rules (RU)</a><% } %>
+                <% if(tour.rulesEnLink) { %><a href="<%= tour.rulesEnLink %>" class="btn btn-outline-info" target="_blank">Rules (EN)</a><% } %>
+                <% if(tour.discordLink) { %><a href="<%= tour.discordLink %>" class="btn btn-outline-primary" target="_blank">Discord</a><% } %>
+                <% if(tour.telegramLink) { %><a href="<%= tour.telegramLink %>" class="btn btn-outline-primary" target="_blank">Telegram</a><% } %>
+                <% if(tour.bracketLink) { %><a href="<%= tour.bracketLink %>" class="btn btn-outline-warning" target="_blank">Bracket</a><% } %>
             </div>
         </div>
     </div>
 
+    <hr style="border-color: #2a2e40;">
+
+    <!-- Сетка групп -->
     <% if (tour.groups && tour.groups.length > 0) { %>
-        <h3 class="text-center mt-5" style="color: #fff; font-weight: bold;">Tournament Stages</h3>
-        
         <div class="stage-switcher">
             <button class="stage-btn active" onclick="showPublicStage(1)" id="p-tab-1">Group Stage 1</button>
             <button class="stage-btn" onclick="showPublicStage(2)" id="p-tab-2">Group Stage 2</button>
@@ -107,7 +93,7 @@
             }
         </script>
     <% } else { %>
-        <div class="text-center text-muted mt-5">No groups have been added to this tournament yet.</div>
+        <div class="text-center text-muted mt-5 mb-5">No groups have been added to this tournament yet.</div>
     <% } %>
 
 </div>
