@@ -119,7 +119,7 @@
         { "id": "dvalin", "name": "Dvalin", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/6d0a753f726ac628667a72fcfb0921e8.png" },
         { "id": "serpent", "name": "Wenut", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/9f93bdb31065252347c6b7172a695ecf.png" },
         { "id": "anemo_knight", "name": "Anemo Knight", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a4458de/933f2176018047fdcb59d39488f15ff5.png" },
-        { "id": "jahoda", "name": "Jahoda", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba981/9635bbc19193933b7a27d0357c902480.png" },
+        { "id": "jahoda", "name": "Jahoda", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba981/9635bbc19193933b7a27d0357c902480.png" }
     ],
     "geo": [
         { "id": "ningguang", "name": "Ningguang", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/1f32d7eb750cb526627d1533e981d8a7.png" },
