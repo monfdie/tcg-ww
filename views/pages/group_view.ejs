@@ -1,28 +1,81 @@
 <%- include('../partials/header') %>
 
 <style>
+    /* Ледяная панель таблицы (Glassmorphism) */
+    .glass-panel {
+        background: rgba(16, 25, 45, 0.65);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-top: 1px solid rgba(255, 255, 255, 0.3);
+        border-left: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.02);
+        padding: 20px;
+    }
+
+    /* Стили таблицы */
+    .glass-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    .glass-table th { border-bottom: 2px solid rgba(255, 255, 255, 0.2); color: #aee3ff; font-size: 13px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+    .glass-table td { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-table tr:last-child td { border-bottom: none; }
+
     /* Стили для круглых иконок без квадратов */
-    .char-icon-wrap { width: 45px; height: 45px; flex-shrink: 0; background: transparent; border: none; }
-    .char-icon-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 1px solid #3c445c; }
-    .deck-box { display: flex; flex-direction: row; gap: 4px; background: transparent; padding: 0; border: none; }
+    .char-icon-wrap { width: 48px; height: 48px; flex-shrink: 0; background: transparent; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.4); border-radius: 50%; }
+    .char-icon-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.4); transition: border-color 0.2s; }
+    .char-icon-wrap img:hover { border-color: #00d2ff; }
     
-    /* Красивая кнопка назад */
-    .back-btn { color: #8fa0c9; text-decoration: none; font-size: 14px; font-weight: bold; transition: 0.2s; display: inline-block; padding: 10px 0; }
-    .back-btn:hover { color: #00d2ff; text-decoration: underline; }
+    /* Прозрачный контейнер деки */
+    .deck-box-glass { 
+        display: flex; 
+        flex-direction: row; 
+        gap: 6px; 
+        background: rgba(0, 0, 0, 0.3); 
+        padding: 6px; 
+        border-radius: 10px; 
+        border: 1px solid rgba(255, 255, 255, 0.1); 
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+    
+    /* Кнопка назад в стиле прозрачного стекла */
+    .back-btn-glass { 
+        color: #e0f2ff; 
+        text-decoration: none; 
+        font-size: 14px; 
+        font-weight: bold; 
+        transition: 0.2s; 
+        display: inline-block; 
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        backdrop-filter: blur(5px);
+    }
+    .back-btn-glass:hover { background: rgba(255, 255, 255, 0.15); color: #ffffff; border-color: #00d2ff; text-decoration: none; }
+
+    /* Градиентный заголовок группы */
+    .group-main-title { 
+        background: linear-gradient(180deg, #ffffff 0%, #aee3ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0px 4px 15px rgba(0, 198, 255, 0.4);
+        font-weight: bold; 
+        font-size: 3rem; 
+    }
 </style>
 
 <div class="container mt-4 mb-5" style="max-width: 1100px;">
     
-    <div class="mb-3">
-        <a href="/tournament/<%= tour.slug %>" class="back-btn">&larr; Back to Tournament</a>
+    <div class="mb-4">
+        <a href="/tournament/<%= tour.slug %>" class="back-btn-glass">&larr; BACK TO TOURNAMENT</a>
     </div>
 
-    <h2 class="mb-4" style="color: #00d2ff; font-weight: bold; font-size: 2.2rem;"><%= group.name %></h2>
+    <h2 class="text-center mb-5 group-main-title"><%= group.name %></h2>
 
-    <div style="background: #1b1e2b; border: 1px solid #2a2e40; border-radius: 8px; padding: 20px;">
-        <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+    <div class="glass-panel">
+        <table class="glass-table">
             <thead>
-                <tr style="border-bottom: 2px solid #3c445c; color: #8fa0c9; font-size: 13px; font-weight: bold;">
+                <tr>
                     <th style="width: 250px; padding: 15px 10px; text-align: left;">PLAYER</th>
                     <th style="width: 60px; text-align: center;">PTS</th>
                     <th style="width: 60px; text-align: center;">W</th>
@@ -38,29 +91,29 @@
                 
                 players.forEach((p, idx) => { 
                 %>
-                    <tr style="border-bottom: 1px solid #2a2e40;">
+                    <tr>
                         <td style="padding: 20px 10px;">
                             <div style="display: flex; align-items: center; font-size: 16px; font-weight: bold; color: white;">
-                                <div style="width: 25px; text-align: right; color: #5c6784; margin-right: 15px;"><%= idx + 1 %></div>
-                                <div style="flex-grow: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= p.name || 'TBA' %></div>
+                                <div style="width: 25px; text-align: right; color: #8fa0c9; margin-right: 15px; text-shadow: 0 1px 2px rgba(0,0,0,0.8);"><%= idx + 1 %></div>
+                                <div style="flex-grow: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.8);"><%= p.name || 'TBA' %></div>
                             </div>
                         </td>
                         
-                        <td style="text-align: center; font-size: 22px; font-weight: bold; color: #00d2ff;"><%= p.calcPts %></td>
+                        <td style="text-align: center; font-size: 24px; font-weight: bold; color: #00d2ff; text-shadow: 0 0 10px rgba(0, 210, 255, 0.4);"><%= p.calcPts %></td>
                         <td style="text-align: center; font-size: 16px; color: white;"><%= p.wins || 0 %></td>
                         <td style="text-align: center; font-size: 16px; color: white;"><%= p.draws || 0 %></td>
                         <td style="text-align: center; font-size: 16px; color: white;"><%= p.losses || 0 %></td>
                         
                         <td style="padding: 20px 10px 20px 40px;">
                             <!-- КОНТЕЙНЕР ДЛЯ РАССТАНОВКИ 2x2 -->
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
                                 
                                 <!-- ВЕРХНИЙ РЯД (Дека 1 и Дека 2) -->
                                 <div style="display: flex; gap: 20px;">
                                     <% for(let dIdx = 0; dIdx < 2; dIdx++) { 
                                         let deck = p.decks && p.decks[dIdx] ? p.decks[dIdx] : [];
                                     %>
-                                        <div class="deck-box">
+                                        <div class="deck-box-glass">
                                             <% for(let cIdx = 0; cIdx < 3; cIdx++) { 
                                                 let charId = deck[cIdx];
                                                 let charImg = '/cardback.png';
@@ -75,7 +128,7 @@
                                                     <% if(charId) { %>
                                                         <img src="<%= charImg %>" onerror="this.src='/cardback.png'">
                                                     <% } else { %>
-                                                        <img src="/cardback.png" style="opacity: 0.15; border: 1px dashed #3c445c;">
+                                                        <img src="/cardback.png" style="opacity: 0.15; border: 1px dashed rgba(255,255,255,0.2);">
                                                     <% } %>
                                                 </div>
                                             <% } %>
@@ -88,7 +141,7 @@
                                     <% for(let dIdx = 2; dIdx < 4; dIdx++) { 
                                         let deck = p.decks && p.decks[dIdx] ? p.decks[dIdx] : [];
                                     %>
-                                        <div class="deck-box">
+                                        <div class="deck-box-glass">
                                             <% for(let cIdx = 0; cIdx < 3; cIdx++) { 
                                                 let charId = deck[cIdx];
                                                 let charImg = '/cardback.png';
@@ -103,7 +156,7 @@
                                                     <% if(charId) { %>
                                                         <img src="<%= charImg %>" onerror="this.src='/cardback.png'">
                                                     <% } else { %>
-                                                        <img src="/cardback.png" style="opacity: 0.15; border: 1px dashed #3c445c;">
+                                                        <img src="/cardback.png" style="opacity: 0.15; border: 1px dashed rgba(255,255,255,0.2);">
                                                     <% } %>
                                                 </div>
                                             <% } %>
