@@ -5,9 +5,10 @@
     
     .group-card { background: #1b1e2b; border: 1px solid #2a2e40; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
     
-    .deck-slot { width: 40px; height: 40px; background: transparent; border: none; display: inline-block; cursor: pointer; border-radius: 50%; overflow: hidden; flex-shrink: 0;}
-    .deck-slot img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 1px solid #3c445c; transition: 0.2s; }
-    .deck-slot:hover img { border-color: #00d2ff; }
+    /* ЧИСТЫЕ ИКОНКИ БЕЗ РАМОК В АДМИНКЕ */
+    .deck-slot { width: 40px; height: 40px; background: transparent; border: none; display: inline-block; cursor: pointer; border-radius: 50%; flex-shrink: 0;}
+    .deck-slot img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: none; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .deck-slot:hover img { transform: scale(1.1); box-shadow: 0 0 15px rgba(0, 210, 255, 0.6); }
     
     .btn-delete-group { background-color: #d32f2f !important; color: #ffffff !important; border: 1px solid #b71c1c !important; font-weight: bold; border-radius: 4px; padding: 6px 12px; font-size: 13px; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
     .btn-delete-group:hover { background-color: #b71c1c !important; }
@@ -197,11 +198,11 @@
                             <td style="text-align: center; padding: 4px;"><input type="number" class="player-input num-input" value="${player.losses || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'losses', this.value)"></td>
                             <td style="padding: 10px 6px 10px 20px;">
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <div style="display: flex; gap: 15px;">`;
+                                    <div style="display: flex; gap: 20px;">`;
 
-                // Ряд 1 (Деки 0 и 1)
+                // Ряд 1 (Деки 0 и 1) - Убраны все фоны и рамки
                 for (let dIdx = 0; dIdx < 2; dIdx++) {
-                    html += `<div style="display: flex; flex-direction: row; gap: 2px;">`;
+                    html += `<div style="display: flex; flex-direction: row; gap: 8px;">`;
                     for (let cIdx = 0; cIdx < 3; cIdx++) {
                         html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})" id="slot-${realGroupIdx}-${pIdx}-${dIdx}-${cIdx}"></div>`;
                     }
@@ -209,11 +210,11 @@
                 }
 
                 html += `           </div>
-                                    <div style="display: flex; gap: 15px;">`;
+                                    <div style="display: flex; gap: 20px;">`;
 
-                // Ряд 2 (Деки 2 и 3)
+                // Ряд 2 (Деки 2 и 3) - Убраны все фоны и рамки
                 for (let dIdx = 2; dIdx < 4; dIdx++) {
-                    html += `<div style="display: flex; flex-direction: row; gap: 2px;">`;
+                    html += `<div style="display: flex; flex-direction: row; gap: 8px;">`;
                     for (let cIdx = 0; cIdx < 3; cIdx++) {
                         html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})" id="slot-${realGroupIdx}-${pIdx}-${dIdx}-${cIdx}"></div>`;
                     }
@@ -230,7 +231,7 @@
             container.innerHTML += html;
         });
 
-        // Заполняем картинки после создания HTML
+        // Заполняем картинки
         tournamentData.forEach((group, gIdx) => {
             if(group.stage !== currentStage) return;
             group.players.forEach((player, pIdx) => {
@@ -243,10 +244,8 @@
                             if(charId) {
                                 let imgUrl = charImages[charId] || '/cardback.png';
                                 slotEl.innerHTML = `<img src="${imgUrl}" onerror="this.src='/cardback.png'">`;
-                                slotEl.style.border = "1px solid #3c445c";
                             } else {
-                                slotEl.style.border = "1px dashed #4e5a7e";
-                                slotEl.innerHTML = `<img src="/cardback.png" style="opacity: 0.15; border: none;">`;
+                                slotEl.innerHTML = `<img src="/cardback.png" style="opacity: 0.15; border-radius: 50%;">`;
                             }
                         }
                     }
@@ -323,7 +322,7 @@
             const slot = document.getElementById('prev-'+i);
             if (currentSelection[i]) {
                 let imgUrl = charImages[currentSelection[i]] || '/cardback.png';
-                slot.innerHTML = `<img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; border:1px solid #3c445c;" onerror="this.src='/cardback.png'">`;
+                slot.innerHTML = `<img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5);" onerror="this.src='/cardback.png'">`;
             } else {
                 slot.innerHTML = '';
             }
