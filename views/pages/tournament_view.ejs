@@ -27,7 +27,6 @@
 
 <div class="container mt-5 mb-5">
     
-    <!-- ШАПКА ТУРНИРА (ВОССТАНОВЛЕНА) -->
     <div class="tournament-header-bg">
         <div class="row">
             <div class="col-md-4 mb-4 mb-md-0 text-center">
@@ -68,7 +67,6 @@
         </div>
     </div>
 
-    <!-- БЛОК ГРУПП -->
     <% if (tour.groups && tour.groups.length > 0) { %>
         <h3 class="text-center mt-5" style="color: #fff; font-weight: bold;">Tournament Stages</h3>
         
@@ -109,7 +107,7 @@
             }
         </script>
     <% } else { %>
-        <div class="text-center text-muted mt-5">No groups or matches have been added to this tournament yet.</div>
+        <div class="text-center text-muted mt-5">No groups have been added to this tournament yet.</div>
     <% } %>
 
 </div>
