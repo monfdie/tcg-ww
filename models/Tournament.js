@@ -1,55 +1,52 @@
 const mongoose = require('mongoose');
 
-const playerGroupSchema = new mongoose.Schema({
-    name: String,           // Имя игрока (например, "Maks")
-    discordId: String,      // (Опционально) для привязки аватарок в будущем
-    place: Number,          // Занятое место (1, 2, 3, 4)
+const playerSchema = new mongoose.Schema({
+    name: { type: String, default: '' },
     wins: { type: Number, default: 0 },
     draws: { type: Number, default: 0 },
     losses: { type: Number, default: 0 },
-    // Колды: массив из 4 элементов. Каждый элемент - массив из 3 ID персонажей
-    decks: { type: [[String]], default: [[], [], [], []] } 
+    points: { type: Number, default: 0 },
+    // Массив из 4 колод. Каждая колода - массив строк (id персонажей)
+    decks: { type: [[String]], default: [[], [], [], []] }
 });
 
 const groupSchema = new mongoose.Schema({
-    name: String,           // "Group A"
-    players: [playerGroupSchema]
+    name: { type: String, required: true },
+    stage: { type: Number, default: 1 }, // 1 - Stage 1, 2 - Stage 2
+    players: { 
+        type: [playerSchema], 
+        default: () => [{}, {}, {}, {}] // По умолчанию 4 пустых игрока
+    }
+});
+
+const matchSchema = new mongoose.Schema({
+    stage: String,
+    title: String,
+    roomId: String
 });
 
 const tournamentSchema = new mongoose.Schema({
-    type: { type: String, enum: ['tournament', 'announcement'], default: 'tournament' },
+    type: { type: String, enum: ['tournament', 'announcement'], required: true },
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
-    description: String,
     date: String,
     prize: String,
     image: String,
-    
-    // Ссылки
+    isMine: { type: Boolean, default: false },
+    isLive: { type: Boolean, default: false },
+    region: String,
+    format: String,
+    description: String,
     regLink: String,
     rulesLink: String,
     rulesEnLink: String,
     discordLink: String,
     telegramLink: String,
     bracketLink: String,
-    
-    isLive: { type: Boolean, default: true },
-    isMine: { type: Boolean, default: true },
-    region: String,
-    format: String,
-
+    matches: [matchSchema],
+    groups: [groupSchema], // НАШИ НОВЫЕ ГРУППЫ
     visibleUntil: Date,
-    createdAt: { type: Date, default: Date.now },
-
-    matches: [{
-        stage: String,
-        title: String,
-        roomId: String
-    }],
-
-    // НОВЫЕ ПОЛЯ ДЛЯ ГРУППОВОГО ЭТАПА
-    groupStage1: [groupSchema],
-    groupStage2: [groupSchema]
+    createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('Tournament', tournamentSchema);
