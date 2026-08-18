@@ -1,140 +1,193 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* Стили для приветственного баннера */
+    /* Главный баннер */
     .hero-banner {
-        background: linear-gradient(rgba(10, 12, 20, 0.7), rgba(10, 12, 20, 0.95)), url('/bg.jpg') center/cover no-repeat;
-        padding: 60px 20px;
-        text-align: center;
+        background: rgba(16, 25, 45, 0.65);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-top: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 12px;
-        border: 1px solid #3c4566;
+        padding: 40px 20px;
+        text-align: center;
         margin-bottom: 40px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-        position: relative;
-        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
     }
-    
-    .hero-banner::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 2px;
-        background: linear-gradient(90deg, transparent, #d4af37, transparent);
-    }
-
     .hero-title {
         font-family: 'Cinzel', serif;
-        font-size: 3.5em;
-        color: #d4af37;
-        margin-bottom: 15px;
-        text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
-        letter-spacing: 2px;
+        font-size: 2.4rem;
+        color: #ffcc00;
+        text-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+        margin-bottom: 12px;
+        font-weight: bold;
     }
-
     .hero-subtitle {
-        color: #8da4c4;
-        font-size: 1.2em;
-        margin-bottom: 35px;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-        line-height: 1.6;
+        color: #aee3ff;
+        font-size: 15px;
+        max-width: 650px;
+        margin: 0 auto 25px auto;
+        line-height: 1.5;
     }
 
-    .hero-buttons {
-        display: flex;
-        gap: 20px;
-        justify-content: center;
-    }
-
-    .btn-hero {
-        padding: 15px 35px;
+    /* Кнопки баннера */
+    .btn-hero-primary {
+        background: #009cf0;
+        color: #fff;
+        border: 1px solid #009cf0;
+        padding: 10px 24px;
         border-radius: 6px;
         font-weight: bold;
         text-transform: uppercase;
+        font-size: 14px;
         text-decoration: none;
-        transition: 0.3s;
-        font-size: 1.1em;
-        letter-spacing: 1px;
+        display: inline-block;
+        transition: 0.2s;
+        box-shadow: 0 4px 12px rgba(0, 156, 240, 0.3);
     }
+    .btn-hero-primary:hover { background: #0085cc; color: #fff; text-decoration: none; transform: translateY(-2px); }
 
-    .btn-primary-hero {
-        background: linear-gradient(135deg, #4facfe, #00f2fe);
-        color: #000;
-        box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
+    .btn-hero-secondary {
+        background: rgba(20, 30, 50, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #e0f2ff;
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-block;
+        transition: 0.2s;
     }
+    .btn-hero-secondary:hover { background: rgba(255, 255, 255, 0.1); color: #fff; text-decoration: none; transform: translateY(-2px); }
 
-    .btn-primary-hero:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 25px rgba(79, 172, 254, 0.8);
-    }
-
-    .btn-secondary-hero {
-        background: rgba(16, 20, 32, 0.8);
-        color: #fff;
-        border: 1px solid #4facfe;
-    }
-
-    .btn-secondary-hero:hover {
-        background: #4facfe;
-        color: #000;
-    }
-
-    /* Состояние, когда турниров нет */
-    .empty-state {
-        text-align: center;
-        padding: 50px 20px;
-        background: rgba(16, 20, 32, 0.5);
-        border: 1px dashed #3c4566;
-        border-radius: 12px;
-        color: #8da4c4;
-    }
-
-    .empty-state h3 {
-        color: #fff;
+    /* Секция активных турниров */
+    .section-heading {
         font-family: 'Cinzel', serif;
-        font-size: 1.8em;
-        margin-bottom: 15px;
+        color: #ffffff;
+        font-size: 1.3rem;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        border-left: 3px solid #00d2ff;
+        padding-left: 10px;
+    }
+
+    /* Сетка турниров */
+    .tournaments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+    }
+
+    /* Карточка турнира (Glassmorphism) */
+    .tournament-card {
+        background: rgba(16, 25, 45, 0.65);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 12px;
+        overflow: hidden;
+        text-decoration: none;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+    .tournament-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(0, 210, 255, 0.6);
+        box-shadow: 0 12px 35px rgba(0, 163, 255, 0.25);
+        color: #fff;
+        text-decoration: none;
+    }
+    .tournament-card-img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        background: #0b0d14;
+    }
+    .tournament-card-body {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+    .tournament-card-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #00d2ff;
+        margin-bottom: 12px;
+    }
+    .tournament-card-meta {
+        font-size: 14px;
+        color: #aee3ff;
+        margin-bottom: 6px;
+    }
+    .tournament-card-meta strong {
+        color: #fff;
+    }
+
+    /* Заглушка, если турниров нет */
+    .empty-tournaments-card {
+        background: rgba(16, 25, 45, 0.4);
+        backdrop-filter: blur(8px);
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        padding: 50px 20px;
+        text-align: center;
     }
 </style>
 
-<div class="hero-banner">
-    <h1 class="hero-title">GENSHIN TCG DRAFTS</h1>
-    <p class="hero-subtitle">The ultimate platform for Genshin Impact TCG draft matches. Create a room, ban and pick your characters, and duel with your friends!</p>
-    <div class="hero-buttons">
-        <a href="/create" class="btn-hero btn-primary-hero">Create Match</a>
-        <a href="/history" class="btn-hero btn-secondary-hero">Recent Games</a>
+<div class="container mt-4 mb-5" style="max-width: 1100px;">
+
+    <!-- Главный баннер -->
+    <div class="hero-banner">
+        <h1 class="hero-title">GENSHIN TCG DRAFTS</h1>
+        <p class="hero-subtitle">The ultimate platform for Genshin Impact TCG draft matches. Create a room, ban and pick your characters, and duel with your friends!</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/create" class="btn-hero-primary">CREATE MATCH</a>
+            <a href="/history" class="btn-hero-secondary">RECENT GAMES</a>
+        </div>
     </div>
-</div>
 
-<h2 style="font-family: 'Cinzel', serif; color: #fff; border-bottom: 1px solid #3c4566; padding-bottom: 10px; margin-bottom: 20px;">
-    ACTIVE TOURNAMENTS
-</h2>
+    <!-- Заголовок активных турниров -->
+    <h3 class="section-heading">ACTIVE TOURNAMENTS</h3>
 
-<div class="tournaments-grid">
-    <% if (locals.tournaments && locals.tournaments.length > 0) { %>
-        <% tournaments.forEach(t => { %>
-            <a href="/tournament/<%= t.slug %>" class="tournament-card">
-                <div class="tc-image">
-                    <!-- Заглушка, если нет картинки -->
-                    <img src="<%= t.image ? (t.image.startsWith('http') ? t.image : '/uploads/' + t.image) : '/bg.jpg' %>" alt="<%= t.title %>">
-                    <div class="tc-status <%= t.status %>"><%= t.status.toUpperCase() %></div>
-                </div>
-                <div class="tc-content">
-                    <h3 class="tc-title"><%= t.title %></h3>
-                    <div class="tc-meta">
-                        <span>Participants: <%= t.participants ? t.participants.length : 0 %></span>
+    <!-- Сетка турниров / Заглушка -->
+    <% 
+    const activeTournaments = (typeof tournaments !== 'undefined' && tournaments) ? tournaments.filter(t => t.isLive !== false) : [];
+    %>
+
+    <% if (activeTournaments && activeTournaments.length > 0) { %>
+        <div class="tournaments-grid">
+            <% activeTournaments.forEach(t => { %>
+                <a href="/tournament/<%= t.slug %>" class="tournament-card">
+                    <% if (t.image) { %>
+                        <img src="<%= t.image.startsWith('http') ? t.image : '/uploads/' + t.image %>" class="tournament-card-img" alt="<%= t.title %>">
+                    <% } else { %>
+                        <img src="/logo.png" class="tournament-card-img" style="object-fit: contain; padding: 20px;" alt="Logo">
+                    <% } %>
+                    <div class="tournament-card-body">
+                        <div class="tournament-card-title"><%= t.title %></div>
+                        <div class="tournament-card-meta"><strong>Date:</strong> <%= t.date || 'TBA' %></div>
+                        <div class="tournament-card-meta"><strong>Prize Pool:</strong> <%= t.prize || 'TBA' %></div>
+                        <div class="tournament-card-meta"><strong>Format:</strong> <%= t.format || 'TBA' %></div>
                     </div>
-                </div>
-            </a>
-        <% }) %>
+                </a>
+            <% }) %>
+        </div>
     <% } else { %>
-        <!-- Красивая заглушка вместо пустого места -->
-        <div class="empty-state" style="grid-column: 1 / -1;">
-            <h3>No Active Tournaments</h3>
-            <p>There are currently no tournaments running. <br>Grab a friend and play a friendly match in the meantime!</p>
-            <a href="/create" class="btn-hero btn-primary-hero" style="display: inline-block; margin-top: 20px; padding: 10px 20px; font-size: 1em;">Start Friendly Match</a>
+        <div class="empty-tournaments-card">
+            <h4 style="font-family: 'Cinzel', serif; color: #fff; margin-bottom: 10px;">NO ACTIVE TOURNAMENTS</h4>
+            <p style="color: #8fa0c9; font-size: 14px; margin-bottom: 20px;">There are currently no tournaments running.<br>Grab a friend and play a friendly match in the meantime!</p>
+            <a href="/create" class="btn-hero-primary">START FRIENDLY MATCH</a>
         </div>
     <% } %>
+
 </div>
 
 <%- include('../partials/footer') %>
