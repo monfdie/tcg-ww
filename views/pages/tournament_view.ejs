@@ -24,13 +24,13 @@
     }
     .stage-btn { min-width: 150px; }
     
-    /* Активная кнопка (Свечение Крио) */
+    /* Активная кнопка (Спокойный синий без жесткого неона) */
     .stage-btn.active { 
-        background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); 
+        background: #009cf0; 
         color: #ffffff; 
-        border-color: #aee3ff; 
-        box-shadow: 0 0 20px rgba(0, 198, 255, 0.5); 
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        border-color: #009cf0; 
+        box-shadow: 0 4px 10px rgba(0, 156, 240, 0.3); 
+        text-shadow: none;
     }
     .stage-btn:hover:not(.active), .link-btn:hover { 
         background: rgba(255, 255, 255, 0.1); 
@@ -44,7 +44,7 @@
     .groups-grid { display: none; grid-template-columns: repeat(4, 1fr); gap: 20px; }
     .groups-grid.active-grid { display: grid; }
     
-    /* Ледяные карточки групп (Glassmorphism) */
+    /* Ледяные карточки групп */
     .public-group-card { 
         background: rgba(16, 25, 45, 0.65); 
         backdrop-filter: blur(12px); 
@@ -77,10 +77,26 @@
         -webkit-text-fill-color: transparent;
         text-shadow: 0px 4px 15px rgba(0, 198, 255, 0.4);
         font-weight: bold; 
-        margin-bottom: 15px; 
+        margin-bottom: 20px; 
         font-size: 20px; 
     }
-    .public-group-player { font-size: 15px; margin-bottom: 6px; color: #e0f2ff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+
+    /* Обертка для никнеймов, чтобы они были выровнены по левому краю, но блок был по центру */
+    .players-list-wrapper {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    /* Увеличенный шрифт никнеймов */
+    .public-group-player { 
+        font-size: 17px; 
+        margin-bottom: 8px; 
+        color: #ffffff; 
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8); 
+        font-weight: 500;
+    }
     
     /* Стили текста из шапки */
     .tour-info-line { font-size: 18px; color: #aee3ff; margin-bottom: 8px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
@@ -94,7 +110,8 @@
         text-shadow: 0px 2px 10px rgba(0, 163, 255, 0.5);
         font-weight: bold; 
         font-size: 2.8rem; 
-        margin-bottom: 25px;
+        margin-bottom: 20px; /* Слегка уменьшен отступ снизу */
+        margin-top: 15px;    /* Слегка прижат к картинке */
         letter-spacing: 1px;
     }
 
@@ -105,9 +122,9 @@
 <div class="container mt-4 mb-5">
     
     <!-- ШАПКА ТУРНИРА -->
-    <div class="mb-4">
+    <div class="mb-2"> <!-- Уменьшен отступ (было mb-4) для приближения картинки к заголовку -->
         <% if(tour.image) { %>
-            <img src="/uploads/<%= tour.image %>" class="img-fluid" style="width: 100%; max-height: 450px; object-fit: cover; object-position: center; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(0, 210, 255, 0.2);" alt="<%= tour.title %>">
+            <img src="/uploads/<%= tour.image %>" class="img-fluid" style="width: 100%; max-height: 450px; object-fit: cover; object-position: center; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(0, 210, 255, 0.1);" alt="<%= tour.title %>">
         <% } else { %>
             <img src="/logo.png" class="img-fluid" style="width: 100%; max-height: 400px; object-fit: cover; object-position: center; border-radius: 12px;" alt="Logo">
         <% } %>
@@ -154,9 +171,14 @@
             <% tour.groups.filter(g => g.stage === 1).forEach(group => { %>
                 <a href="/tournament/<%= tour.slug %>/group/<%= group._id %>" class="public-group-card">
                     <div class="public-group-title"><%= group.name %></div>
-                    <% group.players.forEach(p => { %>
-                        <div class="public-group-player"><%= p.name || 'TBA' %></div>
-                    <% }) %>
+                    <!-- Никнеймы выровнены влево с нумерацией -->
+                    <div class="players-list-wrapper">
+                        <% group.players.forEach((p, idx) => { %>
+                            <div class="public-group-player">
+                                <span style="color: #8fa0c9; margin-right: 8px; font-size: 15px;"><%= idx + 1 %>.</span><%= p.name || 'TBA' %>
+                            </div>
+                        <% }) %>
+                    </div>
                 </a>
             <% }) %>
         </div>
@@ -165,9 +187,13 @@
             <% tour.groups.filter(g => g.stage === 2).forEach(group => { %>
                 <a href="/tournament/<%= tour.slug %>/group/<%= group._id %>" class="public-group-card">
                     <div class="public-group-title"><%= group.name %></div>
-                    <% group.players.forEach(p => { %>
-                        <div class="public-group-player"><%= p.name || 'TBA' %></div>
-                    <% }) %>
+                    <div class="players-list-wrapper">
+                        <% group.players.forEach((p, idx) => { %>
+                            <div class="public-group-player">
+                                <span style="color: #8fa0c9; margin-right: 8px; font-size: 15px;"><%= idx + 1 %>.</span><%= p.name || 'TBA' %>
+                            </div>
+                        <% }) %>
+                    </div>
                 </a>
             <% }) %>
         </div>
