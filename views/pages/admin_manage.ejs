@@ -1,178 +1,373 @@
 <%- include('../partials/header') %>
 
+<style>
+    .groups-panel { background: #1a1e29; padding: 20px; border-radius: 8px; margin-top: 30px; }
+    .group-card { background: #232838; border: 1px solid #3c445c; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    .deck-slot { width: 35px; height: 35px; background: #10121a; border: 1px dashed #4e5a7e; display: inline-block; cursor: pointer; border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 2px;}
+    .deck-slot img { width: 100%; height: 100%; object-fit: cover; }
+    .deck-slot:hover { border-color: #00d2ff; }
+    .deck-container { margin-bottom: 5px; }
+    .table-dark th { color: #8fa0c9; font-weight: normal; font-size: 12px; }
+    .player-input { background: #10121a; border: 1px solid #3c445c; color: white; border-radius: 4px; padding: 4px 8px; font-size: 14px; width: 100%; }
+    .num-input { width: 50px; text-align: center; }
+    
+    /* Modal styles */
+    #charModal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+    .char-modal-content { background-color: #1a1e29; margin: 5% auto; padding: 20px; border: 1px solid #3c445c; border-radius: 8px; width: 90%; max-width: 800px; color: white; max-height: 80vh; overflow-y: auto; }
+    .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 15px; }
+    .char-item { width: 60px; height: 60px; cursor: pointer; border: 2px solid transparent; border-radius: 4px; overflow: hidden; transition: 0.2s; position: relative;}
+    .char-item img { width: 100%; height: 100%; object-fit: cover; }
+    .char-item.selected { border-color: #00ff88; box-shadow: 0 0 10px #00ff88; }
+    .char-item.selected::after { content: '✓'; position: absolute; top: 0; right: 0; background: #00ff88; color: black; font-size: 12px; padding: 0 4px; font-weight: bold; }
+    .selected-deck-preview { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; background: #10121a; padding: 15px; border-radius: 8px;}
+    .preview-slot { width: 60px; height: 60px; border: 1px dashed #4e5a7e; border-radius: 4px; overflow: hidden; }
+</style>
+
 <div class="container mt-5 mb-5">
     <h2>Edit Tournament: <%= tour.title %></h2>
     <hr>
     
+    <!-- ОБЩИЕ НАСТРОЙКИ (Оставлены без изменений) -->
     <form action="/admin/edit/<%= tour._id %>" method="POST" enctype="multipart/form-data">
-        
         <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Title</label>
-                <input type="text" name="title" class="form-control" value="<%= tour.title %>" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Slug (URL)</label>
-                <input type="text" name="slug" class="form-control" value="<%= tour.slug %>" required>
-            </div>
+            <div class="col-md-6 mb-3"><label class="form-label">Title</label><input type="text" name="title" class="form-control" value="<%= tour.title %>" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Slug (URL)</label><input type="text" name="slug" class="form-control" value="<%= tour.slug %>" required></div>
         </div>
-
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Date</label>
-                <input type="text" name="date" class="form-control" value="<%= tour.date %>">
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Prize</label>
-                <input type="text" name="prize" class="form-control" value="<%= tour.prize %>">
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Region</label>
-                <input type="text" name="region" class="form-control" value="<%= tour.region %>">
-            </div>
+            <div class="col-md-4 mb-3"><label class="form-label">Date</label><input type="text" name="date" class="form-control" value="<%= tour.date %>"></div>
+            <div class="col-md-4 mb-3"><label class="form-label">Prize</label><input type="text" name="prize" class="form-control" value="<%= tour.prize %>"></div>
+            <div class="col-md-4 mb-3"><label class="form-label">Region</label><input type="text" name="region" class="form-control" value="<%= tour.region %>"></div>
         </div>
-
         <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Format</label>
-                <input type="text" name="format" class="form-control" value="<%= tour.format %>">
-            </div>
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Image (Upload new to replace)</label>
-                <input type="file" name="image" class="form-control" accept="image/*">
-                <% if(tour.image) { %>
-                    <small class="text-muted">Current image: <%= tour.image %></small>
-                <% } %>
-            </div>
+            <div class="col-md-6 mb-3"><label class="form-label">Format</label><input type="text" name="format" class="form-control" value="<%= tour.format %>"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Image (Upload new to replace)</label><input type="file" name="image" class="form-control" accept="image/*"></div>
         </div>
-
-        <div class="mb-3">
-            <label class="form-label">Description</label>
-            <textarea name="description" class="form-control" rows="4"><%= tour.description %></textarea>
-        </div>
-
+        <div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="4"><%= tour.description %></textarea></div>
         <h4 class="mt-4">Links</h4>
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Registration Link</label>
-                <input type="text" name="regLink" class="form-control" value="<%= tour.regLink %>">
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Rules Link (RU)</label>
-                <input type="text" name="rulesLink" class="form-control" value="<%= tour.rulesLink %>">
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Rules Link (EN)</label>
-                <input type="text" name="rulesEnLink" class="form-control" value="<%= tour.rulesEnLink %>">
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Discord Link</label>
-                <input type="text" name="discordLink" class="form-control" value="<%= tour.discordLink %>">
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Telegram Link</label>
-                <input type="text" name="telegramLink" class="form-control" value="<%= tour.telegramLink %>">
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Main Bracket Link</label>
-                <input type="text" name="bracketLink" class="form-control" value="<%= tour.bracketLink %>">
-            </div>
+            <div class="col-md-4 mb-3"><label class="form-label">Registration</label><input type="text" name="regLink" class="form-control" value="<%= tour.regLink %>"></div>
+            <div class="col-md-4 mb-3"><label class="form-label">Rules (RU)</label><input type="text" name="rulesLink" class="form-control" value="<%= tour.rulesLink %>"></div>
+            <div class="col-md-4 mb-3"><label class="form-label">Rules (EN)</label><input type="text" name="rulesEnLink" class="form-control" value="<%= tour.rulesEnLink %>"></div>
+            <div class="col-md-4 mb-3"><label class="form-label">Discord</label><input type="text" name="discordLink" class="form-control" value="<%= tour.discordLink %>"></div>
+            <div class="col-md-4 mb-3"><label class="form-label">Telegram</label><input type="text" name="telegramLink" class="form-control" value="<%= tour.telegramLink %>"></div>
+            <div class="col-md-4 mb-3"><label class="form-label">Bracket</label><input type="text" name="bracketLink" class="form-control" value="<%= tour.bracketLink %>"></div>
         </div>
-
         <div class="row mb-4 mt-2">
-            <div class="col-md-3">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" name="isMine" id="isMine" <%= tour.isMine ? 'checked' : '' %>>
-                    <label class="form-check-label" for="isMine">Is My Tournament</label>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" name="isLive" id="isLive" <%= tour.isLive ? 'checked' : '' %>>
-                    <label class="form-check-label" for="isLive">Is Live</label>
-                </div>
-            </div>
+            <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="isMine" id="isMine" <%= tour.isMine ? 'checked' : '' %>><label class="form-check-label" for="isMine">Is My Tournament</label></div></div>
+            <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="isLive" id="isLive" <%= tour.isLive ? 'checked' : '' %>><label class="form-check-label" for="isLive">Is Live</label></div></div>
         </div>
-
-        <hr>
-
-        <!-- МАТЧИ -->
-        <h4 class="mt-4">Matches</h4>
-        <div id="matches-container">
-            <% if(tour.matches && tour.matches.length > 0) { %>
-                <% tour.matches.forEach(m => { %>
-                    <div class="match-row row mb-2 align-items-center">
-                        <div class="col-md-3"><input type="text" name="matchStage" value="<%= m.stage %>" placeholder="Stage (e.g. Final)" class="form-control"></div>
-                        <div class="col-md-4"><input type="text" name="matchTitle" value="<%= m.title %>" placeholder="Title (e.g. Player A vs Player B)" class="form-control"></div>
-                        <div class="col-md-4"><input type="text" name="matchRoomId" value="<%= m.roomId %>" placeholder="Room ID" class="form-control"></div>
-                        <div class="col-md-1"><button type="button" class="btn btn-danger remove-btn">X</button></div>
-                    </div>
-                <% }) %>
-            <% } %>
-        </div>
-        <button type="button" id="add-match-btn" class="btn btn-secondary btn-sm mb-4">+ Add Match</button>
-
-        <hr>
-
-        <!-- ГРУППЫ -->
-        <h4 class="mt-4">Groups</h4>
-        <p class="text-muted small">Добавьте названия групп и ссылки на их таблицы (Challonge, Google Sheets и т.д.)</p>
-        <div id="groups-container">
-            <% if(tour.groups && tour.groups.length > 0) { %>
-                <% tour.groups.forEach(g => { %>
-                    <div class="group-row row mb-2 align-items-center">
-                        <div class="col-md-4"><input type="text" name="groupName" value="<%= g.name %>" placeholder="Group Name (e.g. Group A)" class="form-control" required></div>
-                        <div class="col-md-7"><input type="text" name="groupLink" value="<%= g.link %>" placeholder="Group Link (https://...)" class="form-control"></div>
-                        <div class="col-md-1"><button type="button" class="btn btn-danger remove-btn">X</button></div>
-                    </div>
-                <% }) %>
-            <% } %>
-        </div>
-        <button type="button" id="add-group-btn" class="btn btn-secondary btn-sm mb-4">+ Add Group</button>
-
-        <hr>
-
-        <div class="mt-4">
-            <button type="submit" class="btn btn-success btn-lg">Save Changes</button>
-            <a href="/admin/dashboard" class="btn btn-outline-secondary btn-lg ms-2">Cancel</a>
-        </div>
+        <button type="submit" class="btn btn-success">Save General Settings</button>
     </form>
+
+    <hr class="mt-5 mb-5">
+
+    <!-- ГРУППОВЫЕ ЭТАПЫ (SPA на Vanilla JS) -->
+    <div class="groups-panel">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="m-0 text-info">Group Stages Editor</h3>
+            <button class="btn btn-primary" onclick="saveGroupsToDB()">💾 Save Groups Data</button>
+        </div>
+
+        <ul class="nav nav-tabs mb-4" id="stageTabs">
+            <li class="nav-item"><a class="nav-link active" href="#" onclick="switchStage(1); return false;" id="tab-stage-1">Stage 1</a></li>
+            <li class="nav-item"><a class="nav-link" href="#" onclick="switchStage(2); return false;" id="tab-stage-2">Stage 2</a></li>
+        </ul>
+
+        <div class="mb-3 d-flex gap-2">
+            <button class="btn btn-outline-info btn-sm" onclick="addGroup()">+ Add New Group</button>
+            <button class="btn btn-outline-warning btn-sm" onclick="duplicateToStage2()" id="btn-duplicate" style="display:none;">Copy Rosters to Stage 2</button>
+        </div>
+
+        <div id="groups-container">
+            <!-- Сюда JS будет рендерить группы -->
+        </div>
+    </div>
+</div>
+
+<!-- МОДАЛКА ВЫБОРА КОЛОДЫ -->
+<div id="charModal">
+    <div class="char-modal-content">
+        <h4 class="mb-3 text-center">Select 3 Characters for Deck</h4>
+        <div class="selected-deck-preview">
+            <div class="preview-slot" id="prev-0"></div>
+            <div class="preview-slot" id="prev-1"></div>
+            <div class="preview-slot" id="prev-2"></div>
+        </div>
+        <div class="text-center mb-3">
+            <button class="btn btn-success" onclick="confirmDeckSelection()">Confirm Deck</button>
+            <button class="btn btn-secondary" onclick="closeCharModal()">Cancel</button>
+            <button class="btn btn-danger" onclick="clearDeckSelection()">Clear Deck</button>
+        </div>
+        <input type="text" class="player-input mb-3" id="charSearch" placeholder="Search character..." onkeyup="filterChars()">
+        
+        <div class="char-grid" id="modalCharGrid">
+            <% 
+            const allChars = [];
+            Object.values(chars).forEach(elementArr => {
+                elementArr.forEach(c => allChars.push(c));
+            });
+            allChars.sort((a,b) => a.name.localeCompare(b.name));
+            allChars.forEach(c => { %>
+                <div class="char-item" data-id="<%= c.id %>" data-name="<%= c.name.toLowerCase() %>" onclick="toggleCharSelect('<%= c.id %>', this)">
+                    <img src="https://gi-tcg-assets.s3.eu-north-1.amazonaws.com/<%= c.id %>.webp" title="<%= c.name %>">
+                </div>
+            <% }); %>
+        </div>
+    </div>
 </div>
 
 <script>
-    // Добавление новых строк для матчей
-    document.getElementById('add-match-btn').addEventListener('click', function() {
-        const container = document.getElementById('matches-container');
-        const row = document.createElement('div');
-        row.className = 'match-row row mb-2 align-items-center';
-        row.innerHTML = `
-            <div class="col-md-3"><input type="text" name="matchStage" placeholder="Stage" class="form-control"></div>
-            <div class="col-md-4"><input type="text" name="matchTitle" placeholder="Title" class="form-control"></div>
-            <div class="col-md-4"><input type="text" name="matchRoomId" placeholder="Room ID" class="form-control"></div>
-            <div class="col-md-1"><button type="button" class="btn btn-danger remove-btn">X</button></div>
-        `;
-        container.appendChild(row);
-    });
+    // Инициализация данных
+    let currentStage = 1;
+    let tournamentData = <%- JSON.stringify(tour.groups || []) %>;
+    
+    // Структура для редактирования колоды
+    let editingContext = { groupIdx: -1, playerIdx: -1, deckIdx: -1 };
+    let currentSelection = [];
 
-    // Добавление новых строк для групп
-    document.getElementById('add-group-btn').addEventListener('click', function() {
+    // --- РЕНДЕР ГРУПП ---
+    function renderGroups() {
         const container = document.getElementById('groups-container');
-        const row = document.createElement('div');
-        row.className = 'group-row row mb-2 align-items-center';
-        row.innerHTML = `
-            <div class="col-md-4"><input type="text" name="groupName" placeholder="Group Name (e.g. Group A)" class="form-control" required></div>
-            <div class="col-md-7"><input type="text" name="groupLink" placeholder="Group Link (https://...)" class="form-control"></div>
-            <div class="col-md-1"><button type="button" class="btn btn-danger remove-btn">X</button></div>
-        `;
-        container.appendChild(row);
-    });
-
-    // Удаление строк (как для матчей, так и для групп)
-    document.addEventListener('click', function(e) {
-        if(e.target && e.target.classList.contains('remove-btn')) {
-            e.target.closest('.row').remove();
+        container.innerHTML = '';
+        
+        // Фильтруем группы текущего этапа
+        const stageGroups = tournamentData.filter(g => g.stage === currentStage);
+        
+        if (stageGroups.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center py-4">No groups in this stage.</p>';
+            return;
         }
-    });
+
+        stageGroups.forEach(group => {
+            // Находим реальный индекс группы в главном массиве
+            const realGroupIdx = tournamentData.findIndex(g => g === group);
+            
+            let html = `
+            <div class="group-card">
+                <div class="d-flex justify-content-between mb-3">
+                    <input type="text" class="player-input" style="width: 200px; font-weight: bold; font-size: 16px; color:#00d2ff;" 
+                           value="${group.name}" onchange="updateGroupData(${realGroupIdx}, 'name', this.value)">
+                    <button class="btn btn-sm btn-danger" onclick="deleteGroup(${realGroupIdx})">Delete Group</button>
+                </div>
+                
+                <table class="table table-dark table-borderless mb-0">
+                    <thead>
+                        <tr>
+                            <th width="20%">PLAYER</th>
+                            <th width="8%" class="text-center">PTS</th>
+                            <th width="8%" class="text-center">W</th>
+                            <th width="8%" class="text-center">D</th>
+                            <th width="8%" class="text-center">L</th>
+                            <th width="48%">DECKS (Click to edit)</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            
+            group.players.forEach((player, pIdx) => {
+                // Вычисляем очки (3 за победу, 1 за ничью)
+                let pts = (Number(player.wins) || 0) * 3 + (Number(player.draws) || 0);
+                
+                html += `
+                        <tr>
+                            <td><input type="text" class="player-input" value="${player.name || ''}" placeholder="Player ${pIdx+1}" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'name', this.value)"></td>
+                            <td class="text-center align-middle" style="color: #ffcc00; font-weight: bold; font-size: 16px;">${pts}</td>
+                            <td><input type="number" class="player-input num-input" value="${player.wins || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'wins', this.value)"></td>
+                            <td><input type="number" class="player-input num-input" value="${player.draws || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'draws', this.value)"></td>
+                            <td><input type="number" class="player-input num-input" value="${player.losses || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'losses', this.value)"></td>
+                            <td>`;
+                
+                // Рендер 4 колод
+                for (let dIdx = 0; dIdx < 4; dIdx++) {
+                    let deck = player.decks && player.decks[dIdx] ? player.decks[dIdx] : [];
+                    html += `<div class="deck-container d-inline-block me-3">`;
+                    // 3 слота в колоде
+                    for (let cIdx = 0; cIdx < 3; cIdx++) {
+                        let charId = deck[cIdx];
+                        if (charId) {
+                            html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})">
+                                        <img src="https://gi-tcg-assets.s3.eu-north-1.amazonaws.com/${charId}.webp">
+                                     </div>`;
+                        } else {
+                            html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})"></div>`;
+                        }
+                    }
+                    html += `</div>`;
+                }
+                
+                html += `   </td>
+                        </tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    // --- УПРАВЛЕНИЕ ДАННЫМИ ---
+    function switchStage(stage) {
+        currentStage = stage;
+        document.getElementById('tab-stage-1').classList.toggle('active', stage === 1);
+        document.getElementById('tab-stage-2').classList.toggle('active', stage === 2);
+        document.getElementById('btn-duplicate').style.display = stage === 1 ? 'inline-block' : 'none';
+        renderGroups();
+    }
+
+    function addGroup() {
+        const newGroup = {
+            name: 'New Group',
+            stage: currentStage,
+            players: [
+                { name: '', wins: 0, draws: 0, losses: 0, decks: [[],[],[],[]] },
+                { name: '', wins: 0, draws: 0, losses: 0, decks: [[],[],[],[]] },
+                { name: '', wins: 0, draws: 0, losses: 0, decks: [[],[],[],[]] },
+                { name: '', wins: 0, draws: 0, losses: 0, decks: [[],[],[],[]] }
+            ]
+        };
+        tournamentData.push(newGroup);
+        renderGroups();
+    }
+
+    function deleteGroup(idx) {
+        if(confirm('Are you sure you want to delete this group?')) {
+            tournamentData.splice(idx, 1);
+            renderGroups();
+        }
+    }
+
+    function updateGroupData(idx, field, value) {
+        tournamentData[idx][field] = value;
+    }
+
+    function updatePlayer(gIdx, pIdx, field, value) {
+        if(field === 'name') {
+            tournamentData[gIdx].players[pIdx].name = value;
+        } else {
+            tournamentData[gIdx].players[pIdx][field] = parseInt(value) || 0;
+            renderGroups(); // Перерисовываем чтобы обновить очки (PTS)
+        }
+    }
+
+    function duplicateToStage2() {
+        if(!confirm('This will copy all groups from Stage 1 to Stage 2 with 0 scores and empty decks. Proceed?')) return;
+        
+        // Удаляем старый Stage 2
+        tournamentData = tournamentData.filter(g => g.stage !== 2);
+        
+        // Копируем Stage 1
+        const stage1Groups = tournamentData.filter(g => g.stage === 1);
+        stage1Groups.forEach(g => {
+            const newGroup = JSON.parse(JSON.stringify(g)); // Глубокая копия
+            newGroup.stage = 2;
+            newGroup._id = undefined; // Удаляем Mongo ID
+            // Сбрасываем стату и колоды
+            newGroup.players.forEach(p => {
+                p._id = undefined;
+                p.wins = 0; p.draws = 0; p.losses = 0; p.points = 0;
+                p.decks = [[], [], [], []];
+            });
+            tournamentData.push(newGroup);
+        });
+        
+        switchStage(2);
+    }
+
+    // --- ЛОГИКА МОДАЛКИ ВЫБОРА КОЛОДЫ ---
+    const modal = document.getElementById('charModal');
+    
+    function openDeckEditor(gIdx, pIdx, dIdx) {
+        editingContext = { groupIdx: gIdx, playerIdx: pIdx, deckIdx: dIdx };
+        let existingDeck = tournamentData[gIdx].players[pIdx].decks[dIdx] || [];
+        currentSelection = [...existingDeck];
+        
+        updateModalVisuals();
+        modal.style.display = 'block';
+    }
+
+    function closeCharModal() {
+        modal.style.display = 'none';
+    }
+
+    function toggleCharSelect(charId, elem) {
+        const idx = currentSelection.indexOf(charId);
+        if (idx > -1) {
+            currentSelection.splice(idx, 1); // Убираем
+        } else {
+            if (currentSelection.length >= 3) return; // Максимум 3
+            currentSelection.push(charId);
+        }
+        updateModalVisuals();
+    }
+
+    function updateModalVisuals() {
+        // Обновляем сетку выбора
+        document.querySelectorAll('.char-item').forEach(el => {
+            if (currentSelection.includes(el.dataset.id)) {
+                el.classList.add('selected');
+            } else {
+                el.classList.remove('selected');
+            }
+        });
+
+        // Обновляем превью наверху модалки
+        for(let i=0; i<3; i++) {
+            const slot = document.getElementById('prev-'+i);
+            if(currentSelection[i]) {
+                slot.innerHTML = `<img src="https://gi-tcg-assets.s3.eu-north-1.amazonaws.com/${currentSelection[i]}.webp" style="width:100%; height:100%; object-fit:cover;">`;
+            } else {
+                slot.innerHTML = '';
+            }
+        }
+    }
+
+    function clearDeckSelection() {
+        currentSelection = [];
+        updateModalVisuals();
+    }
+
+    function confirmDeckSelection() {
+        const { groupIdx, playerIdx, deckIdx } = editingContext;
+        tournamentData[groupIdx].players[playerIdx].decks[deckIdx] = [...currentSelection];
+        closeCharModal();
+        renderGroups();
+    }
+
+    function filterChars() {
+        const term = document.getElementById('charSearch').value.toLowerCase();
+        document.querySelectorAll('.char-item').forEach(el => {
+            if(el.dataset.name.includes(term)) el.style.display = 'block';
+            else el.style.display = 'none';
+        });
+    }
+
+    // --- СОХРАНЕНИЕ В БАЗУ ---
+    async function saveGroupsToDB() {
+        try {
+            const btn = document.querySelector('.btn-primary');
+            btn.innerHTML = 'Saving...'; btn.disabled = true;
+
+            const res = await fetch('/admin/edit-groups/<%= tour._id %>', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groups: tournamentData })
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                alert('Groups saved successfully!');
+            } else {
+                alert('Error saving groups');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Server error while saving groups');
+        } finally {
+            const btn = document.querySelector('.btn-primary');
+            btn.innerHTML = '💾 Save Groups Data'; btn.disabled = false;
+        }
+    }
+
+    // Инициализация при загрузке
+    switchStage(1);
 </script>
 
 <%- include('../partials/footer') %>
