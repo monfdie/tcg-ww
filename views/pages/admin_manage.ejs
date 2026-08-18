@@ -3,15 +3,12 @@
 <style>
     .groups-panel { background: #151822; padding: 20px; border-radius: 8px; margin-top: 30px; border: 1px solid #2a2e40; }
     
-    /* КОМПАКТНЫЕ ГРУППЫ: уменьшены отступы */
-    .group-card { background: #1b1e2b; border: 1px solid #2a2e40; padding: 12px 20px; border-radius: 8px; margin-bottom: 15px; }
+    .group-card { background: #1b1e2b; border: 1px solid #2a2e40; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
     
-    /* КРУГЛЫЕ ИКОНКИ: убран фон и рамки контейнера, скругление на самой картинке */
     .deck-slot { width: 40px; height: 40px; background: transparent; border: none; display: inline-block; cursor: pointer; border-radius: 50%; overflow: hidden; flex-shrink: 0;}
     .deck-slot img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 1px solid #3c445c; transition: 0.2s; }
     .deck-slot:hover img { border-color: #00d2ff; }
     
-    /* КРАСНАЯ КНОПКА УДАЛЕНИЯ */
     .btn-delete-group { background-color: #d32f2f !important; color: #ffffff !important; border: 1px solid #b71c1c !important; font-weight: bold; border-radius: 4px; padding: 6px 12px; font-size: 13px; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
     .btn-delete-group:hover { background-color: #b71c1c !important; }
 
@@ -24,14 +21,14 @@
     .btn-tcg-save:hover { background: #0052a3; }
     .btn-tcg-add { background: #1a3a2a; border: 1px solid #00ff88; color: #00ff88; }
     .btn-tcg-add:hover { background: #00ff88; color: #000; }
-    .btn-tcg-copy { background: #3a2a1a; border: 1px solid #ffcc00; color: #ffcc00; }
-    .btn-tcg-copy:hover { background: #ffcc00; color: #000; }
+    .btn-tcg-copy { background: transparent; border: 1px solid #fbc02d; color: #fbc02d; }
+    .btn-tcg-copy:hover { background: rgba(251, 192, 45, 0.1); }
     
     .stage-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #2a2e40; padding-bottom: 10px; }
     .stage-tab { background: transparent; border: 1px solid #3c445c; color: #8fa0c9; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
     .stage-tab.active { border-color: #00d2ff; color: #00d2ff; background: rgba(0, 210, 255, 0.1); }
     
-    /* ЖЕСТКАЯ МОДАЛКА */
+    /* Стили Модалки */
     #charModal { display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); overflow: auto; }
     .char-modal-content { background-color: #1b1e2b; margin: 5% auto; padding: 25px; border: 1px solid #3c445c; border-radius: 8px; width: 90%; max-width: 900px; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
     .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 12px; margin-top: 15px; max-height: 50vh; overflow-y: auto; padding-right: 10px; }
@@ -41,6 +38,15 @@
     .char-item.selected::after { content: '✓'; position: absolute; top: 2px; right: 2px; background: #00ff88; color: black; font-size: 14px; padding: 2px 6px; font-weight: bold; border-radius: 4px; }
     .selected-deck-preview { display: flex; gap: 15px; justify-content: center; margin-bottom: 20px; background: #0b0d14; padding: 20px; border-radius: 8px; border: 1px solid #2a2e40;}
     .preview-slot { width: 70px; height: 70px; border: 2px dashed #4e5a7e; border-radius: 6px; overflow: hidden; background: #151822; }
+    
+    /* Кнопки модалки (Цвета по ТЗ) */
+    .m-btn { padding: 8px 25px; font-weight: bold; text-transform: uppercase; border-radius: 4px; cursor: pointer; border: none; font-size: 14px; }
+    .m-confirm { background: white; color: black; }
+    .m-confirm:hover { background: #e0e0e0; }
+    .m-cancel { background: transparent; color: #ff6b6b; border: 1px solid #ff6b6b; }
+    .m-cancel:hover { background: rgba(255, 107, 107, 0.1); }
+    .m-clear { background: #f8f9fa; color: #000; }
+    .m-clear:hover { background: #e2e6ea; }
 </style>
 
 <div class="container mt-5 mb-5">
@@ -100,16 +106,16 @@
 
 <div id="charModal">
     <div class="char-modal-content">
-        <h3 class="mb-4 text-center" style="color: #00d2ff; font-weight: bold;">Select 3 Characters</h3>
+        <h4 class="mb-4" style="color: #00d2ff; font-weight: bold;">Select 3 Characters</h4>
         <div class="selected-deck-preview">
             <div class="preview-slot" id="prev-0"></div>
             <div class="preview-slot" id="prev-1"></div>
             <div class="preview-slot" id="prev-2"></div>
         </div>
-        <div class="text-center mb-4 d-flex justify-content-center gap-3">
-            <button class="btn btn-success px-4 fw-bold" onclick="confirmDeckSelection()">Confirm</button>
-            <button class="btn btn-secondary px-4 fw-bold" onclick="closeCharModal()">Cancel</button>
-            <button class="btn btn-danger px-4 fw-bold" onclick="clearDeckSelection()">Clear</button>
+        <div class="mb-4 d-flex gap-2">
+            <button class="m-btn m-confirm" onclick="confirmDeckSelection()">CONFIRM</button>
+            <button class="m-btn m-cancel" onclick="closeCharModal()">CANCEL</button>
+            <button class="m-btn m-clear" onclick="clearDeckSelection()">CLEAR</button>
         </div>
         <input type="text" class="form-control bg-dark text-white mb-3 border-secondary" id="charSearch" placeholder="Search character..." onkeyup="filterChars()">
         
@@ -132,7 +138,6 @@
 </div>
 
 <script>
-    // Массив изображений персонажей для скрипта (считывает c.img)
     const charImages = {};
     <% allChars.forEach(c => { 
         let charImg = c.img || `/cardback.png`;
@@ -160,7 +165,7 @@
             
             let html = `
             <div class="group-card">
-                <div class="d-flex justify-content-between mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
                     <input type="text" class="player-input" style="width: 250px; font-weight: bold; font-size: 16px; color:#00d2ff; border-color:#00d2ff;" 
                            value="${group.name}" onchange="updateGroupData(${realGroupIdx}, 'name', this.value)">
                     <button class="btn-delete-group" onclick="deleteGroup(${realGroupIdx})">Delete Group</button>
@@ -168,13 +173,13 @@
                 
                 <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
                     <thead>
-                        <tr style="border-bottom: 2px solid #3c445c; color: #8fa0c9; font-size: 14px;">
-                            <th style="width: 250px; padding: 8px 10px; text-align: left;">PLAYER</th>
-                            <th style="width: 70px; text-align: center;">PTS</th>
-                            <th style="width: 70px; text-align: center;">W</th>
-                            <th style="width: 70px; text-align: center;">D</th>
-                            <th style="width: 70px; text-align: center;">L</th>
-                            <th style="padding: 8px 10px; text-align: left;">DECKS (Click to edit)</th>
+                        <tr style="border-bottom: 2px solid #3c445c; color: #8fa0c9; font-size: 12px; font-weight: bold;">
+                            <th style="width: 200px; padding: 6px; text-align: left;">PLAYER</th>
+                            <th style="width: 50px; text-align: center;">PTS</th>
+                            <th style="width: 50px; text-align: center;">W</th>
+                            <th style="width: 50px; text-align: center;">D</th>
+                            <th style="width: 50px; text-align: center;">L</th>
+                            <th style="padding: 6px; text-align: left; padding-left: 20px;">DECKS (Click to edit)</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -184,41 +189,69 @@
                 
                 html += `
                         <tr style="border-bottom: 1px solid #2a2e40;">
-                            <td style="padding: 8px 10px;">
+                            <td style="padding: 10px 6px;">
                                 <input type="text" class="player-input" value="${player.name || ''}" placeholder="Player ${pIdx+1}" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'name', this.value)">
                             </td>
-                            <td style="text-align: center; color: #ffcc00; font-weight: bold; font-size: 18px;">${pts}</td>
-                            <td style="text-align: center; padding: 6px;"><input type="number" class="player-input num-input" value="${player.wins || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'wins', this.value)"></td>
-                            <td style="text-align: center; padding: 6px;"><input type="number" class="player-input num-input" value="${player.draws || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'draws', this.value)"></td>
-                            <td style="text-align: center; padding: 6px;"><input type="number" class="player-input num-input" value="${player.losses || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'losses', this.value)"></td>
-                            <td style="padding: 8px 10px;">
-                                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">`;
-                
-                for (let dIdx = 0; dIdx < 4; dIdx++) {
-                    let deck = player.decks && player.decks[dIdx] ? player.decks[dIdx] : [];
-                    html += `<div style="display: flex; flex-direction: row; gap: 4px; background: transparent; padding: 0; border: none;">`;
-                    for (let cIdx = 0; cIdx < 3; cIdx++) {
-                        let charId = deck[cIdx];
-                        if (charId) {
-                            let imgUrl = charImages[charId] || '/cardback.png';
-                            html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})">
-                                        <img src="${imgUrl}" onerror="this.src='/cardback.png'">
-                                     </div>`;
-                        } else {
-                            html += `<div class="deck-slot" style="border:1px dashed #4e5a7e;" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})">
-                                        <img src="/cardback.png" style="opacity: 0.2; border: none;">
-                                     </div>`;
-                        }
-                    }
-                    html += `</div>`;
-                }
-                html += `       </div>
+                            <td style="text-align: center; color: #ffcc00; font-weight: bold; font-size: 16px;">${pts}</td>
+                            <td style="text-align: center; padding: 4px;"><input type="number" class="player-input num-input" value="${player.wins || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'wins', this.value)"></td>
+                            <td style="text-align: center; padding: 4px;"><input type="number" class="player-input num-input" value="${player.draws || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'draws', this.value)"></td>
+                            <td style="text-align: center; padding: 4px;"><input type="number" class="player-input num-input" value="${player.losses || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'losses', this.value)"></td>
+                            
+                            <td style="padding: 10px 6px 10px 20px;">
+                                <!-- СЕТКА 2x2 ДЛЯ АДМИНКИ -->
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    
+                                    <!-- Верхний ряд -->
+                                    <div style="display: flex; gap: 15px;">
+                                        <% for (let dIdx = 0; dIdx < 2; dIdx++) { %>
+                                            <div style="display: flex; flex-direction: row; gap: 2px;">
+                                                <% for (let cIdx = 0; cIdx < 3; cIdx++) { %>
+                                                    <div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})" id="slot-${realGroupIdx}-${pIdx}-${dIdx}-${cIdx}"></div>
+                                                <% } %>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                    
+                                    <!-- Нижний ряд -->
+                                    <div style="display: flex; gap: 15px;">
+                                        <% for (let dIdx = 2; dIdx < 4; dIdx++) { %>
+                                            <div style="display: flex; flex-direction: row; gap: 2px;">
+                                                <% for (let cIdx = 0; cIdx < 3; cIdx++) { %>
+                                                    <div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})" id="slot-${realGroupIdx}-${pIdx}-${dIdx}-${cIdx}"></div>
+                                                <% } %>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
                             </td>
                         </tr>`;
             });
 
             html += `</tbody></table></div>`;
             container.innerHTML += html;
+        });
+
+        // Заполняем слоты картинками после рендера HTML
+        tournamentData.forEach((group, gIdx) => {
+            if(group.stage !== currentStage) return;
+            group.players.forEach((player, pIdx) => {
+                for(let dIdx = 0; dIdx < 4; dIdx++) {
+                    let deck = player.decks && player.decks[dIdx] ? player.decks[dIdx] : [];
+                    for(let cIdx = 0; cIdx < 3; cIdx++) {
+                        let charId = deck[cIdx];
+                        let slotEl = document.getElementById(`slot-${gIdx}-${pIdx}-${dIdx}-${cIdx}`);
+                        if(slotEl) {
+                            if(charId) {
+                                let imgUrl = charImages[charId] || '/cardback.png';
+                                slotEl.innerHTML = `<img src="${imgUrl}" onerror="this.src='/cardback.png'">`;
+                            } else {
+                                slotEl.style.border = "1px dashed #4e5a7e";
+                                slotEl.innerHTML = `<img src="/cardback.png" style="opacity: 0.15; border: none;">`;
+                            }
+                        }
+                    }
+                }
+            });
         });
     }
 
