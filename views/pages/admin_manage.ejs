@@ -114,7 +114,8 @@
             });
             allChars.sort((a,b) => a.name.localeCompare(b.name));
             allChars.forEach(c => { 
-                let charImg = c.image || c.avatar || `/cardback.png`;
+                // ДОСТАЕМ c.img
+                let charImg = c.img || `/cardback.png`;
             %>
                 <div class="char-item" data-id="<%= c.id %>" data-name="<%= c.name.toLowerCase() %>" onclick="toggleCharSelect('<%= c.id %>', this)">
                     <img src="<%= charImg %>" title="<%= c.name %>" onerror="this.src='/cardback.png'">
@@ -125,10 +126,9 @@
 </div>
 
 <script>
-    // Массив изображений персонажей для скрипта
     const charImages = {};
     <% allChars.forEach(c => { 
-        let charImg = c.image || c.avatar || `/cardback.png`;
+        let charImg = c.img || `/cardback.png`;
     %>
         charImages['<%= c.id %>'] = '<%= charImg %>';
     <% }); %>
