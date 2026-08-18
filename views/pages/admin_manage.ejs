@@ -4,19 +4,16 @@
     .groups-panel { background: #151822; padding: 20px; border-radius: 8px; margin-top: 30px; border: 1px solid #2a2e40; }
     .group-card { background: #1b1e2b; border: 1px solid #2a2e40; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
     
-    /* Стили для колод */
     .deck-slot { width: 35px; height: 35px; background: #0b0d14; border: 1px solid #3c445c; display: inline-block; cursor: pointer; border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 2px;}
     .deck-slot img { width: 100%; height: 100%; object-fit: cover; }
     .deck-slot:hover { border-color: #00d2ff; }
     .deck-container { margin-bottom: 5px; }
     
-    /* Таблицы и инпуты */
     .table-dark th { color: #8fa0c9; font-weight: normal; font-size: 12px; border-bottom: 1px solid #2a2e40; }
     .player-input { background: #0b0d14; border: 1px solid #3c445c; color: white; border-radius: 4px; padding: 4px 8px; font-size: 14px; width: 100%; }
     .player-input:focus { outline: none; border-color: #00d2ff; }
     .num-input { width: 50px; text-align: center; }
     
-    /* Кастомные кнопки для темной темы */
     .btn-tcg { padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 13px; transition: 0.2s; border: none; }
     .btn-tcg-save { background: #0066cc; color: #fff; }
     .btn-tcg-save:hover { background: #0052a3; }
@@ -27,12 +24,10 @@
     .btn-tcg-del { background: transparent; border: 1px solid #ff4444; color: #ff4444; padding: 4px 10px; font-size: 12px; }
     .btn-tcg-del:hover { background: #ff4444; color: #fff; }
     
-    /* Кастомные вкладки этапов */
     .stage-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #2a2e40; padding-bottom: 10px; }
     .stage-tab { background: transparent; border: 1px solid #3c445c; color: #8fa0c9; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
     .stage-tab.active { border-color: #00d2ff; color: #00d2ff; background: rgba(0, 210, 255, 0.1); }
     
-    /* Модальное окно */
     #charModal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
     .char-modal-content { background-color: #1b1e2b; margin: 5% auto; padding: 20px; border: 1px solid #3c445c; border-radius: 8px; width: 90%; max-width: 800px; color: white; max-height: 80vh; overflow-y: auto; }
     .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 15px; }
@@ -48,6 +43,7 @@
     <h2>Edit Tournament: <%= tour.title %></h2>
     <hr>
     
+    <!-- General Settings Form -->
     <form action="/admin/edit/<%= tour._id %>" method="POST" enctype="multipart/form-data">
         <div class="row">
             <div class="col-md-6 mb-3"><label class="form-label">Title</label><input type="text" name="title" class="player-input" value="<%= tour.title %>" required></div>
@@ -121,9 +117,11 @@
                 elementArr.forEach(c => allChars.push(c));
             });
             allChars.sort((a,b) => a.name.localeCompare(b.name));
-            allChars.forEach(c => { %>
+            allChars.forEach(c => { 
+                let charImg = c.image || c.avatar || c.icon || `https://gi-tcg-assets.s3.eu-north-1.amazonaws.com/${c.id}.webp`;
+            %>
                 <div class="char-item" data-id="<%= c.id %>" data-name="<%= c.name.toLowerCase() %>" onclick="toggleCharSelect('<%= c.id %>', this)">
-                    <img src="/images/cards/<%= c.id %>.webp" title="<%= c.name %>" onerror="this.src='/logo.png'"> <!-- ССЫЛКА НА КАРТИНКИ В МОДАЛКЕ -->
+                    <img src="<%= charImg %>" title="<%= c.name %>" onerror="this.src='/logo.png'">
                 </div>
             <% }); %>
         </div>
@@ -131,9 +129,13 @@
 </div>
 
 <script>
-    // === ВАЖНО: УКАЖИТЕ ЗДЕСЬ ПУТЬ ДО ВАШИХ КАРТИНОК ===
-    const IMAGE_BASE_URL = "characters.json"; 
-    // ===================================================
+    // Массив изображений из вашего characters.json для JS
+    const charImages = {};
+    <% allChars.forEach(c => { 
+        let charImg = c.image || c.avatar || c.icon || `https://gi-tcg-assets.s3.eu-north-1.amazonaws.com/${c.id}.webp`;
+    %>
+        charImages['<%= c.id %>'] = '<%= charImg %>';
+    <% }); %>
 
     let currentStage = 1;
     let tournamentData = <%- JSON.stringify(tour.groups || []) %>;
@@ -192,8 +194,9 @@
                     for (let cIdx = 0; cIdx < 3; cIdx++) {
                         let charId = deck[cIdx];
                         if (charId) {
+                            let imgUrl = charImages[charId] || '/logo.png';
                             html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})">
-                                        <img src="${IMAGE_BASE_URL}${charId}.webp" onerror="this.src='/logo.png'">
+                                        <img src="${imgUrl}" onerror="this.src='/logo.png'">
                                      </div>`;
                         } else {
                             html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})"></div>`;
@@ -277,7 +280,12 @@
         });
         for(let i=0; i<3; i++) {
             const slot = document.getElementById('prev-'+i);
-            slot.innerHTML = currentSelection[i] ? `<img src="${IMAGE_BASE_URL}${currentSelection[i]}.webp" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/logo.png'">` : '';
+            if (currentSelection[i]) {
+                let imgUrl = charImages[currentSelection[i]] || '/logo.png';
+                slot.innerHTML = `<img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/logo.png'">`;
+            } else {
+                slot.innerHTML = '';
+            }
         }
     }
 
