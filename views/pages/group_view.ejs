@@ -1,31 +1,23 @@
 <%- include('../partials/header') %>
 
-<style>
-    /* Жесткая блокировка для горизонтального отображения колод */
-    .decks-wrapper { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 15px; justify-content: flex-start; align-items: center; min-width: max-content; }
-    .single-deck { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 3px; }
-    .char-icon { width: 35px; height: 35px; border-radius: 50%; overflow: hidden; border: 1px solid #3c445c; background: #0b0d14; flex-shrink: 0; }
-    .char-icon img { width: 100%; height: 100%; object-fit: cover; }
-</style>
-
-<div class="container mt-5 mb-5">
+<div class="container-fluid mt-4 mb-5" style="max-width: 1600px; padding: 0 30px;">
     
     <div class="mb-4">
         <a href="/tournament/<%= tour.slug %>" class="btn btn-outline-secondary" style="border-color: #3c445c; color: #8fa0c9;">&larr; Back to Tournament</a>
     </div>
 
-    <h2 class="text-center mb-5" style="color: #00d2ff; font-weight: bold;"><%= group.name %></h2>
+    <h2 class="text-center mb-5" style="color: #00d2ff; font-weight: bold; font-size: 2.5rem;"><%= group.name %></h2>
 
-    <div class="table-responsive" style="border-radius: 8px; border: 1px solid #2a2e40;">
-        <table class="table table-dark table-hover text-center align-middle mb-0" style="background: #1b1e2b; min-width: 800px;">
+    <div class="table-responsive" style="border-radius: 8px; border: 1px solid #2a2e40; overflow-x: auto;">
+        <table class="table table-dark table-hover align-middle mb-0" style="background: #1b1e2b; min-width: 1200px;">
             <thead>
-                <tr style="border-bottom: 2px solid #3c445c;">
-                    <th class="text-start" style="padding: 15px; color: #8fa0c9; width: 25%;">PLAYER</th>
+                <tr style="border-bottom: 2px solid #3c445c; text-align: center;">
+                    <th class="text-start" style="padding: 20px; color: #8fa0c9; width: 20%;">PLAYER</th>
                     <th style="color: #8fa0c9; width: 8%;">PTS</th>
                     <th style="color: #8fa0c9; width: 8%;">W</th>
                     <th style="color: #8fa0c9; width: 8%;">D</th>
                     <th style="color: #8fa0c9; width: 8%;">L</th>
-                    <th class="text-start" style="color: #8fa0c9; padding-left: 20px;">DECKS</th>
+                    <th class="text-start" style="color: #8fa0c9; padding-left: 30px; width: 48%;">DECKS</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,36 +27,30 @@
                 
                 players.forEach((p, idx) => { 
                 %>
-                    <tr style="border-bottom: 1px solid #2a2e40;">
-                        <td class="text-start" style="padding: 15px; font-size: 16px; font-weight: bold;">
-                            <span style="color: #5c6784; margin-right: 15px; font-size: 18px;"><%= idx + 1 %></span>
+                    <tr style="border-bottom: 1px solid #2a2e40; text-align: center;">
+                        <td class="text-start" style="padding: 20px; font-size: 18px; font-weight: bold;">
+                            <span style="color: #5c6784; margin-right: 15px; font-size: 20px;"><%= idx + 1 %></span>
                             <%= p.name || 'TBA' %>
                         </td>
-                        <td style="font-size: 20px; font-weight: bold; color: #00d2ff;"><%= p.calcPts %></td>
-                        <td><%= p.wins || 0 %></td>
-                        <td><%= p.draws || 0 %></td>
-                        <td><%= p.losses || 0 %></td>
-                        <td class="text-start" style="padding-left: 20px;">
+                        <td style="font-size: 24px; font-weight: bold; color: #00d2ff;"><%= p.calcPts %></td>
+                        <td style="font-size: 18px;"><%= p.wins || 0 %></td>
+                        <td style="font-size: 18px;"><%= p.draws || 0 %></td>
+                        <td style="font-size: 18px;"><%= p.losses || 0 %></td>
+                        <td class="text-start" style="padding-left: 30px;">
                             
-                            <div class="decks-wrapper">
+                            <!-- ЖЕСТКОЕ ГОРИЗОНТАЛЬНОЕ ВЫРАВНИВАНИЕ -->
+                            <div style="display: flex; flex-direction: row; flex-wrap: nowrap; gap: 20px; align-items: center;">
                                 <% for(let dIdx = 0; dIdx < 4; dIdx++) { 
                                     let deck = p.decks && p.decks[dIdx] ? p.decks[dIdx] : [];
                                 %>
-                                    <div class="single-deck">
+                                    <div style="display: flex; flex-direction: row; flex-wrap: nowrap; gap: 4px; background: #10121a; padding: 6px; border-radius: 8px; border: 1px solid #2a2e40;">
                                         <% for(let cIdx = 0; cIdx < 3; cIdx++) { 
                                             let charId = deck[cIdx];
-                                            let charImg = '/cardback.png';
-                                            
-                                            if(charId) {
-                                                for(let el in chars) {
-                                                    let c = chars[el].find(x => x.id == charId || x.id == parseInt(charId));
-                                                    if(c && c.image) { charImg = c.image; break; }
-                                                }
-                                            }
+                                            let charImg = charId ? `https://gi-tcg-assets.s3.eu-north-1.amazonaws.com/${charId}.webp` : '/cardback.png';
                                         %>
-                                            <div class="char-icon">
+                                            <div style="width: 55px; height: 55px; border-radius: 4px; overflow: hidden; border: 1px solid #3c445c; background: #0b0d14; flex-shrink: 0;">
                                                 <% if(charId) { %>
-                                                    <img src="<%= charImg %>" onerror="this.src='/cardback.png'">
+                                                    <img src="<%= charImg %>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/logo.png'">
                                                 <% } %>
                                             </div>
                                         <% } %>
