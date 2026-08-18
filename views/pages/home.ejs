@@ -131,7 +131,7 @@
         color: #fff;
     }
 
-    /* Заглушка, если турниров нет */
+    /* Блок, если турниров нет */
     .empty-tournaments-card {
         background: rgba(16, 25, 45, 0.4);
         backdrop-filter: blur(8px);
@@ -149,30 +149,31 @@
         <h1 class="hero-title">GENSHIN TCG DRAFTS</h1>
         <p class="hero-subtitle">The ultimate platform for Genshin Impact TCG draft matches. Create a room, ban and pick your characters, and duel with your friends!</p>
         <div class="d-flex justify-content-center gap-3">
-            <a href="/create" class="btn-hero-primary">CREATE MATCH</a>
-            <a href="/history" class="btn-hero-secondary">RECENT GAMES</a>
+            <a href="/lobby" class="btn-hero-primary">CREATE MATCH</a>
+            <a href="/recent" class="btn-hero-secondary">RECENT GAMES</a>
         </div>
     </div>
 
     <!-- Заголовок активных турниров -->
     <h3 class="section-heading">ACTIVE TOURNAMENTS</h3>
 
-    <!-- Сетка турниров / Заглушка -->
+    <!-- Сетка турниров / Заглушка с безопасной проверкой locals -->
     <% 
-    const activeTournaments = (typeof tournaments !== 'undefined' && tournaments) ? tournaments.filter(t => t.isLive !== false) : [];
+    const tourList = (typeof tournaments !== 'undefined' && Array.isArray(tournaments)) ? tournaments : (locals.tournaments || []);
+    const activeTournaments = tourList.filter(t => t && t.isLive !== false);
     %>
 
-    <% if (activeTournaments && activeTournaments.length > 0) { %>
+    <% if (activeTournaments.length > 0) { %>
         <div class="tournaments-grid">
             <% activeTournaments.forEach(t => { %>
-                <a href="/tournament/<%= t.slug %>" class="tournament-card">
+                <a href="/tournament/<%= t.slug || t._id %>" class="tournament-card">
                     <% if (t.image) { %>
-                        <img src="<%= t.image.startsWith('http') ? t.image : '/uploads/' + t.image %>" class="tournament-card-img" alt="<%= t.title %>">
+                        <img src="<%= (typeof t.image === 'string' && t.image.startsWith('http')) ? t.image : '/uploads/' + t.image %>" class="tournament-card-img" alt="<%= t.title || 'Tournament' %>" onerror="this.src='/logo.png'">
                     <% } else { %>
                         <img src="/logo.png" class="tournament-card-img" style="object-fit: contain; padding: 20px;" alt="Logo">
                     <% } %>
                     <div class="tournament-card-body">
-                        <div class="tournament-card-title"><%= t.title %></div>
+                        <div class="tournament-card-title"><%= t.title || 'Untitled Tournament' %></div>
                         <div class="tournament-card-meta"><strong>Date:</strong> <%= t.date || 'TBA' %></div>
                         <div class="tournament-card-meta"><strong>Prize Pool:</strong> <%= t.prize || 'TBA' %></div>
                         <div class="tournament-card-meta"><strong>Format:</strong> <%= t.format || 'TBA' %></div>
@@ -184,7 +185,7 @@
         <div class="empty-tournaments-card">
             <h4 style="font-family: 'Cinzel', serif; color: #fff; margin-bottom: 10px;">NO ACTIVE TOURNAMENTS</h4>
             <p style="color: #8fa0c9; font-size: 14px; margin-bottom: 20px;">There are currently no tournaments running.<br>Grab a friend and play a friendly match in the meantime!</p>
-            <a href="/create" class="btn-hero-primary">START FRIENDLY MATCH</a>
+            <a href="/lobby" class="btn-hero-primary">START FRIENDLY MATCH</a>
         </div>
     <% } %>
 
