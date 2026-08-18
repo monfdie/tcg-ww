@@ -45,7 +45,8 @@
         { "id": "hydrotulpa", "name": "Hydro Tulpa", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/49f90b5353035a7edeaa050c7bcd2f0a.png" },
         { "id": "crocodile", "name": "Hydro Crocodile", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/5ea3cab5d35d44096106216727b4670e.png" },
         { "id": "aino", "name": "Aino", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cbe/751c2a66dfbd3fb158870012ff33b364.png" },
-        { "id": "dahlia", "name": "Dahlia", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cbe/3d819990ea80ea82815395ae7d0fef32.png" }
+        { "id": "dahlia", "name": "Dahlia", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cbe/3d819990ea80ea82815395ae7d0fef32.png" },
+        { "id": "hcube", "name": "Hydro Cube", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba981/55561420e1c18c08f59e637bfa30366b.png" }
     ],
     "pyro": [
         { "id": "diluc", "name": "Diluc", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/ae3db9ad714e4247e905058c516a9172.png" },
@@ -69,7 +70,8 @@
         { "id": "babel", "name": "Babel", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/f5035d249f2d455aa8175401349c757f.png" },
         { "id": "crab", "name": "Emperor Crab", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/60ad49d54e31fbae312e19bb1a7993ce.png" },
         { "id": "gosoytot", "name": "Gosoytot", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/68c0b1b4/2aa84d81075016be2b56bc7963fbc99d.png" },
-        { "id": "ququzaur", "name": "Ququzaur", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3484/f17ef867ac6f52eefce8077d38b1c0d1.png" }
+        { "id": "ququzaur", "name": "Ququzaur", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/699e3484/f17ef867ac6f52eefce8077d38b1c0d1.png" },
+        { "id": "durin", "name": "Durin", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba981/ea02d8378172f946c3f7e33ee6ad2775.png" }
     ],
     "electro": [
         { "id": "fischl", "name": "Fischl", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/c2732a74d3c6fdceaf0129ac656203aa.png" },
@@ -116,7 +118,8 @@
         { "id": "kenki", "name": "Maguu Kenki", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/18a12280ae38e93a3ace4da3e0a342e9.png" },
         { "id": "dvalin", "name": "Dvalin", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/6d0a753f726ac628667a72fcfb0921e8.png" },
         { "id": "serpent", "name": "Wenut", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/9f93bdb31065252347c6b7172a695ecf.png" },
-        { "id": "anemo_knight", "name": "Anemo Knight", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a4458de/933f2176018047fdcb59d39488f15ff5.png?x-oss-process=image/format,jpg/quality,Q_60" }
+        { "id": "anemo_knight", "name": "Anemo Knight", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a4458de/933f2176018047fdcb59d39488f15ff5.png" },
+        { "id": "jahoda", "name": "Jahoda", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba981/9635bbc19193933b7a27d0357c902480.png" },
     ],
     "geo": [
         { "id": "ningguang", "name": "Ningguang", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/1f32d7eb750cb526627d1533e981d8a7.png" },
