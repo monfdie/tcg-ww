@@ -1,206 +1,55 @@
-<%- include('../partials/header') %>
+<!-- ДОБАВИТЬ ЭТОТ БЛОК В views/pages/tournament_view.ejs (например, под описанием турнира) -->
 
 <style>
-    /* 1. Блокируем прокрутку всего сайта для этой страницы */
-    .main-content { overflow: hidden !important; }
-
-    /* 2. Делаем контейнер на всю высоту с Flexbox и сдвигаем всё ВВЕРХ */
-    .page-container { 
-        max-width: 1400px !important; 
-        width: 100%; 
-        margin: 0 auto; 
-        padding-top: 15px !important; /* <-- Прижали страницу к верху */
-        padding-bottom: 15px !important;
-        box-sizing: border-box; 
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-    }
+    .stage-switcher { display: flex; gap: 15px; margin: 30px 0 20px 0; justify-content: center; }
+    .stage-btn { background: #151822; border: 2px solid #00d2ff; color: #00d2ff; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; min-width: 150px; }
+    .stage-btn.active { background: rgba(0, 210, 255, 0.2); box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
+    .stage-btn:hover { background: rgba(0, 210, 255, 0.1); }
     
-    /* ШАПКА ТУРНИРА (Сделали компактнее) */
-    .tv-header {
-        flex-shrink: 0; 
-        background: rgba(16, 20, 32, 0.85); 
-        border: 1px solid #2a3454; 
-        border-radius: 12px; 
-        padding: 25px 30px; /* <-- Уменьшили внутренний отступ в 2 раза */
-        margin-bottom: 20px; /* <-- Уменьшили отступ до списка игр */
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        box-shadow: 0 10px 40px rgba(0,0,0,0.4); 
-    }
+    .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; display: none; }
+    .groups-grid.active-grid { display: grid; }
     
-    .tv-title { 
-        font-family: 'Cinzel', serif; 
-        font-size: 2.6em; /* <-- Чуть уменьшили заголовок */
-        color: #fff; 
-        margin: 0 0 15px 0; /* <-- Уменьшили отступ вниз */
-        text-shadow: 0 0 20px rgba(79, 172, 254, 0.4); 
-        text-align: center; 
-        letter-spacing: 2px;
-    }
-    
-    .tv-badges { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
-    .tv-badge { 
-        background: rgba(0,0,0,0.4); 
-        border: 1px solid #4facfe; 
-        color: #4facfe; 
-        padding: 6px 20px; /* <-- Компактные бейджи */
-        border-radius: 30px; 
-        font-weight: bold; 
-        font-size: 0.9em;
-        text-transform: uppercase; 
-        letter-spacing: 1px; 
-        font-family: 'Segoe UI', sans-serif;
-    }
-
-    /* КНОПКИ ССЫЛОК */
-    .tv-links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px; }
-    .tv-btn { 
-        padding: 10px 22px; /* <-- Компактные кнопки */
-        border-radius: 8px; 
-        text-decoration: none; 
-        font-weight: bold; 
-        font-size: 0.9em; 
-        transition: all 0.3s ease; 
-        border: 1px solid #3c4566; 
-        background: rgba(42, 52, 84, 0.5);
-        color: #8da4c4;
-    }
-    .tv-btn:hover { 
-        background: #4facfe; 
-        color: #000; 
-        border-color: #4facfe;
-        box-shadow: 0 0 20px rgba(79, 172, 254, 0.4); 
-        transform: translateY(-2px); 
-    }
-
-    .tv-divider { width: 80%; height: 1px; background: #2a3454; margin: 10px 0 15px 0; }
-    
-    .tv-date { font-family: 'Segoe UI', sans-serif; font-size: 1.1em; color: #8da4c4; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
-    .tv-date span { color: #fff; margin-left: 10px;}
-
-    /* ФИЛЬТРЫ МАТЧЕЙ */
-    .stage-filters { 
-        flex-shrink: 0; 
-        display: flex; gap: 10px; margin-bottom: 15px; 
-        overflow-x: auto; justify-content: center; padding-bottom: 10px; 
-    }
-    .filter-btn { background: transparent; border: 1px solid #3c4566; color: #8da4c4; padding: 8px 20px; border-radius: 30px; cursor: pointer; transition: 0.2s; font-weight: bold; white-space: nowrap; font-size: 0.9em; }
-    .filter-btn:hover { border-color: #d4af37; color: #fff; }
-    .filter-btn.active { background: #d4af37; color: #000; border-color: #d4af37; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
-
-    /* 3. КОНТЕЙНЕР МАТЧЕЙ (ПРОКРУТКА) */
-    #matches-list {
-        flex-grow: 1; 
-        overflow-y: auto; 
-        padding-right: 15px; 
-        padding-bottom: 20px;
-    }
-
-    #matches-list::-webkit-scrollbar { width: 8px; }
-    #matches-list::-webkit-scrollbar-track { background: rgba(16, 20, 32, 0.5); border-radius: 10px; }
-    #matches-list::-webkit-scrollbar-thumb { background: #3c4566; border-radius: 10px; }
-    #matches-list::-webkit-scrollbar-thumb:hover { background: #4facfe; }
-
-    /* КАРТОЧКА МАТЧА */
-    .match-item { background: rgba(16, 20, 32, 0.8); border: 1px solid #2a3454; padding: 18px 25px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; text-decoration: none; }
-    .match-item:hover { border-color: #4facfe; background: rgba(26, 31, 51, 1); transform: translateX(5px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
-    .m-title { font-family: 'Cinzel', serif; font-size: 1.25em; color: #fff; display: flex; align-items: center; gap: 15px; }
-    .m-replay { background: #2a3454; color: #fff; padding: 8px 20px; border-radius: 4px; font-size: 0.85em; text-transform: uppercase; font-weight: bold; border: 1px solid #3c4566; transition: 0.2s; }
-    .match-item:hover .m-replay { background: #4facfe; color: #000; border-color: #4facfe; }
-
-    @media (max-width: 768px) {
-        .page-container { height: calc(100vh - 10px); padding-top: 5px !important; }
-        .tv-header { padding: 20px 15px; }
-        .tv-title { font-size: 1.8em; }
-    }
+    .public-group-card { border: 2px solid #00d2ff; background: #10121a; border-radius: 4px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; text-decoration: none; color: white; display: block; }
+    .public-group-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.2); text-decoration: none; color: white; }
+    .public-group-title { font-weight: bold; margin-bottom: 15px; font-size: 18px; }
+    .public-group-player { font-size: 14px; margin-bottom: 5px; color: #8fa0c9; }
 </style>
 
-<div class="page-container">
-    
-    <div class="tv-header">
-        <h1 class="tv-title"><%= tour.title %></h1>
-        
-        <div class="tv-badges">
-            <div class="tv-badge"><%= tour.region || 'Global' %></div>
-            <div class="tv-badge"><%= tour.format || 'Standard' %></div>
-        </div>
-
-        <div class="tv-links">
-            <% if (tour.regLink) { %> <a href="<%= tour.regLink %>" target="_blank" class="tv-btn">Register</a> <% } %>
-            <% if (tour.bracketLink) { %> <a href="<%= tour.bracketLink %>" target="_blank" class="tv-btn">Bracket</a> <% } %>
-            <% if (tour.rulesLink) { %> <a href="<%= tour.rulesLink %>" target="_blank" class="tv-btn">Rules (RU)</a> <% } %>
-            <% if (tour.rulesEnLink) { %> <a href="<%= tour.rulesEnLink %>" target="_blank" class="tv-btn">Rules (EN)</a> <% } %>
-            <% if (tour.discordLink) { %> <a href="<%= tour.discordLink %>" target="_blank" class="tv-btn">Discord</a> <% } %>
-            <% if (tour.telegramLink) { %> <a href="<%= tour.telegramLink %>" target="_blank" class="tv-btn">Telegram</a> <% } %>
-        </div>
-
-        <div class="tv-divider"></div>
-
-        <div class="tv-date">
-            DATE: <span><%= tour.date || 'TBA' %></span>
-            <% if(tour.prize) { %>
-                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#3c4566;">|</span>&nbsp;&nbsp;&nbsp;&nbsp;
-                PRIZE POOL: <span style="color:#d4af37;"><%= tour.prize %></span>
-            <% } %>
-        </div>
+<% if (tour.groups && tour.groups.length > 0) { %>
+    <div class="stage-switcher">
+        <button class="stage-btn active" onclick="showPublicStage(1)" id="p-tab-1">Group Stage 1</button>
+        <button class="stage-btn" onclick="showPublicStage(2)" id="p-tab-2">Group Stage 2</button>
+        <button class="stage-btn" onclick="alert('Play-offs coming soon!')">Play-offs</button>
     </div>
 
-    <% if (matches && matches.length > 0) { %>
-        <% let uniqueStages = [...new Set(matches.map(m => m.stage))]; %>
-        
-        <div class="stage-filters">
-            <button class="filter-btn active" onclick="filterMatches('all', this)">All Stages</button>
-            <% uniqueStages.forEach(stage => { %>
-                <button class="filter-btn" onclick="filterMatches('<%= stage %>', this)"><%= stage %></button>
-            <% }) %>
-        </div>
+    <div id="p-stage-1" class="groups-grid active-grid">
+        <% tour.groups.filter(g => g.stage === 1).forEach(group => { %>
+            <a href="/tournament/<%= tour.slug %>/group/<%= group._id %>" class="public-group-card">
+                <div class="public-group-title"><%= group.name %></div>
+                <% group.players.forEach(p => { %>
+                    <div class="public-group-player"><%= p.name || 'TBA' %></div>
+                <% }) %>
+            </a>
+        <% }) %>
+    </div>
 
-        <div id="matches-list">
-            <% matches.forEach(m => { %>
-                <a href="/game/<%= m.roomId %>" class="match-item" data-stage="<%= m.stage %>">
-                    <div style="display: flex; align-items: center; gap: 20px;">
-                        <span style="color: #8da4c4; font-weight: bold; width: 70px; text-transform: uppercase;"><%= m.stage %></span>
-                        <div class="m-title">
-                            <span style="color: #4facfe;"><%= m.blueName %></span> 
-                            <span style="color: #556; font-size: 0.8em;">VS</span> 
-                            <span style="color: #ff6b6b;"><%= m.redName %></span>
-                            <% if (m.title) { %>
-                                <span style="font-family: 'Segoe UI', sans-serif; font-size: 0.8em; color: #6a7b9c; font-weight: normal; margin-left: 10px;">(<%= m.title %>)</span>
-                            <% } %>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; align-items: center;">
-                        <div class="m-replay">▶ Replay</div>
-                    </div>
-                </a>
-            <% }) %>
-        </div>
+    <div id="p-stage-2" class="groups-grid">
+        <% tour.groups.filter(g => g.stage === 2).forEach(group => { %>
+            <a href="/tournament/<%= tour.slug %>/group/<%= group._id %>" class="public-group-card">
+                <div class="public-group-title"><%= group.name %></div>
+                <% group.players.forEach(p => { %>
+                    <div class="public-group-player"><%= p.name || 'TBA' %></div>
+                <% }) %>
+            </a>
+        <% }) %>
+    </div>
 
-    <% } else { %>
-        <div style="text-align: center; padding: 50px; color: #8da4c4; background: rgba(16, 20, 32, 0.6); border-radius: 12px; border: 1px dashed #2a3454;">
-            <p style="margin: 0; font-size: 1.1em;">No matches added to this tournament yet.</p>
-        </div>
-    <% } %>
-
-</div>
-
-<script>
-    function filterMatches(stage, btnElement) {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btnElement.classList.add('active');
-
-        document.querySelectorAll('.match-item').forEach(item => {
-            if (stage === 'all' || item.getAttribute('data-stage') === stage) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-    }
-</script>
-
-<%- include('../partials/footer') %>
+    <script>
+        function showPublicStage(stage) {
+            document.getElementById('p-tab-1').classList.toggle('active', stage === 1);
+            document.getElementById('p-tab-2').classList.toggle('active', stage === 2);
+            document.getElementById('p-stage-1').classList.toggle('active-grid', stage === 1);
+            document.getElementById('p-stage-2').classList.toggle('active-grid', stage === 2);
+        }
+    </script>
+<% } %>
