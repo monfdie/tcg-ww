@@ -39,7 +39,6 @@
     .selected-deck-preview { display: flex; gap: 15px; justify-content: center; margin-bottom: 20px; background: #0b0d14; padding: 20px; border-radius: 8px; border: 1px solid #2a2e40;}
     .preview-slot { width: 70px; height: 70px; border: 2px dashed #4e5a7e; border-radius: 6px; overflow: hidden; background: #151822; }
     
-    /* Кнопки модалки (Цвета по ТЗ) */
     .m-btn { padding: 8px 25px; font-weight: bold; text-transform: uppercase; border-radius: 4px; cursor: pointer; border: none; font-size: 14px; }
     .m-confirm { background: white; color: black; }
     .m-confirm:hover { background: #e0e0e0; }
@@ -106,13 +105,13 @@
 
 <div id="charModal">
     <div class="char-modal-content">
-        <h4 class="mb-4" style="color: #00d2ff; font-weight: bold;">Select 3 Characters</h4>
+        <h4 class="mb-4 text-center" style="color: #00d2ff; font-weight: bold;">Select 3 Characters</h4>
         <div class="selected-deck-preview">
             <div class="preview-slot" id="prev-0"></div>
             <div class="preview-slot" id="prev-1"></div>
             <div class="preview-slot" id="prev-2"></div>
         </div>
-        <div class="mb-4 d-flex gap-2">
+        <div class="text-center mb-4 d-flex justify-content-center gap-2">
             <button class="m-btn m-confirm" onclick="confirmDeckSelection()">CONFIRM</button>
             <button class="m-btn m-cancel" onclick="closeCharModal()">CANCEL</button>
             <button class="m-btn m-clear" onclick="clearDeckSelection()">CLEAR</button>
@@ -196,32 +195,32 @@
                             <td style="text-align: center; padding: 4px;"><input type="number" class="player-input num-input" value="${player.wins || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'wins', this.value)"></td>
                             <td style="text-align: center; padding: 4px;"><input type="number" class="player-input num-input" value="${player.draws || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'draws', this.value)"></td>
                             <td style="text-align: center; padding: 4px;"><input type="number" class="player-input num-input" value="${player.losses || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'losses', this.value)"></td>
-                            
                             <td style="padding: 10px 6px 10px 20px;">
-                                <!-- СЕТКА 2x2 ДЛЯ АДМИНКИ -->
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    
-                                    <!-- Верхний ряд -->
-                                    <div style="display: flex; gap: 15px;">
-                                        <% for (let dIdx = 0; dIdx < 2; dIdx++) { %>
-                                            <div style="display: flex; flex-direction: row; gap: 2px;">
-                                                <% for (let cIdx = 0; cIdx < 3; cIdx++) { %>
-                                                    <div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})" id="slot-${realGroupIdx}-${pIdx}-${dIdx}-${cIdx}"></div>
-                                                <% } %>
-                                            </div>
-                                        <% } %>
-                                    </div>
-                                    
-                                    <!-- Нижний ряд -->
-                                    <div style="display: flex; gap: 15px;">
-                                        <% for (let dIdx = 2; dIdx < 4; dIdx++) { %>
-                                            <div style="display: flex; flex-direction: row; gap: 2px;">
-                                                <% for (let cIdx = 0; cIdx < 3; cIdx++) { %>
-                                                    <div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})" id="slot-${realGroupIdx}-${pIdx}-${dIdx}-${cIdx}"></div>
-                                                <% } %>
-                                            </div>
-                                        <% } %>
-                                    </div>
+                                    <div style="display: flex; gap: 15px;">`;
+
+                // Ряд 1 (Деки 0 и 1)
+                for (let dIdx = 0; dIdx < 2; dIdx++) {
+                    html += `<div style="display: flex; flex-direction: row; gap: 2px;">`;
+                    for (let cIdx = 0; cIdx < 3; cIdx++) {
+                        html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})" id="slot-${realGroupIdx}-${pIdx}-${dIdx}-${cIdx}"></div>`;
+                    }
+                    html += `</div>`;
+                }
+
+                html += `           </div>
+                                    <div style="display: flex; gap: 15px;">`;
+
+                // Ряд 2 (Деки 2 и 3)
+                for (let dIdx = 2; dIdx < 4; dIdx++) {
+                    html += `<div style="display: flex; flex-direction: row; gap: 2px;">`;
+                    for (let cIdx = 0; cIdx < 3; cIdx++) {
+                        html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})" id="slot-${realGroupIdx}-${pIdx}-${dIdx}-${cIdx}"></div>`;
+                    }
+                    html += `</div>`;
+                }
+
+                html += `           </div>
                                 </div>
                             </td>
                         </tr>`;
@@ -231,7 +230,7 @@
             container.innerHTML += html;
         });
 
-        // Заполняем слоты картинками после рендера HTML
+        // Заполняем картинки после создания HTML
         tournamentData.forEach((group, gIdx) => {
             if(group.stage !== currentStage) return;
             group.players.forEach((player, pIdx) => {
@@ -244,6 +243,7 @@
                             if(charId) {
                                 let imgUrl = charImages[charId] || '/cardback.png';
                                 slotEl.innerHTML = `<img src="${imgUrl}" onerror="this.src='/cardback.png'">`;
+                                slotEl.style.border = "1px solid #3c445c";
                             } else {
                                 slotEl.style.border = "1px dashed #4e5a7e";
                                 slotEl.innerHTML = `<img src="/cardback.png" style="opacity: 0.15; border: none;">`;
@@ -323,7 +323,7 @@
             const slot = document.getElementById('prev-'+i);
             if (currentSelection[i]) {
                 let imgUrl = charImages[currentSelection[i]] || '/cardback.png';
-                slot.innerHTML = `<img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/cardback.png'">`;
+                slot.innerHTML = `<img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; border:1px solid #3c445c;" onerror="this.src='/cardback.png'">`;
             } else {
                 slot.innerHTML = '';
             }
