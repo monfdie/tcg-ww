@@ -28,7 +28,6 @@
                 players.forEach((p, idx) => { 
                 %>
                     <tr style="border-bottom: 1px solid #2a2e40;">
-                        <!-- Идеально ровный столбик игрока -->
                         <td style="padding: 20px 10px;">
                             <div style="display: flex; align-items: center; font-size: 18px; font-weight: bold; color: white;">
                                 <div style="width: 30px; text-align: right; color: #5c6784; margin-right: 15px;"><%= idx + 1 %></div>
@@ -36,13 +35,11 @@
                             </div>
                         </td>
                         
-                        <!-- Фиксированные столбики цифр -->
                         <td style="text-align: center; font-size: 24px; font-weight: bold; color: #00d2ff;"><%= p.calcPts %></td>
                         <td style="text-align: center; font-size: 18px; color: white;"><%= p.wins || 0 %></td>
                         <td style="text-align: center; font-size: 18px; color: white;"><%= p.draws || 0 %></td>
                         <td style="text-align: center; font-size: 18px; color: white;"><%= p.losses || 0 %></td>
                         
-                        <!-- Колоды (переносятся на новую строку, увеличивая высоту, убирая скролл) -->
                         <td style="padding: 20px 10px;">
                             <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
                                 <% for(let dIdx = 0; dIdx < 4; dIdx++) { 
@@ -53,11 +50,12 @@
                                             let charId = deck[cIdx];
                                             let charImg = '/cardback.png';
                                             
+                                            // ДОСТАЕМ ИМЕННО СВОЙСТВО c.img ИЗ ВАШЕГО JSON
                                             if(charId) {
                                                 for(let el in chars) {
                                                     let c = chars[el].find(x => String(x.id) === String(charId));
-                                                    if(c) {
-                                                        charImg = c.image || c.avatar || c.icon || '/cardback.png'; 
+                                                    if(c && c.img) {
+                                                        charImg = c.img; 
                                                         break;
                                                     }
                                                 }
