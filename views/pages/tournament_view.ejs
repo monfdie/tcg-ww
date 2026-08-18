@@ -1,60 +1,69 @@
 <%- include('../partials/header') %>
 
 <style>
-    .stage-switcher { display: flex; gap: 15px; margin: 40px 0 20px 0; justify-content: center; }
-    .stage-btn { background: #1b1e2b; border: 1px solid #3c445c; color: #8fa0c9; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; min-width: 150px; }
+    /* Стили для переключателя этапов */
+    .stage-switcher { display: flex; gap: 15px; margin: 30px 0 40px 0; justify-content: center; }
+    .stage-btn { background: #1b1e2b; border: 1px solid #3c445c; color: #8fa0c9; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; min-width: 150px; text-transform: uppercase; font-size: 14px; }
     .stage-btn.active { background: #00d2ff; color: #000; border-color: #00d2ff; }
     .stage-btn:hover:not(.active) { background: #2a2e40; color: white; }
     
+    /* Сетка групп */
     .groups-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
     .groups-grid.active-grid { display: grid; }
     
-    .public-group-card { background: #1b1e2b; border: 1px solid #3c445c; border-radius: 6px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; text-decoration: none; color: white; display: block; }
+    .public-group-card { background: #1b1e2b; border: 1px solid #2a2e40; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; text-decoration: none; color: white; display: block; }
     .public-group-card:hover { border-color: #00d2ff; transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0, 210, 255, 0.1); color: white; text-decoration: none; }
     .public-group-title { font-weight: bold; margin-bottom: 15px; font-size: 18px; color: #00d2ff; }
     .public-group-player { font-size: 14px; margin-bottom: 5px; color: #c4d0eb; }
+    
+    /* Стили текста и ссылок из шапки */
+    .tour-info-line { font-size: 16px; color: #8fa0c9; margin-bottom: 3px; }
+    .tour-info-line strong { color: white; }
+    .tour-link { color: #0d6efd; text-decoration: underline; font-size: 16px; margin-right: 12px; }
+    .tour-link:hover { color: #0a58ca; }
 </style>
 
-<div class="container mt-5 mb-5">
+<div class="container mt-4 mb-5">
     
-    <!-- Шапка турнира -->
-    <div class="row mb-5">
-        <div class="col-md-4 text-center">
-            <% if(tour.image) { %>
-                <img src="/uploads/<%= tour.image %>" class="img-fluid rounded" style="max-height: 300px; object-fit: contain;">
-            <% } else { %>
-                <img src="/logo.png" class="img-fluid rounded" style="max-height: 300px;">
-            <% } %>
-        </div>
-        <div class="col-md-8">
-            <h1 style="color: #00d2ff; font-weight: bold; margin-bottom: 20px;"><%= tour.title %></h1>
-            <p style="color: #c4d0eb; font-size: 16px;"><%= tour.description %></p>
-            
-            <div class="row mt-4 mb-4" style="color: #8fa0c9; font-size: 15px;">
-                <div class="col-md-6">
-                    <div class="mb-2"><strong class="text-white">Date:</strong> <%= tour.date || 'TBA' %></div>
-                    <div class="mb-2"><strong class="text-white">Prize Pool:</strong> <%= tour.prize || 'TBA' %></div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-2"><strong class="text-white">Region:</strong> <%= tour.region || 'Any' %></div>
-                    <div class="mb-2"><strong class="text-white">Format:</strong> <%= tour.format || 'TBA' %></div>
-                </div>
-            </div>
-
-            <div class="d-flex gap-2 flex-wrap">
-                <% if(tour.regLink) { %><a href="<%= tour.regLink %>" class="btn btn-primary" target="_blank">Register</a><% } %>
-                <% if(tour.rulesLink) { %><a href="<%= tour.rulesLink %>" class="btn btn-outline-info" target="_blank">Rules (RU)</a><% } %>
-                <% if(tour.rulesEnLink) { %><a href="<%= tour.rulesEnLink %>" class="btn btn-outline-info" target="_blank">Rules (EN)</a><% } %>
-                <% if(tour.discordLink) { %><a href="<%= tour.discordLink %>" class="btn btn-outline-primary" target="_blank">Discord</a><% } %>
-                <% if(tour.telegramLink) { %><a href="<%= tour.telegramLink %>" class="btn btn-outline-primary" target="_blank">Telegram</a><% } %>
-                <% if(tour.bracketLink) { %><a href="<%= tour.bracketLink %>" class="btn btn-outline-warning" target="_blank">Bracket</a><% } %>
-            </div>
-        </div>
+    <!-- ШАПКА ТУРНИРА -->
+    <div class="mb-4">
+        <% if(tour.image) { %>
+            <img src="/uploads/<%= tour.image %>" class="img-fluid" style="width: 100%; max-height: 450px; object-fit: cover; object-position: center; border-radius: 4px;" alt="<%= tour.title %>">
+        <% } else { %>
+            <img src="/logo.png" class="img-fluid" style="width: 100%; max-height: 400px; object-fit: cover; object-position: center; border-radius: 4px;" alt="Logo">
+        <% } %>
     </div>
 
-    <hr style="border-color: #2a2e40;">
+    <!-- Заголовок -->
+    <h1 style="color: #00d2ff; font-weight: bold; font-size: 2.5rem; margin-bottom: 25px;"><%= tour.title %></h1>
+    
+    <!-- Описание (если есть) -->
+    <% if (tour.description) { %>
+        <p style="color: #c4d0eb; font-size: 16px; margin-bottom: 20px; line-height: 1.6;"><%= tour.description %></p>
+    <% } %>
 
-    <!-- Сетка групп -->
+    <!-- Информация (Даты, призы и т.д.) -->
+    <div class="mb-3">
+        <div class="tour-info-line"><strong>Date:</strong> <%= tour.date || 'TBA' %></div>
+        <div class="tour-info-line"><strong>Prize Pool:</strong> <%= tour.prize || 'TBA' %></div>
+        <div class="tour-info-line"><strong>Region:</strong> <%= tour.region || 'Any' %></div>
+        <div class="tour-info-line"><strong>Format:</strong> <%= tour.format || 'TBA' %></div>
+    </div>
+
+    <!-- Ссылки -->
+    <div class="mb-4">
+        <% if(tour.regLink) { %><a href="<%= tour.regLink %>" class="tour-link" target="_blank">Register</a><% } %>
+        <% if(tour.rulesLink) { %><a href="<%= tour.rulesLink %>" class="tour-link" target="_blank">Rules (RU)</a><% } %>
+        <% if(tour.rulesEnLink) { %><a href="<%= tour.rulesEnLink %>" class="tour-link" target="_blank">Rules (EN)</a><% } %>
+        <% if(tour.discordLink) { %><a href="<%= tour.discordLink %>" class="tour-link" target="_blank">Discord</a><% } %>
+        <% if(tour.telegramLink) { %><a href="<%= tour.telegramLink %>" class="tour-link" target="_blank">Telegram</a><% } %>
+        <% if(tour.bracketLink) { %><a href="<%= tour.bracketLink %>" class="tour-link" target="_blank">Bracket</a><% } %>
+    </div>
+
+    <hr style="border-color: #3c445c; margin-bottom: 30px;">
+    <!-- КОНЕЦ ШАПКИ -->
+
+    <!-- СЕТКА ГРУПП -->
     <% if (tour.groups && tour.groups.length > 0) { %>
         <div class="stage-switcher">
             <button class="stage-btn active" onclick="showPublicStage(1)" id="p-tab-1">Group Stage 1</button>
@@ -93,7 +102,7 @@
             }
         </script>
     <% } else { %>
-        <div class="text-center text-muted mt-5 mb-5">No groups have been added to this tournament yet.</div>
+        <div class="text-center text-muted mt-5 mb-5" style="font-size: 16px;">No groups have been added to this tournament yet.</div>
     <% } %>
 
 </div>
