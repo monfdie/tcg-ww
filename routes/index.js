@@ -77,16 +77,19 @@ router.post('/admin/tierlist/save', isAdmin, express.json(), async (req, res) =>
 // ==========================================
 router.get('/', async (req, res) => {
     try {
-        // Ищем активные турниры (isLive: true или все существующие турниры)
-        const tournaments = await Tournament.find({ isLive: true }).sort({ createdAt: -1 });
+        // Загружаем турниры из базы
+        const tournaments = await Tournament.find().sort({ createdAt: -1 }).lean();
         
-        res.render('pages/index', {
+        res.render('pages/home', {
             tournaments: tournaments || [],
             user: req.user || null
         });
     } catch (err) {
-        console.error(err);
-        res.render('pages/index', { tournaments: [], user: req.user || null });
+        console.error('Home route error:', err);
+        res.render('pages/home', { 
+            tournaments: [], 
+            user: req.user || null 
+        });
     }
 });
 
