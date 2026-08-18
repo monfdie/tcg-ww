@@ -1,99 +1,4 @@
-<%- include('../partials/header') %>
-
-<style>
-    .groups-panel { background: #151822; padding: 20px; border-radius: 8px; margin-top: 30px; border: 1px solid #2a2e40; }
-    .group-card { background: #1b1e2b; border: 1px solid #2a2e40; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-    
-    .deck-slot { width: 35px; height: 35px; background: #0b0d14; border: 1px solid #3c445c; display: inline-block; cursor: pointer; border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 2px;}
-    .deck-slot img { width: 100%; height: 100%; object-fit: cover; }
-    .deck-slot:hover { border-color: #00d2ff; }
-    .deck-container { margin-bottom: 5px; }
-    
-    .table-dark th { color: #8fa0c9; font-weight: normal; font-size: 12px; border-bottom: 1px solid #2a2e40; }
-    .player-input { background: #0b0d14; border: 1px solid #3c445c; color: white; border-radius: 4px; padding: 4px 8px; font-size: 14px; width: 100%; }
-    .player-input:focus { outline: none; border-color: #00d2ff; }
-    .num-input { width: 50px; text-align: center; }
-    
-    .btn-tcg { padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 13px; transition: 0.2s; border: none; }
-    .btn-tcg-save { background: #0066cc; color: #fff; }
-    .btn-tcg-save:hover { background: #0052a3; }
-    .btn-tcg-add { background: #1a3a2a; border: 1px solid #00ff88; color: #00ff88; }
-    .btn-tcg-add:hover { background: #00ff88; color: #000; }
-    .btn-tcg-copy { background: #3a2a1a; border: 1px solid #ffcc00; color: #ffcc00; }
-    .btn-tcg-copy:hover { background: #ffcc00; color: #000; }
-    .btn-tcg-del { background: transparent; border: 1px solid #ff4444; color: #ff4444; padding: 4px 10px; font-size: 12px; }
-    .btn-tcg-del:hover { background: #ff4444; color: #fff; }
-    
-    .stage-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #2a2e40; padding-bottom: 10px; }
-    .stage-tab { background: transparent; border: 1px solid #3c445c; color: #8fa0c9; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-    .stage-tab.active { border-color: #00d2ff; color: #00d2ff; background: rgba(0, 210, 255, 0.1); }
-    
-    #charModal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
-    .char-modal-content { background-color: #1b1e2b; margin: 5% auto; padding: 20px; border: 1px solid #3c445c; border-radius: 8px; width: 90%; max-width: 800px; color: white; max-height: 80vh; overflow-y: auto; }
-    .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 15px; }
-    .char-item { width: 60px; height: 60px; cursor: pointer; border: 2px solid transparent; border-radius: 4px; overflow: hidden; transition: 0.2s; position: relative;}
-    .char-item img { width: 100%; height: 100%; object-fit: cover; }
-    .char-item.selected { border-color: #00ff88; box-shadow: 0 0 10px #00ff88; }
-    .char-item.selected::after { content: '✓'; position: absolute; top: 0; right: 0; background: #00ff88; color: black; font-size: 12px; padding: 0 4px; font-weight: bold; }
-    .selected-deck-preview { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; background: #0b0d14; padding: 15px; border-radius: 8px;}
-    .preview-slot { width: 60px; height: 60px; border: 1px dashed #4e5a7e; border-radius: 4px; overflow: hidden; }
-</style>
-
-<div class="container mt-5 mb-5">
-    <h2>Edit Tournament: <%= tour.title %></h2>
-    <hr>
-    
-    <!-- General Settings Form -->
-    <form action="/admin/edit/<%= tour._id %>" method="POST" enctype="multipart/form-data">
-        <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Title</label><input type="text" name="title" class="player-input" value="<%= tour.title %>" required></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Slug (URL)</label><input type="text" name="slug" class="player-input" value="<%= tour.slug %>" required></div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 mb-3"><label class="form-label">Date</label><input type="text" name="date" class="player-input" value="<%= tour.date %>"></div>
-            <div class="col-md-4 mb-3"><label class="form-label">Prize</label><input type="text" name="prize" class="player-input" value="<%= tour.prize %>"></div>
-            <div class="col-md-4 mb-3"><label class="form-label">Region</label><input type="text" name="region" class="player-input" value="<%= tour.region %>"></div>
-        </div>
-        <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Format</label><input type="text" name="format" class="player-input" value="<%= tour.format %>"></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Image (Upload new to replace)</label><input type="file" name="image" class="player-input" accept="image/*"></div>
-        </div>
-        <div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="player-input" rows="4"><%= tour.description %></textarea></div>
-        <h4 class="mt-4">Links</h4>
-        <div class="row">
-            <div class="col-md-4 mb-3"><label class="form-label">Registration</label><input type="text" name="regLink" class="player-input" value="<%= tour.regLink %>"></div>
-            <div class="col-md-4 mb-3"><label class="form-label">Rules (RU)</label><input type="text" name="rulesLink" class="player-input" value="<%= tour.rulesLink %>"></div>
-            <div class="col-md-4 mb-3"><label class="form-label">Rules (EN)</label><input type="text" name="rulesEnLink" class="player-input" value="<%= tour.rulesEnLink %>"></div>
-            <div class="col-md-4 mb-3"><label class="form-label">Discord</label><input type="text" name="discordLink" class="player-input" value="<%= tour.discordLink %>"></div>
-            <div class="col-md-4 mb-3"><label class="form-label">Telegram</label><input type="text" name="telegramLink" class="player-input" value="<%= tour.telegramLink %>"></div>
-            <div class="col-md-4 mb-3"><label class="form-label">Bracket</label><input type="text" name="bracketLink" class="player-input" value="<%= tour.bracketLink %>"></div>
-        </div>
-        <div class="row mb-4 mt-2">
-            <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="isMine" id="isMine" <%= tour.isMine ? 'checked' : '' %>><label class="form-check-label" for="isMine">Is My Tournament</label></div></div>
-            <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="isLive" id="isLive" <%= tour.isLive ? 'checked' : '' %>><label class="form-check-label" for="isLive">Is Live</label></div></div>
-        </div>
-        <button type="submit" class="btn-tcg btn-tcg-save">💾 Save General Settings</button>
-    </form>
-
-    <div class="groups-panel">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="m-0 text-info">Group Stages Editor</h3>
-            <button class="btn-tcg btn-tcg-save" onclick="saveGroupsToDB()">💾 Save Groups Data</button>
-        </div>
-
-        <div class="stage-tabs">
-            <button class="stage-tab active" onclick="switchStage(1)" id="tab-stage-1">Stage 1</button>
-            <button class="stage-tab" onclick="switchStage(2)" id="tab-stage-2">Stage 2</button>
-        </div>
-
-        <div class="mb-4 d-flex gap-2">
-            <button class="btn-tcg btn-tcg-add" onclick="addGroup()">+ Add New Group</button>
-            <button class="btn-tcg btn-tcg-copy" onclick="duplicateToStage2()" id="btn-duplicate" style="display:none;">Copy Rosters to Stage 2</button>
-        </div>
-
-        <div id="groups-container"></div>
-    </div>
-</div>
+<!-- ... (ВЕСЬ ВЕРХНИЙ КОД ОСТАВЛЯЕТЕ КАК ЕСТЬ ДО ЭТОГО МОМЕНТА) ... -->
 
 <div id="charModal">
     <div class="char-modal-content">
@@ -118,10 +23,10 @@
             });
             allChars.sort((a,b) => a.name.localeCompare(b.name));
             allChars.forEach(c => { 
-                let charImg = c.image || c.avatar || c.icon || `https://gi-tcg-assets.s3.eu-north-1.amazonaws.com/${c.id}.webp`;
+                let charImg = c.image || '/cardback.png';
             %>
                 <div class="char-item" data-id="<%= c.id %>" data-name="<%= c.name.toLowerCase() %>" onclick="toggleCharSelect('<%= c.id %>', this)">
-                    <img src="<%= charImg %>" title="<%= c.name %>" onerror="this.src='/logo.png'">
+                    <img src="<%= charImg %>" title="<%= c.name %>" onerror="this.src='/cardback.png'">
                 </div>
             <% }); %>
         </div>
@@ -129,10 +34,9 @@
 </div>
 
 <script>
-    // Массив изображений из вашего characters.json для JS
     const charImages = {};
     <% allChars.forEach(c => { 
-        let charImg = c.image || c.avatar || c.icon || `https://gi-tcg-assets.s3.eu-north-1.amazonaws.com/${c.id}.webp`;
+        let charImg = c.image || '/cardback.png';
     %>
         charImages['<%= c.id %>'] = '<%= charImg %>';
     <% }); %>
@@ -194,9 +98,9 @@
                     for (let cIdx = 0; cIdx < 3; cIdx++) {
                         let charId = deck[cIdx];
                         if (charId) {
-                            let imgUrl = charImages[charId] || '/logo.png';
+                            let imgUrl = charImages[charId] || '/cardback.png';
                             html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})">
-                                        <img src="${imgUrl}" onerror="this.src='/logo.png'">
+                                        <img src="${imgUrl}" onerror="this.src='/cardback.png'">
                                      </div>`;
                         } else {
                             html += `<div class="deck-slot" onclick="openDeckEditor(${realGroupIdx}, ${pIdx}, ${dIdx})"></div>`;
@@ -281,8 +185,8 @@
         for(let i=0; i<3; i++) {
             const slot = document.getElementById('prev-'+i);
             if (currentSelection[i]) {
-                let imgUrl = charImages[currentSelection[i]] || '/logo.png';
-                slot.innerHTML = `<img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/logo.png'">`;
+                let imgUrl = charImages[currentSelection[i]] || '/cardback.png';
+                slot.innerHTML = `<img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/cardback.png'">`;
             } else {
                 slot.innerHTML = '';
             }
