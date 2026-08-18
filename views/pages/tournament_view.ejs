@@ -2,7 +2,7 @@
 
 <style>
     /* Стили для переключателя этапов и кнопок-ссылок */
-    .stage-switcher { display: flex; gap: 15px; margin: 30px 0 40px 0; justify-content: center; }
+    .stage-switcher { display: flex; gap: 15px; margin: 20px 0 30px 0; justify-content: center; } /* Уменьшен отступ сверху */
     .stage-btn, .link-btn {
         background: #1b1e2b;
         border: 1px solid #3c445c;
@@ -31,8 +31,8 @@
     .public-group-title { font-weight: bold; margin-bottom: 15px; font-size: 18px; color: #00d2ff; }
     .public-group-player { font-size: 14px; margin-bottom: 5px; color: #c4d0eb; }
     
-    /* Стили текста из шапки */
-    .tour-info-line { font-size: 16px; color: #8fa0c9; margin-bottom: 3px; }
+    /* Стили текста из шапки (УВЕЛИЧЕН ШРИФТ И ОТСТУПЫ МЕЖДУ СТРОКАМИ) */
+    .tour-info-line { font-size: 18px; color: #8fa0c9; margin-bottom: 8px; }
     .tour-info-line strong { color: white; }
     
     /* Адаптивность для меньших экранов */
@@ -59,8 +59,8 @@
         <p style="color: #c4d0eb; font-size: 16px; margin-bottom: 20px; line-height: 1.6;"><%= tour.description %></p>
     <% } %>
 
-    <!-- Информация (Даты, призы и т.д.) -->
-    <div class="mb-4">
+    <!-- Информация (Даты, призы и т.д.) + отступ снизу (pb-3) -->
+    <div class="mb-4 pb-3"> 
         <div class="tour-info-line"><strong>Date:</strong> <%= tour.date || 'TBA' %></div>
         <div class="tour-info-line"><strong>Prize Pool:</strong> <%= tour.prize || 'TBA' %></div>
         <div class="tour-info-line"><strong>Region:</strong> <%= tour.region || 'Any' %></div>
@@ -77,7 +77,7 @@
         <% if(tour.bracketLink) { %><a href="<%= tour.bracketLink %>" class="link-btn" target="_blank">Bracket</a><% } %>
     </div>
 
-    <hr style="border-color: #3c445c; margin-bottom: 30px;">
+    <hr style="border-color: #3c445c; margin-bottom: 20px; margin-top: 25px;">
     <!-- КОНЕЦ ШАПКИ -->
 
     <!-- СЕТКА ГРУПП -->
