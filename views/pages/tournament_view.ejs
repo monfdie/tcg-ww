@@ -1,18 +1,25 @@
 <!-- ДОБАВИТЬ ЭТОТ БЛОК В views/pages/tournament_view.ejs (например, под описанием турнира) -->
 
+<!-- ДОБАВИТЬ ЭТОТ БЛОК В views/pages/tournament_view.ejs (например, под описанием турнира) -->
+
 <style>
     .stage-switcher { display: flex; gap: 15px; margin: 30px 0 20px 0; justify-content: center; }
-    .stage-btn { background: #151822; border: 2px solid #00d2ff; color: #00d2ff; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; min-width: 150px; }
-    .stage-btn.active { background: rgba(0, 210, 255, 0.2); box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
-    .stage-btn:hover { background: rgba(0, 210, 255, 0.1); }
+    .stage-btn { background: #1b1e2b; border: 1px solid #3c445c; color: #8fa0c9; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; min-width: 150px; }
+    .stage-btn.active { background: #00d2ff; color: #000; border-color: #00d2ff; }
+    .stage-btn:hover:not(.active) { background: #2a2e40; color: white; }
     
-    .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; display: none; }
+    /* Сетка ровно на 4 группы в ряд */
+    .groups-grid { display: none; grid-template-columns: repeat(4, 1fr); gap: 20px; }
     .groups-grid.active-grid { display: grid; }
     
-    .public-group-card { border: 2px solid #00d2ff; background: #10121a; border-radius: 4px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; text-decoration: none; color: white; display: block; }
-    .public-group-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.2); text-decoration: none; color: white; }
-    .public-group-title { font-weight: bold; margin-bottom: 15px; font-size: 18px; }
-    .public-group-player { font-size: 14px; margin-bottom: 5px; color: #8fa0c9; }
+    .public-group-card { background: #1b1e2b; border: 1px solid #3c445c; border-radius: 6px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; text-decoration: none; color: white; display: block; }
+    .public-group-card:hover { border-color: #00d2ff; transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0, 210, 255, 0.1); color: white; text-decoration: none; }
+    .public-group-title { font-weight: bold; margin-bottom: 15px; font-size: 18px; color: #00d2ff; }
+    .public-group-player { font-size: 14px; margin-bottom: 5px; color: #c4d0eb; }
+    
+    /* Адаптивность для телефонов */
+    @media (max-width: 992px) { .groups-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 576px) { .groups-grid { grid-template-columns: 1fr; } }
 </style>
 
 <% if (tour.groups && tour.groups.length > 0) { %>
