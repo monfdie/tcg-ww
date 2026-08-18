@@ -2,48 +2,33 @@
 
 <style>
     /* Стили для круглых иконок без квадратов */
-    .char-icon-wrap {
-        width: 50px; 
-        height: 50px; 
-        flex-shrink: 0;
-        background: transparent;
-        border: none;
-    }
-    .char-icon-wrap img {
-        width: 100%; 
-        height: 100%; 
-        object-fit: cover; 
-        border-radius: 50%; /* Делает картинку круглой */
-        border: 2px solid #3c445c; /* Рамка вокруг самого круга */
-    }
-    .deck-box {
-        display: flex; 
-        flex-direction: row; 
-        gap: 4px; 
-        background: transparent; /* Убран фон */
-        padding: 0; 
-        border: none; /* Убрана квадратная рамка */
-    }
+    .char-icon-wrap { width: 45px; height: 45px; flex-shrink: 0; background: transparent; border: none; }
+    .char-icon-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 1px solid #3c445c; }
+    .deck-box { display: flex; flex-direction: row; gap: 4px; background: transparent; padding: 0; border: none; }
+    
+    /* Красивая кнопка назад */
+    .back-btn { color: #8fa0c9; text-decoration: none; font-size: 14px; font-weight: bold; transition: 0.2s; display: inline-block; padding: 10px 0; }
+    .back-btn:hover { color: #00d2ff; text-decoration: underline; }
 </style>
 
-<div class="container mt-4 mb-5" style="max-width: 1200px;">
+<div class="container mt-4 mb-5" style="max-width: 1100px;">
     
-    <div class="mb-4">
-        <a href="/tournament/<%= tour.slug %>" class="btn btn-outline-secondary" style="border-color: #3c445c; color: #8fa0c9;">&larr; Back to Tournament</a>
+    <div class="mb-3">
+        <a href="/tournament/<%= tour.slug %>" class="back-btn">&larr; Back to Tournament</a>
     </div>
 
-    <h2 class="text-center mb-5" style="color: #00d2ff; font-weight: bold; font-size: 2.5rem;"><%= group.name %></h2>
+    <h2 class="mb-4" style="color: #00d2ff; font-weight: bold; font-size: 2.2rem;"><%= group.name %></h2>
 
     <div style="background: #1b1e2b; border: 1px solid #2a2e40; border-radius: 8px; padding: 20px;">
         <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
             <thead>
-                <tr style="border-bottom: 2px solid #3c445c; color: #8fa0c9; font-size: 14px;">
+                <tr style="border-bottom: 2px solid #3c445c; color: #8fa0c9; font-size: 13px; font-weight: bold;">
                     <th style="width: 250px; padding: 15px 10px; text-align: left;">PLAYER</th>
-                    <th style="width: 80px; text-align: center;">PTS</th>
-                    <th style="width: 80px; text-align: center;">W</th>
-                    <th style="width: 80px; text-align: center;">D</th>
-                    <th style="width: 80px; text-align: center;">L</th>
-                    <th style="padding: 15px 10px; text-align: left;">DECKS</th>
+                    <th style="width: 60px; text-align: center;">PTS</th>
+                    <th style="width: 60px; text-align: center;">W</th>
+                    <th style="width: 60px; text-align: center;">D</th>
+                    <th style="width: 60px; text-align: center;">L</th>
+                    <th style="padding: 15px 10px; text-align: left; padding-left: 40px;">DECKS</th>
                 </tr>
             </thead>
             <tbody>
@@ -55,47 +40,77 @@
                 %>
                     <tr style="border-bottom: 1px solid #2a2e40;">
                         <td style="padding: 20px 10px;">
-                            <div style="display: flex; align-items: center; font-size: 18px; font-weight: bold; color: white;">
-                                <div style="width: 30px; text-align: right; color: #5c6784; margin-right: 15px;"><%= idx + 1 %></div>
+                            <div style="display: flex; align-items: center; font-size: 16px; font-weight: bold; color: white;">
+                                <div style="width: 25px; text-align: right; color: #5c6784; margin-right: 15px;"><%= idx + 1 %></div>
                                 <div style="flex-grow: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= p.name || 'TBA' %></div>
                             </div>
                         </td>
                         
-                        <td style="text-align: center; font-size: 24px; font-weight: bold; color: #00d2ff;"><%= p.calcPts %></td>
-                        <td style="text-align: center; font-size: 18px; color: white;"><%= p.wins || 0 %></td>
-                        <td style="text-align: center; font-size: 18px; color: white;"><%= p.draws || 0 %></td>
-                        <td style="text-align: center; font-size: 18px; color: white;"><%= p.losses || 0 %></td>
+                        <td style="text-align: center; font-size: 22px; font-weight: bold; color: #00d2ff;"><%= p.calcPts %></td>
+                        <td style="text-align: center; font-size: 16px; color: white;"><%= p.wins || 0 %></td>
+                        <td style="text-align: center; font-size: 16px; color: white;"><%= p.draws || 0 %></td>
+                        <td style="text-align: center; font-size: 16px; color: white;"><%= p.losses || 0 %></td>
                         
-                        <td style="padding: 20px 10px;">
-                            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
-                                <% for(let dIdx = 0; dIdx < 4; dIdx++) { 
-                                    let deck = p.decks && p.decks[dIdx] ? p.decks[dIdx] : [];
-                                %>
-                                    <div class="deck-box">
-                                        <% for(let cIdx = 0; cIdx < 3; cIdx++) { 
-                                            let charId = deck[cIdx];
-                                            let charImg = '/cardback.png';
-                                            
-                                            if(charId) {
-                                                for(let el in chars) {
-                                                    let c = chars[el].find(x => String(x.id) === String(charId));
-                                                    if(c && c.img) {
-                                                        charImg = c.img; 
-                                                        break;
+                        <td style="padding: 20px 10px 20px 40px;">
+                            <!-- КОНТЕЙНЕР ДЛЯ РАССТАНОВКИ 2x2 -->
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                
+                                <!-- ВЕРХНИЙ РЯД (Дека 1 и Дека 2) -->
+                                <div style="display: flex; gap: 20px;">
+                                    <% for(let dIdx = 0; dIdx < 2; dIdx++) { 
+                                        let deck = p.decks && p.decks[dIdx] ? p.decks[dIdx] : [];
+                                    %>
+                                        <div class="deck-box">
+                                            <% for(let cIdx = 0; cIdx < 3; cIdx++) { 
+                                                let charId = deck[cIdx];
+                                                let charImg = '/cardback.png';
+                                                if(charId) {
+                                                    for(let el in chars) {
+                                                        let c = chars[el].find(x => String(x.id) === String(charId));
+                                                        if(c && c.img) { charImg = c.img; break; }
                                                     }
                                                 }
-                                            }
-                                        %>
-                                            <div class="char-icon-wrap">
-                                                <% if(charId) { %>
-                                                    <img src="<%= charImg %>" onerror="this.src='/cardback.png'">
-                                                <% } else { %>
-                                                    <img src="/cardback.png" style="opacity: 0.2; border: 1px dashed #4e5a7e;">
-                                                <% } %>
-                                            </div>
-                                        <% } %>
-                                    </div>
-                                <% } %>
+                                            %>
+                                                <div class="char-icon-wrap">
+                                                    <% if(charId) { %>
+                                                        <img src="<%= charImg %>" onerror="this.src='/cardback.png'">
+                                                    <% } else { %>
+                                                        <img src="/cardback.png" style="opacity: 0.15; border: 1px dashed #3c445c;">
+                                                    <% } %>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% } %>
+                                </div>
+
+                                <!-- НИЖНИЙ РЯД (Дека 3 и Дека 4) -->
+                                <div style="display: flex; gap: 20px;">
+                                    <% for(let dIdx = 2; dIdx < 4; dIdx++) { 
+                                        let deck = p.decks && p.decks[dIdx] ? p.decks[dIdx] : [];
+                                    %>
+                                        <div class="deck-box">
+                                            <% for(let cIdx = 0; cIdx < 3; cIdx++) { 
+                                                let charId = deck[cIdx];
+                                                let charImg = '/cardback.png';
+                                                if(charId) {
+                                                    for(let el in chars) {
+                                                        let c = chars[el].find(x => String(x.id) === String(charId));
+                                                        if(c && c.img) { charImg = c.img; break; }
+                                                    }
+                                                }
+                                            %>
+                                                <div class="char-icon-wrap">
+                                                    <% if(charId) { %>
+                                                        <img src="<%= charImg %>" onerror="this.src='/cardback.png'">
+                                                    <% } else { %>
+                                                        <img src="/cardback.png" style="opacity: 0.15; border: 1px dashed #3c445c;">
+                                                    <% } %>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% } %>
+                                </div>
+                                
                             </div>
                         </td>
                     </tr>
