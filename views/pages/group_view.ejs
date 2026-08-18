@@ -1,0 +1,79 @@
+<%- include('../partials/header') %>
+
+<style>
+    .group-page-container { background: #3b4cca; padding: 30px; min-height: 80vh; border-top: 4px solid #ffcc00; }
+    .group-header { color: #ffcc00; text-align: center; font-weight: bold; font-size: 3rem; margin-bottom: 20px; }
+    
+    .g-table { width: 100%; border-collapse: collapse; }
+    .g-table th { color: #ffcc00; font-size: 24px; padding: 15px; border-bottom: 2px solid #ffcc00; }
+    .g-table td { padding: 15px; font-size: 20px; color: #ffcc00; font-weight: bold; }
+    
+    .g-player-name { font-size: 24px; color: #ffcc00; }
+    
+    .g-deck-container { display: flex; gap: 15px; justify-content: center; }
+    .g-deck { display: flex; gap: 2px; }
+    .g-char { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #ffcc00; overflow: hidden; background: #10121a; }
+    .g-char img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .pts-col { font-size: 28px !important; }
+</style>
+
+<div class="group-page-container">
+    <div class="container">
+        
+        <div class="mb-3">
+            <a href="/tournament/<%= tour.slug %>" class="btn btn-outline-light">< Back to Tournament</a>
+        </div>
+
+        <h1 class="group-header"><%= group.name %></h1>
+
+        <table class="g-table text-center">
+            <thead>
+                <tr>
+                    <th class="text-start" width="25%"></th>
+                    <th width="10%">PTS</th>
+                    <th width="10%">W</th>
+                    <th width="10%">D</th>
+                    <th width="10%">L</th>
+                    <th width="35%"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <% players.forEach((p, idx) => { %>
+                    <tr>
+                        <td class="text-start">
+                            <span style="font-size: 28px; margin-right: 15px;"><%= idx + 1 %></span>
+                            <span class="g-player-name"><%= p.name || 'TBA' %></span>
+                        </td>
+                        <td class="pts-col"><%= p.points %></td>
+                        <td><%= p.wins %></td>
+                        <td><%= p.draws %></td>
+                        <td><%= p.losses %></td>
+                        <td>
+                            <div class="g-deck-container">
+                                <% for(let dIdx = 0; dIdx < 4; dIdx++) { 
+                                    let deck = p.decks[dIdx] || [];
+                                %>
+                                    <div class="g-deck">
+                                        <% for(let cIdx = 0; cIdx < 3; cIdx++) { 
+                                            let charId = deck[cIdx];
+                                        %>
+                                            <div class="g-char">
+                                                <% if(charId) { %>
+                                                    <img src="characters.json<%= charId %>.webp" onerror="this.src='/logo.png'">
+                                                <% } %>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
