@@ -1,41 +1,103 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* Стили для переключателя этапов и кнопок-ссылок */
-    .stage-switcher { display: flex; gap: 15px; margin: 20px 0 30px 0; justify-content: center; } /* Уменьшен отступ сверху */
+    /* Снежный/Ледяной стиль для кнопок и ссылок */
+    .stage-switcher { display: flex; gap: 15px; margin: 20px 0 30px 0; justify-content: center; }
     .stage-btn, .link-btn {
-        background: #1b1e2b;
-        border: 1px solid #3c445c;
-        color: #8fa0c9;
+        background: rgba(20, 30, 50, 0.6);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-top: 1px solid rgba(255, 255, 255, 0.3);
+        color: #e0f2ff;
         padding: 10px 20px;
-        border-radius: 6px;
+        border-radius: 8px;
         font-weight: bold;
         cursor: pointer;
-        transition: 0.2s;
+        transition: all 0.3s ease;
         text-transform: uppercase;
         font-size: 14px;
         text-decoration: none;
         display: inline-block;
         text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
     .stage-btn { min-width: 150px; }
-    .stage-btn.active { background: #00d2ff; color: #000; border-color: #00d2ff; }
-    .stage-btn:hover:not(.active), .link-btn:hover { background: #2a2e40; color: white; text-decoration: none; }
     
-    /* Сетка групп: строго 4 в ряд */
+    /* Активная кнопка (Свечение Крио) */
+    .stage-btn.active { 
+        background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); 
+        color: #ffffff; 
+        border-color: #aee3ff; 
+        box-shadow: 0 0 20px rgba(0, 198, 255, 0.5); 
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .stage-btn:hover:not(.active), .link-btn:hover { 
+        background: rgba(255, 255, 255, 0.1); 
+        border-color: #00d2ff; 
+        color: #ffffff; 
+        transform: translateY(-2px);
+        text-decoration: none; 
+    }
+    
+    /* Сетка групп: 4 в ряд */
     .groups-grid { display: none; grid-template-columns: repeat(4, 1fr); gap: 20px; }
     .groups-grid.active-grid { display: grid; }
     
-    .public-group-card { background: #1b1e2b; border: 1px solid #2a2e40; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; text-decoration: none; color: white; display: block; }
-    .public-group-card:hover { border-color: #00d2ff; transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0, 210, 255, 0.1); color: white; text-decoration: none; }
-    .public-group-title { font-weight: bold; margin-bottom: 15px; font-size: 18px; color: #00d2ff; }
-    .public-group-player { font-size: 14px; margin-bottom: 5px; color: #c4d0eb; }
+    /* Ледяные карточки групп (Glassmorphism) */
+    .public-group-card { 
+        background: rgba(16, 25, 45, 0.65); 
+        backdrop-filter: blur(12px); 
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1); 
+        border-top: 1px solid rgba(255, 255, 255, 0.3); 
+        border-left: 1px solid rgba(255, 255, 255, 0.3); 
+        border-radius: 12px; 
+        padding: 20px; 
+        text-align: center; 
+        cursor: pointer; 
+        transition: all 0.3s ease; 
+        text-decoration: none; 
+        color: white; 
+        display: block; 
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.02);
+    }
+    .public-group-card:hover { 
+        border-color: rgba(0, 210, 255, 0.6); 
+        transform: translateY(-5px); 
+        box-shadow: 0 12px 40px rgba(0, 163, 255, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.05); 
+        color: white; 
+        text-decoration: none; 
+    }
     
-    /* Стили текста из шапки (УВЕЛИЧЕН ШРИФТ И ОТСТУПЫ МЕЖДУ СТРОКАМИ) */
-    .tour-info-line { font-size: 18px; color: #8fa0c9; margin-bottom: 8px; }
-    .tour-info-line strong { color: white; }
+    /* Градиентный заголовок группы */
+    .public-group-title { 
+        background: linear-gradient(180deg, #ffffff 0%, #aee3ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0px 4px 15px rgba(0, 198, 255, 0.4);
+        font-weight: bold; 
+        margin-bottom: 15px; 
+        font-size: 20px; 
+    }
+    .public-group-player { font-size: 15px; margin-bottom: 6px; color: #e0f2ff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
     
-    /* Адаптивность для меньших экранов */
+    /* Стили текста из шапки */
+    .tour-info-line { font-size: 18px; color: #aee3ff; margin-bottom: 8px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+    .tour-info-line strong { color: #ffffff; }
+    
+    /* Главный заголовок турнира */
+    .tour-main-title {
+        background: linear-gradient(180deg, #ffffff 0%, #80d4ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0px 2px 10px rgba(0, 163, 255, 0.5);
+        font-weight: bold; 
+        font-size: 2.8rem; 
+        margin-bottom: 25px;
+        letter-spacing: 1px;
+    }
+
     @media (max-width: 992px) { .groups-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 576px) { .groups-grid { grid-template-columns: 1fr; } }
 </style>
@@ -45,21 +107,21 @@
     <!-- ШАПКА ТУРНИРА -->
     <div class="mb-4">
         <% if(tour.image) { %>
-            <img src="/uploads/<%= tour.image %>" class="img-fluid" style="width: 100%; max-height: 450px; object-fit: cover; object-position: center; border-radius: 4px;" alt="<%= tour.title %>">
+            <img src="/uploads/<%= tour.image %>" class="img-fluid" style="width: 100%; max-height: 450px; object-fit: cover; object-position: center; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(0, 210, 255, 0.2);" alt="<%= tour.title %>">
         <% } else { %>
-            <img src="/logo.png" class="img-fluid" style="width: 100%; max-height: 400px; object-fit: cover; object-position: center; border-radius: 4px;" alt="Logo">
+            <img src="/logo.png" class="img-fluid" style="width: 100%; max-height: 400px; object-fit: cover; object-position: center; border-radius: 12px;" alt="Logo">
         <% } %>
     </div>
 
     <!-- Заголовок -->
-    <h1 style="color: #00d2ff; font-weight: bold; font-size: 2.5rem; margin-bottom: 25px;"><%= tour.title %></h1>
+    <h1 class="tour-main-title"><%= tour.title %></h1>
     
-    <!-- Описание (если есть) -->
+    <!-- Описание -->
     <% if (tour.description) { %>
-        <p style="color: #c4d0eb; font-size: 16px; margin-bottom: 20px; line-height: 1.6;"><%= tour.description %></p>
+        <p style="color: #e0f2ff; font-size: 16px; margin-bottom: 20px; line-height: 1.6; text-shadow: 0 1px 2px rgba(0,0,0,0.5);"><%= tour.description %></p>
     <% } %>
 
-    <!-- Информация (Даты, призы и т.д.) + отступ снизу (pb-3) -->
+    <!-- Информация -->
     <div class="mb-4 pb-3"> 
         <div class="tour-info-line"><strong>Date:</strong> <%= tour.date || 'TBA' %></div>
         <div class="tour-info-line"><strong>Prize Pool:</strong> <%= tour.prize || 'TBA' %></div>
@@ -67,7 +129,7 @@
         <div class="tour-info-line"><strong>Format:</strong> <%= tour.format || 'TBA' %></div>
     </div>
 
-    <!-- Ссылки в виде кнопок -->
+    <!-- Ссылки в виде стеклянных кнопок -->
     <div class="d-flex flex-wrap gap-2 mb-4">
         <% if(tour.regLink) { %><a href="<%= tour.regLink %>" class="link-btn" target="_blank">Register</a><% } %>
         <% if(tour.rulesLink) { %><a href="<%= tour.rulesLink %>" class="link-btn" target="_blank">Rules (RU)</a><% } %>
@@ -77,7 +139,7 @@
         <% if(tour.bracketLink) { %><a href="<%= tour.bracketLink %>" class="link-btn" target="_blank">Bracket</a><% } %>
     </div>
 
-    <hr style="border-color: #3c445c; margin-bottom: 20px; margin-top: 25px;">
+    <hr style="border-color: rgba(255,255,255,0.1); margin-bottom: 20px; margin-top: 25px; box-shadow: 0 1px 0 rgba(0,0,0,0.5);">
     <!-- КОНЕЦ ШАПКИ -->
 
     <!-- СЕТКА ГРУПП -->
@@ -119,7 +181,7 @@
             }
         </script>
     <% } else { %>
-        <div class="text-center text-muted mt-5 mb-5" style="font-size: 16px;">No groups have been added to this tournament yet.</div>
+        <div class="text-center mt-5 mb-5" style="font-size: 18px; color: #aee3ff; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">No groups have been added to this tournament yet.</div>
     <% } %>
 
 </div>
