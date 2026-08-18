@@ -1,5 +1,31 @@
 <%- include('../partials/header') %>
 
+<style>
+    /* Стили для круглых иконок без квадратов */
+    .char-icon-wrap {
+        width: 50px; 
+        height: 50px; 
+        flex-shrink: 0;
+        background: transparent;
+        border: none;
+    }
+    .char-icon-wrap img {
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        border-radius: 50%; /* Делает картинку круглой */
+        border: 2px solid #3c445c; /* Рамка вокруг самого круга */
+    }
+    .deck-box {
+        display: flex; 
+        flex-direction: row; 
+        gap: 4px; 
+        background: transparent; /* Убран фон */
+        padding: 0; 
+        border: none; /* Убрана квадратная рамка */
+    }
+</style>
+
 <div class="container mt-4 mb-5" style="max-width: 1200px;">
     
     <div class="mb-4">
@@ -41,16 +67,15 @@
                         <td style="text-align: center; font-size: 18px; color: white;"><%= p.losses || 0 %></td>
                         
                         <td style="padding: 20px 10px;">
-                            <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
                                 <% for(let dIdx = 0; dIdx < 4; dIdx++) { 
                                     let deck = p.decks && p.decks[dIdx] ? p.decks[dIdx] : [];
                                 %>
-                                    <div style="display: flex; gap: 4px; background: #10121a; padding: 6px; border-radius: 8px; border: 1px solid #2a2e40;">
+                                    <div class="deck-box">
                                         <% for(let cIdx = 0; cIdx < 3; cIdx++) { 
                                             let charId = deck[cIdx];
                                             let charImg = '/cardback.png';
                                             
-                                            // ДОСТАЕМ ИМЕННО СВОЙСТВО c.img ИЗ ВАШЕГО JSON
                                             if(charId) {
                                                 for(let el in chars) {
                                                     let c = chars[el].find(x => String(x.id) === String(charId));
@@ -61,11 +86,11 @@
                                                 }
                                             }
                                         %>
-                                            <div style="width: 50px; height: 50px; border-radius: 4px; overflow: hidden; border: 1px solid #3c445c; background: #0b0d14;">
+                                            <div class="char-icon-wrap">
                                                 <% if(charId) { %>
-                                                    <img src="<%= charImg %>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/cardback.png'">
+                                                    <img src="<%= charImg %>" onerror="this.src='/cardback.png'">
                                                 <% } else { %>
-                                                    <img src="/cardback.png" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.2;">
+                                                    <img src="/cardback.png" style="opacity: 0.2; border: 1px dashed #4e5a7e;">
                                                 <% } %>
                                             </div>
                                         <% } %>
