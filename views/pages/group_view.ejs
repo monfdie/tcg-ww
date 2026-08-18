@@ -20,21 +20,33 @@
     .glass-table td { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
     .glass-table tr:last-child td { border-bottom: none; }
 
-    /* Стили для круглых иконок без квадратов */
-    .char-icon-wrap { width: 48px; height: 48px; flex-shrink: 0; background: transparent; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.4); border-radius: 50%; }
-    .char-icon-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.4); transition: border-color 0.2s; }
-    .char-icon-wrap img:hover { border-color: #00d2ff; }
+    /* ЧИСТЫЕ КРУГЛЫЕ ИКОНКИ (БЕЗ РАМОК И ФОНА) */
+    .char-icon-wrap { 
+        width: 48px; 
+        height: 48px; 
+        flex-shrink: 0; 
+        background: transparent; 
+        border: none; 
+        border-radius: 50%; 
+    }
+    .char-icon-wrap img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        border-radius: 50%; 
+        border: none; /* Убрана обводка вокруг самой картинки */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5); /* Легкая тень для объема */
+    }
     
-    /* Прозрачный контейнер деки */
+    /* КОНТЕЙНЕР ДЕКИ (БЕЗ ФОНА И РАМОК) */
     .deck-box-glass { 
         display: flex; 
         flex-direction: row; 
-        gap: 6px; 
-        background: rgba(0, 0, 0, 0.3); 
-        padding: 6px; 
-        border-radius: 10px; 
-        border: 1px solid rgba(255, 255, 255, 0.1); 
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        gap: 8px; 
+        background: transparent; /* Убран темный фон */
+        padding: 0; /* Убраны отступы внутри рамки */
+        border: none; /* Убрана рамка контейнера */
+        box-shadow: none;
     }
     
     /* Кнопка назад в стиле прозрачного стекла */
@@ -106,10 +118,10 @@
                         
                         <td style="padding: 20px 10px 20px 40px;">
                             <!-- КОНТЕЙНЕР ДЛЯ РАССТАНОВКИ 2x2 -->
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
                                 
                                 <!-- ВЕРХНИЙ РЯД (Дека 1 и Дека 2) -->
-                                <div style="display: flex; gap: 20px;">
+                                <div style="display: flex; gap: 30px;">
                                     <% for(let dIdx = 0; dIdx < 2; dIdx++) { 
                                         let deck = p.decks && p.decks[dIdx] ? p.decks[dIdx] : [];
                                     %>
@@ -128,7 +140,7 @@
                                                     <% if(charId) { %>
                                                         <img src="<%= charImg %>" onerror="this.src='/cardback.png'">
                                                     <% } else { %>
-                                                        <img src="/cardback.png" style="opacity: 0.15; border: 1px dashed rgba(255,255,255,0.2);">
+                                                        <img src="/cardback.png" style="opacity: 0.15; border-radius: 50%;">
                                                     <% } %>
                                                 </div>
                                             <% } %>
@@ -137,7 +149,7 @@
                                 </div>
 
                                 <!-- НИЖНИЙ РЯД (Дека 3 и Дека 4) -->
-                                <div style="display: flex; gap: 20px;">
+                                <div style="display: flex; gap: 30px;">
                                     <% for(let dIdx = 2; dIdx < 4; dIdx++) { 
                                         let deck = p.decks && p.decks[dIdx] ? p.decks[dIdx] : [];
                                     %>
@@ -156,7 +168,7 @@
                                                     <% if(charId) { %>
                                                         <img src="<%= charImg %>" onerror="this.src='/cardback.png'">
                                                     <% } else { %>
-                                                        <img src="/cardback.png" style="opacity: 0.15; border: 1px dashed rgba(255,255,255,0.2);">
+                                                        <img src="/cardback.png" style="opacity: 0.15; border-radius: 50%;">
                                                     <% } %>
                                                 </div>
                                             <% } %>
