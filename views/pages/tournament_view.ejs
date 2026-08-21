@@ -1,50 +1,99 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* Снежный/Ледяной стиль для кнопок и ссылок */
-    .stage-switcher { display: flex; gap: 15px; margin: 20px 0 30px 0; justify-content: center; }
-    .stage-btn, .link-btn {
+    /* Панель кнопок этапов */
+    .stage-switcher { 
+        display: flex; 
+        gap: 12px; 
+        margin: 20px 0 25px 0; 
+        justify-content: center; 
+        flex-wrap: wrap; 
+    }
+    
+    /* Кнопки ссылок (Register, Rules, Discord...) */
+    .link-btn {
         background: rgba(20, 30, 50, 0.6);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-top: 1px solid rgba(255, 255, 255, 0.3);
         color: #e0f2ff;
-        padding: 10px 20px;
+        padding: 8px 18px;
         border-radius: 8px;
         font-weight: bold;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         text-transform: uppercase;
-        font-size: 14px;
+        font-size: 13px;
         text-decoration: none;
         display: inline-block;
         text-align: center;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
-    .stage-btn { min-width: 150px; }
-    
-    /* Активная кнопка (Спокойный синий без жесткого неона) */
-    .stage-btn.active { 
-        background: #009cf0; 
-        color: #ffffff; 
-        border-color: #009cf0; 
-        box-shadow: 0 4px 10px rgba(0, 156, 240, 0.3); 
-        text-shadow: none;
-    }
-    .stage-btn:hover:not(.active), .link-btn:hover { 
+    .link-btn:hover { 
         background: rgba(255, 255, 255, 0.1); 
         border-color: #00d2ff; 
         color: #ffffff; 
-        transform: translateY(-2px);
         text-decoration: none; 
     }
+
+    /* Спокойные матовые Крио-кнопки переключения этапов (без подсветки) */
+    .stage-btn {
+        background: rgba(25, 45, 70, 0.45);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(100, 205, 245, 0.25);
+        color: #d6f2ff;
+        padding: 9px 20px;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        text-transform: uppercase;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-width: 140px;
+        box-shadow: none;
+    }
+
+    .stage-btn:hover:not(.active) {
+        background: rgba(40, 75, 115, 0.6);
+        border-color: rgba(100, 205, 245, 0.5);
+        color: #ffffff;
+        box-shadow: none;
+    }
+
+    /* Активная матовая кнопка без свечения */
+    .stage-btn.active {
+        background: #4abde8;
+        color: #082236;
+        border: 1px solid #4abde8;
+        font-weight: 800;
+        box-shadow: none;
+        text-shadow: none;
+    }
+
+    /* Маленькие кнопки подэтапов внутри статистики */
+    .sub-switch-btn {
+        padding: 6px 16px !important;
+        font-size: 12px !important;
+        min-width: 100px !important;
+        border-radius: 6px !important;
+    }
     
-    /* Сетка групп: 4 в ряд */
+    /* Сетка групп (Stage 1 и 2) */
     .groups-grid { display: none; grid-template-columns: repeat(4, 1fr); gap: 20px; }
     .groups-grid.active-grid { display: grid; }
     
-    /* Ледяные карточки групп */
+    /* Сетка плей-офф */
+    .playoffs-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+    .playoffs-grid.active-grid { display: grid; }
+
+    /* Карточки групп и игроков */
     .public-group-card { 
         background: rgba(16, 25, 45, 0.65); 
         backdrop-filter: blur(12px); 
@@ -69,8 +118,20 @@
         color: white; 
         text-decoration: none; 
     }
+
+    .playoff-player-card {
+        background: rgba(16, 25, 45, 0.65); 
+        backdrop-filter: blur(12px); 
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15); 
+        border-top: 1px solid rgba(255, 255, 255, 0.35); 
+        border-left: 1px solid rgba(255, 255, 255, 0.35); 
+        border-radius: 12px; 
+        padding: 20px 15px; 
+        text-align: center; 
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    }
     
-    /* Градиентный заголовок группы */
     .public-group-title { 
         background: linear-gradient(180deg, #ffffff 0%, #aee3ff 100%);
         -webkit-background-clip: text;
@@ -81,28 +142,76 @@
         font-size: 20px; 
     }
 
-    /* Обертка для никнеймов, чтобы они были выровнены по левому краю, но блок был по центру */
-    .players-list-wrapper {
-        display: inline-flex;
-        flex-direction: column;
-        align-items: flex-start;
-        text-align: left;
+    .players-list-wrapper { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+    .public-group-player { font-size: 17px; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); font-weight: 500; }
+    
+    /* 5 рядов дек для плей-офф с аккуратными рамочками */
+    .playoff-decks-container { display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; }
+    .playoff-deck-box { 
+        display: flex; 
+        gap: 8px; 
+        justify-content: center; 
+        align-items: center; 
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 25px;
+        padding: 4px 10px;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+    .playoff-char-wrap { width: 40px; height: 40px; border-radius: 50%; background: transparent; flex-shrink: 0; }
+    .playoff-char-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,0.5); }
+
+    /* Панель статистики */
+    .stats-section { display: none; }
+    .stats-type-content { display: none; }
+    .stats-type-content.active-type { display: block; }
+    
+    .stats-stage-content { display: none; }
+    .stats-stage-content.active-stage { display: block; }
+    
+    .stats-glass-panel {
+        max-width: 780px;
+        margin: 0 auto;
+        background: rgba(18, 29, 50, 0.65);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(174, 227, 255, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.35);
+        border-left: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 12px;
+        box-shadow: 0 12px 35px 0 rgba(0, 0, 0, 0.4), inset 0 0 18px rgba(174, 227, 255, 0.04);
+        padding: 15px 25px;
     }
 
-    /* Увеличенный шрифт никнеймов */
-    .public-group-player { 
-        font-size: 17px; 
-        margin-bottom: 8px; 
-        color: #ffffff; 
+    .stats-table { width: 100%; border-collapse: collapse; margin: 0 auto; }
+    .stats-table th { 
+        border-bottom: 2px solid rgba(174, 227, 255, 0.2); 
+        color: #aee3ff; 
+        font-size: 13px; 
+        font-weight: bold; 
         text-shadow: 0 1px 2px rgba(0,0,0,0.8); 
-        font-weight: 500;
+        padding: 12px 10px; 
+        text-transform: uppercase; 
+        letter-spacing: 1px;
     }
+    .stats-table td { border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 10px; vertical-align: middle; }
+    .stats-table tr:last-child td { border-bottom: none; }
+
+    .stats-rank { font-size: 20px; font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+    .rank-1 { color: #ffcc00; }
+    .rank-2 { color: #d1d5db; }
+    .rank-3 { color: #cd7f32; }
+    .rank-default { color: #8fa0c9; font-size: 16px; }
+
+    .stats-char-single { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .stats-char-item { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     
-    /* Стили текста из шапки */
+    .stats-count { font-size: 18px; font-weight: bold; color: #ffffff; text-shadow: 0 0 10px rgba(0, 210, 255, 0.4); }
+    .stats-count-label { font-size: 12px; color: #aee3ff; margin-left: 4px; font-weight: normal; text-transform: uppercase; }
+
     .tour-info-line { font-size: 18px; color: #aee3ff; margin-bottom: 8px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
     .tour-info-line strong { color: #ffffff; }
     
-    /* Главный заголовок турнира */
     .tour-main-title {
         background: linear-gradient(180deg, #ffffff 0%, #80d4ff 100%);
         -webkit-background-clip: text;
@@ -110,8 +219,8 @@
         text-shadow: 0px 2px 10px rgba(0, 163, 255, 0.5);
         font-weight: bold; 
         font-size: 2.8rem; 
-        margin-bottom: 20px; /* Слегка уменьшен отступ снизу */
-        margin-top: 15px;    /* Слегка прижат к картинке */
+        margin-bottom: 20px;
+        margin-top: 15px;
         letter-spacing: 1px;
     }
 
@@ -119,26 +228,34 @@
     @media (max-width: 576px) { .groups-grid { grid-template-columns: 1fr; } }
 </style>
 
+<% 
+function getCharData(id) {
+    if (!id) return { img: '/cardback.png', name: 'Unknown' };
+    for (let el in chars) {
+        let c = chars[el].find(x => String(x.id) === String(id));
+        if (c) return { img: c.img || '/cardback.png', name: c.name || id };
+    }
+    return { img: '/cardback.png', name: id };
+}
+%>
+
 <div class="container mt-4 mb-5">
     
-    <!-- ШАПКА ТУРНИРА -->
-    <div class="mb-2"> <!-- Уменьшен отступ (было mb-4) для приближения картинки к заголовку -->
+    <!-- ШАПКА ТУРНИРА (Уменьшенная высота фото) -->
+    <div class="mb-2">
         <% if(tour.image) { %>
-            <img src="/uploads/<%= tour.image %>" class="img-fluid" style="width: 100%; max-height: 450px; object-fit: cover; object-position: center; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(0, 210, 255, 0.1);" alt="<%= tour.title %>">
+            <img src="<%= tour.image.startsWith('http') ? tour.image : '/uploads/' + tour.image %>" class="img-fluid" style="width: 100%; max-height: 280px; object-fit: cover; object-position: center; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" alt="<%= tour.title %>" onerror="this.src='/logo.png'">
         <% } else { %>
-            <img src="/logo.png" class="img-fluid" style="width: 100%; max-height: 400px; object-fit: cover; object-position: center; border-radius: 12px;" alt="Logo">
+            <img src="/logo.png" class="img-fluid" style="width: 100%; max-height: 280px; object-fit: cover; object-position: center; border-radius: 12px;" alt="Logo">
         <% } %>
     </div>
 
-    <!-- Заголовок -->
     <h1 class="tour-main-title"><%= tour.title %></h1>
     
-    <!-- Описание -->
     <% if (tour.description) { %>
         <p style="color: #e0f2ff; font-size: 16px; margin-bottom: 20px; line-height: 1.6; text-shadow: 0 1px 2px rgba(0,0,0,0.5);"><%= tour.description %></p>
     <% } %>
 
-    <!-- Информация -->
     <div class="mb-4 pb-3"> 
         <div class="tour-info-line"><strong>Date:</strong> <%= tour.date || 'TBA' %></div>
         <div class="tour-info-line"><strong>Prize Pool:</strong> <%= tour.prize || 'TBA' %></div>
@@ -146,7 +263,7 @@
         <div class="tour-info-line"><strong>Format:</strong> <%= tour.format || 'TBA' %></div>
     </div>
 
-    <!-- Ссылки в виде стеклянных кнопок -->
+    <!-- ССЫЛКИ -->
     <div class="d-flex flex-wrap gap-2 mb-4">
         <% if(tour.regLink) { %><a href="<%= tour.regLink %>" class="link-btn" target="_blank">Register</a><% } %>
         <% if(tour.rulesLink) { %><a href="<%= tour.rulesLink %>" class="link-btn" target="_blank">Rules (RU)</a><% } %>
@@ -156,54 +273,232 @@
         <% if(tour.bracketLink) { %><a href="<%= tour.bracketLink %>" class="link-btn" target="_blank">Bracket</a><% } %>
     </div>
 
-    <hr style="border-color: rgba(255,255,255,0.1); margin-bottom: 20px; margin-top: 25px; box-shadow: 0 1px 0 rgba(0,0,0,0.5);">
-    <!-- КОНЕЦ ШАПКИ -->
+    <hr style="border-color: rgba(255,255,255,0.1); margin-bottom: 20px; margin-top: 25px;">
 
-    <!-- СЕТКА ГРУПП -->
+    <!-- ПЕРЕКЛЮЧАТЕЛЬ ЭТАПОВ -->
     <% if (tour.groups && tour.groups.length > 0) { %>
         <div class="stage-switcher">
-            <button class="stage-btn active" onclick="showPublicStage(1)" id="p-tab-1">Group Stage 1</button>
-            <button class="stage-btn" onclick="showPublicStage(2)" id="p-tab-2">Group Stage 2</button>
-            <button class="stage-btn" onclick="alert('Play-offs coming soon!')">Play-offs</button>
+            <button class="stage-btn active" onclick="showPublicStage('1')" id="p-tab-1">Group Stage 1</button>
+            <button class="stage-btn" onclick="showPublicStage('2')" id="p-tab-2">Group Stage 2</button>
+            <button class="stage-btn" onclick="showPublicStage('3')" id="p-tab-3">Play-offs</button>
+            <button class="stage-btn" onclick="showPublicStage('stats')" id="p-tab-stats">Statistics</button>
         </div>
 
+        <!-- STAGE 1 -->
         <div id="p-stage-1" class="groups-grid active-grid">
             <% tour.groups.filter(g => g.stage === 1).forEach(group => { %>
                 <a href="/tournament/<%= tour.slug %>/group/<%= group._id %>" class="public-group-card">
                     <div class="public-group-title"><%= group.name %></div>
-                    <!-- Никнеймы выровнены влево с нумерацией -->
                     <div class="players-list-wrapper">
-                        <% group.players.forEach((p, idx) => { %>
-                            <div class="public-group-player">
-                                <span style="color: #8fa0c9; margin-right: 8px; font-size: 15px;"><%= idx + 1 %>.</span><%= p.name || 'TBA' %>
-                            </div>
+                        <% group.players.forEach(p => { %>
+                            <div class="public-group-player"><%= p.name || 'TBA' %></div>
                         <% }) %>
                     </div>
                 </a>
             <% }) %>
         </div>
 
+        <!-- STAGE 2 -->
         <div id="p-stage-2" class="groups-grid">
             <% tour.groups.filter(g => g.stage === 2).forEach(group => { %>
                 <a href="/tournament/<%= tour.slug %>/group/<%= group._id %>" class="public-group-card">
                     <div class="public-group-title"><%= group.name %></div>
                     <div class="players-list-wrapper">
-                        <% group.players.forEach((p, idx) => { %>
-                            <div class="public-group-player">
-                                <span style="color: #8fa0c9; margin-right: 8px; font-size: 15px;"><%= idx + 1 %>.</span><%= p.name || 'TBA' %>
-                            </div>
+                        <% group.players.forEach(p => { %>
+                            <div class="public-group-player"><%= p.name || 'TBA' %></div>
                         <% }) %>
                     </div>
                 </a>
             <% }) %>
         </div>
 
+        <!-- PLAY-OFFS (STAGE 3) -->
+        <div id="p-stage-3" class="playoffs-grid">
+            <% 
+            const playoffGroup = tour.groups.find(g => g.stage === 3);
+            const playoffPlayers = playoffGroup ? playoffGroup.players : [];
+            %>
+            <% if (playoffPlayers && playoffPlayers.length > 0) { %>
+                <% playoffPlayers.forEach(p => { %>
+                    <div class="playoff-player-card">
+                        <div class="public-group-title" style="margin-bottom: 15px; font-size: 18px;"><%= p.name || 'Player' %></div>
+                        <div class="playoff-decks-container">
+                            <% for(let dIdx = 0; dIdx < 5; dIdx++) { 
+                                let deck = p.decks && p.decks[dIdx] ? p.decks[dIdx] : [];
+                            %>
+                                <div class="playoff-deck-box">
+                                    <% for(let cIdx = 0; cIdx < 3; cIdx++) { 
+                                        let charId = deck[cIdx];
+                                        let charData = getCharData(charId);
+                                    %>
+                                        <div class="playoff-char-wrap" title="<%= charData.name %>">
+                                            <% if(charId) { %>
+                                                <img src="<%= charData.img %>" onerror="this.src='/cardback.png'">
+                                            <% } else { %>
+                                                <img src="/cardback.png" style="opacity: 0.15;">
+                                            <% } %>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="text-center col-12 py-5" style="color: #aee3ff; font-size: 16px; grid-column: 1 / -1;">No players added to Play-offs yet.</div>
+            <% } %>
+        </div>
+
+        <!-- РАЗДЕЛ СТАТИСТИКИ -->
+        <div id="p-stage-stats" class="stats-section">
+            
+            <!-- Главный переключатель статистики: DECKS vs CHARACTERS -->
+            <div class="stage-switcher" style="margin-top: 0; margin-bottom: 15px;">
+                <button class="stage-btn active" onclick="switchStatsType('decks')" id="st-btn-decks">Decks Stats</button>
+                <button class="stage-btn" onclick="switchStatsType('chars')" id="st-btn-chars">Characters Stats</button>
+            </div>
+
+            <!-- Вкладка: ДЕКИ -->
+            <div id="stats-type-decks" class="stats-type-content active-type">
+                <div class="stage-switcher" style="margin-top: 0; margin-bottom: 20px;">
+                    <button class="stage-btn active sub-switch-btn" onclick="switchDeckStage('1')" id="sd-tab-1">Stage 1</button>
+                    <button class="stage-btn sub-switch-btn" onclick="switchDeckStage('2')" id="sd-tab-2">Stage 2</button>
+                    <button class="stage-btn sub-switch-btn" onclick="switchDeckStage('3')" id="sd-tab-3">Play-offs</button>
+                </div>
+
+                <div class="stats-glass-panel">
+                    <% [1, 2, 3].forEach(stageLevel => { %>
+                        <div id="sd-content-<%= stageLevel %>" class="stats-stage-content <%= stageLevel === 1 ? 'active-stage' : '' %>">
+                            <% if (deckStats && deckStats[stageLevel] && deckStats[stageLevel].length > 0) { %>
+                                <table class="stats-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px; text-align: center;">#</th>
+                                            <th style="text-align: center;">DECK COMPOSITION</th>
+                                            <th style="width: 150px; text-align: center;">PLAYERS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% deckStats[stageLevel].forEach((stat, index) => { 
+                                            let rankClass = index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : (index === 2 ? 'rank-3' : 'rank-default'));
+                                        %>
+                                            <tr>
+                                                <td style="text-align: center;">
+                                                    <div class="stats-rank <%= rankClass %>"><%= index + 1 %>.</div>
+                                                </td>
+                                                <td>
+                                                    <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                                                        <% stat.deck.forEach(charId => { 
+                                                            let charData = getCharData(charId);
+                                                        %>
+                                                            <img src="<%= charData.img %>" class="stats-char-item" title="<%= charData.name %>" alt="Char">
+                                                        <% }) %>
+                                                    </div>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <div class="stats-count">
+                                                        <%= stat.count %> <span class="stats-count-label"><%= stat.count === 1 ? 'Player' : 'Players' %></span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            <% } else { %>
+                                <div class="text-center py-4" style="color: #8fa0c9; font-size: 15px;">No deck data available for this stage.</div>
+                            <% } %>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+
+            <!-- Вкладка: ПЕРСОНАЖИ -->
+            <div id="stats-type-chars" class="stats-type-content">
+                <div class="stage-switcher" style="margin-top: 0; margin-bottom: 20px;">
+                    <button class="stage-btn active sub-switch-btn" onclick="switchCharStage('1')" id="sc-tab-1">Stage 1</button>
+                    <button class="stage-btn sub-switch-btn" onclick="switchCharStage('2')" id="sc-tab-2">Stage 2</button>
+                    <button class="stage-btn sub-switch-btn" onclick="switchCharStage('3')" id="sc-tab-3">Play-offs</button>
+                </div>
+
+                <div class="stats-glass-panel">
+                    <% [1, 2, 3].forEach(stageLevel => { %>
+                        <div id="sc-content-<%= stageLevel %>" class="stats-stage-content <%= stageLevel === 1 ? 'active-stage' : '' %>">
+                            <% if (charStats && charStats[stageLevel] && charStats[stageLevel].length > 0) { %>
+                                <table class="stats-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px; text-align: center;">#</th>
+                                            <th style="text-align: center;">CHARACTER</th>
+                                            <th style="width: 150px; text-align: center;">DECKS / PICKS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% charStats[stageLevel].forEach((stat, index) => { 
+                                            let charData = getCharData(stat.charId);
+                                            let rankClass = index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : (index === 2 ? 'rank-3' : 'rank-default'));
+                                        %>
+                                            <tr>
+                                                <td style="text-align: center;">
+                                                    <div class="stats-rank <%= rankClass %>"><%= index + 1 %>.</div>
+                                                </td>
+                                                <td style="padding: 10px 15px;">
+                                                    <div style="display: grid; grid-template-columns: 54px 1fr; align-items: center; gap: 15px; max-width: 240px; margin: 0 auto;">
+                                                        <img src="<%= charData.img %>" class="stats-char-single" alt="<%= charData.name %>">
+                                                        <span style="font-size: 16px; font-weight: bold; color: #ffffff; text-align: left; text-shadow: 0 1px 3px rgba(0,0,0,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= charData.name %></span>
+                                                    </div>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <div class="stats-count">
+                                                        <%= stat.count %> <span class="stats-count-label"><%= stat.count === 1 ? 'Pick' : 'Picks' %></span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            <% } else { %>
+                                <div class="text-center py-4" style="color: #8fa0c9; font-size: 15px;">No character data available for this stage.</div>
+                            <% } %>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+
+        </div>
+
         <script>
             function showPublicStage(stage) {
-                document.getElementById('p-tab-1').classList.toggle('active', stage === 1);
-                document.getElementById('p-tab-2').classList.toggle('active', stage === 2);
-                document.getElementById('p-stage-1').classList.toggle('active-grid', stage === 1);
-                document.getElementById('p-stage-2').classList.toggle('active-grid', stage === 2);
+                document.getElementById('p-tab-1').classList.toggle('active', stage === '1');
+                document.getElementById('p-tab-2').classList.toggle('active', stage === '2');
+                document.getElementById('p-tab-3').classList.toggle('active', stage === '3');
+                document.getElementById('p-tab-stats').classList.toggle('active', stage === 'stats');
+                
+                document.getElementById('p-stage-1').classList.toggle('active-grid', stage === '1');
+                document.getElementById('p-stage-2').classList.toggle('active-grid', stage === '2');
+                document.getElementById('p-stage-3').classList.toggle('active-grid', stage === '3');
+                document.getElementById('p-stage-stats').style.display = (stage === 'stats') ? 'block' : 'none';
+            }
+
+            function switchStatsType(type) {
+                document.getElementById('st-btn-decks').classList.toggle('active', type === 'decks');
+                document.getElementById('st-btn-chars').classList.toggle('active', type === 'chars');
+
+                document.getElementById('stats-type-decks').classList.toggle('active-type', type === 'decks');
+                document.getElementById('stats-type-chars').classList.toggle('active-type', type === 'chars');
+            }
+
+            function switchDeckStage(stage) {
+                [1, 2, 3].forEach(s => {
+                    document.getElementById('sd-tab-' + s).classList.toggle('active', String(s) === String(stage));
+                    document.getElementById('sd-content-' + s).classList.toggle('active-stage', String(s) === String(stage));
+                });
+            }
+
+            function switchCharStage(stage) {
+                [1, 2, 3].forEach(s => {
+                    document.getElementById('sc-tab-' + s).classList.toggle('active', String(s) === String(stage));
+                    document.getElementById('sc-content-' + s).classList.toggle('active-stage', String(s) === String(stage));
+                });
             }
         </script>
     <% } else { %>

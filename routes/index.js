@@ -124,8 +124,70 @@ router.get('/tournament/:slug', async (req, res) => {
             };
         });
 
-        res.render('pages/tournament_view', { title: tour.title, tour: tour, matches: enrichedMatches });
-    } catch (err) { res.redirect('/tournaments'); }
+        // ==========================================
+        // РАСЧЕТ СТАТИСТИКИ (DECKS И CHARACTERS)
+        // ==========================================
+        const deckStats = { 1: [], 2: [], 3: [] };
+        const charStats = { 1: [], 2: [], 3: [] };
+
+        const deckCounts = { 1: {}, 2: {}, 3: {} };
+        const charCounts = { 1: {}, 2: {}, 3: {} };
+
+        if (tour.groups && tour.groups.length > 0) {
+            tour.groups.forEach(group => {
+                const stage = group.stage || 1;
+                if (!deckCounts[stage]) deckCounts[stage] = {};
+                if (!charCounts[stage]) charCounts[stage] = {};
+
+                if (group.players && group.players.length > 0) {
+                    group.players.forEach(player => {
+                        if (player.decks && Array.isArray(player.decks)) {
+                            player.decks.forEach(deck => {
+                                if (deck && deck.length === 3) {
+                                    const validDeck = deck.filter(id => id && id.trim() !== '');
+                                    if (validDeck.length === 3) {
+                                        // 1. Статистика по колодам
+                                        const sortedDeckKey = [...validDeck].sort().join(',');
+                                        deckCounts[stage][sortedDeckKey] = (deckCounts[stage][sortedDeckKey] || 0) + 1;
+
+                                        // 2. Статистика по персонажам
+                                        validDeck.forEach(charId => {
+                                            charCounts[stage][charId] = (charCounts[stage][charId] || 0) + 1;
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Формируем отсортированные списки
+            for (let stage in deckCounts) {
+                deckStats[stage] = Object.keys(deckCounts[stage]).map(key => ({
+                    deck: key.split(','),
+                    count: deckCounts[stage][key]
+                })).sort((a, b) => b.count - a.count);
+
+                charStats[stage] = Object.keys(charCounts[stage]).map(charId => ({
+                    charId: charId,
+                    count: charCounts[stage][charId]
+                })).sort((a, b) => b.count - a.count);
+            }
+        }
+
+        res.render('pages/tournament_view', {
+            title: tour.title,
+            tour: tour,
+            matches: enrichedMatches,
+            deckStats: deckStats,
+            charStats: charStats,
+            chars: CHARACTERS_BY_ELEMENT
+        });
+    } catch (err) {
+        console.error(err);
+        res.redirect('/tournaments');
+    }
 });
 
 // ПРОСМОТР КОНКРЕТНОЙ ГРУППЫ (ПУБЛИЧНАЯ)
