@@ -542,14 +542,23 @@
         else { tournamentData[gIdx].players[pIdx][field] = parseInt(value) || 0; renderGroups(); }
     }
 
-    function duplicateToStage2() {
-        if(!confirm('Copy Stage 1 groups to Stage 2 (clearing scores and decks)?')) return;
+   function duplicateToStage2() {
+        if(!confirm('Copy Stage 1 groups to Stage 2 with scores and decks?')) return;
         tournamentData = tournamentData.filter(g => g.stage !== 2);
         const stage1Groups = tournamentData.filter(g => g.stage === 1);
         stage1Groups.forEach(g => {
             const newGroup = JSON.parse(JSON.stringify(g));
-            newGroup.stage = 2; newGroup._id = undefined;
-            newGroup.players.forEach(p => { p._id = undefined; p.wins = 0; p.draws = 0; p.losses = 0; p.points = 0; p.decks = [[], [], [], []]; });
+            newGroup.stage = 2;
+            newGroup._id = undefined;
+            newGroup.players.forEach(p => { 
+                p._id = undefined; 
+                // Сохраняем счет, победы, поражения, ничьи и все деки из Stage 1
+                p.wins = p.wins || 0;
+                p.draws = p.draws || 0;
+                p.losses = p.losses || 0;
+                p.points = (Number(p.wins) || 0) * 3 + (Number(p.draws) || 0);
+                p.decks = Array.isArray(p.decks) ? p.decks : [[], [], [], []];
+            });
             tournamentData.push(newGroup);
         });
         switchStage(2);
