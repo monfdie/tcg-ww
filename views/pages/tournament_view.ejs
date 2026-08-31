@@ -500,6 +500,15 @@ function getCharData(id) {
                     document.getElementById('sc-content-' + s).classList.toggle('active-stage', String(s) === String(stage));
                 });
             }
+
+            // Автоматическое переключение на стадию из URL (?stage=2 и т.д.)
+            (function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const stageParam = urlParams.get('stage');
+                if (stageParam && ['1', '2', '3', 'stats'].includes(stageParam)) {
+                    showPublicStage(stageParam);
+                }
+            })();
         </script>
     <% } else { %>
         <div class="text-center mt-5 mb-5" style="font-size: 18px; color: #aee3ff; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">No groups have been added to this tournament yet.</div>
