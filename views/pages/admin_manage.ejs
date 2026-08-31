@@ -68,7 +68,7 @@
         line-height: 12px;
         transition: 0.15s;
     }
-    .order-btn:hover {
+    .order-btn:hover:not([disabled]) {
         background: rgba(0, 210, 255, 0.2);
         color: #00d2ff;
         border-color: #00d2ff;
@@ -114,6 +114,23 @@
     .btn-delete-group:hover { 
         background-color: #d32f2f !important; 
         color: #ffffff !important; 
+    }
+
+    .btn-sort-group {
+        background-color: rgba(0, 210, 255, 0.15) !important;
+        color: #00d2ff !important;
+        border: 1px solid rgba(0, 210, 255, 0.4) !important;
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 3px 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .btn-sort-group:hover {
+        background-color: #00d2ff !important;
+        color: #082236 !important;
     }
 
     .btn-tcg { 
@@ -417,7 +434,10 @@
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <input type="text" class="player-input" style="width: 150px; font-weight: 700; color:#00d2ff; border-color: rgba(0, 210, 255, 0.4);" 
                            value="${group.name}" onchange="updateGroupData(${realGroupIdx}, 'name', this.value)">
-                    <button class="btn-delete-group" onclick="deleteGroup(${realGroupIdx})">Delete</button>
+                    <div class="d-flex gap-1">
+                        <button type="button" class="btn-sort-group" onclick="sortGroupPlayersByPts(${realGroupIdx})" title="Auto sort by Points">Sort by PTS</button>
+                        <button class="btn-delete-group" onclick="deleteGroup(${realGroupIdx})">Delete</button>
+                    </div>
                 </div>
                 
                 <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
@@ -590,6 +610,15 @@
         renderGroups();
     }
 
+    function sortGroupPlayersByPts(gIdx) {
+        tournamentData[gIdx].players.sort((a, b) => {
+            const ptsA = (Number(a.wins) || 0) * 3 + (Number(a.draws) || 0);
+            const ptsB = (Number(b.wins) || 0) * 3 + (Number(b.draws) || 0);
+            return ptsB - ptsA;
+        });
+        renderGroups();
+    }
+
     function duplicateToStage2() {
         if(!confirm('Copy Stage 1 groups to Stage 2 (keeping current scores and decks)?')) return;
         tournamentData = tournamentData.filter(g => g.stage !== 2);
@@ -668,6 +697,13 @@
         } catch (e) { alert('Server error'); } 
         finally { btn.innerHTML = '💾 Save Stages Data'; btn.disabled = false; }
     }
+
+    // Первоначальная сортировка групп по очкам при загрузке
+    tournamentData.forEach((g, gIdx) => {
+        if (g.stage !== 3 && g.players) {
+            sortGroupPlayersByPts(gIdx);
+        }
+    });
 
     switchStage(1);
 </script>
