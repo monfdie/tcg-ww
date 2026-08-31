@@ -7,7 +7,7 @@
         min-height: 100vh;
     }
 
-    /* Сбалансированная ледяная панель (не темная и без пересвета) */
+    /* Сбалансированная ледяная панель */
     .glass-panel {
         background: rgba(18, 29, 50, 0.65);
         backdrop-filter: blur(14px);
@@ -145,51 +145,19 @@
             </thead>
             <tbody>
                 <% 
-                // 1. Предварительный расчет очков
-                players.forEach(p => { 
+                // Сохраняем исходный индекс из админки для ручного тай-брейкера
+                players.forEach((p, originalIndex) => { 
                     p.calcPts = (Number(p.wins) || 0) * 3 + (Number(p.draws) || 0); 
+                    p.originalIndex = originalIndex;
                 });
-
-                // 2. Функция тай-брейкера
-                function comparePlayers(a, b) {
-                    // Критерий 1: Количество набранных очков
+                
+                // Сортировка по очкам, при равенстве — по выставленному порядку в админке
+                players.sort((a, b) => {
                     if (b.calcPts !== a.calcPts) {
                         return b.calcPts - a.calcPts;
                     }
-
-                    // Критерий 2 и 3: Личные встречи и преимущество второй недели
-                    if (a.h2h && a.h2h[b.name]) {
-                        const match = a.h2h[b.name];
-                        let aH2hPts = 0;
-                        let bH2hPts = 0;
-
-                        if (match.w1 === 'win') aH2hPts += 3;
-                        else if (match.w1 === 'loss') bH2hPts += 3;
-                        else if (match.w1 === 'draw') { aH2hPts += 1; bH2hPts += 1; }
-
-                        if (match.w2 === 'win') aH2hPts += 3;
-                        else if (match.w2 === 'loss') bH2hPts += 3;
-                        else if (match.w2 === 'draw') { aH2hPts += 1; bH2hPts += 1; }
-
-                        // Если один игрок набрал больше очков в личных встречах (2 победы или 1 победа + 1 ничья)
-                        if (bH2hPts !== aH2hPts) {
-                            return bH2hPts - aH2hPts;
-                        }
-
-                        // Если 1-1 по победам — побеждает тот, кто выиграл на второй неделе
-                        if (match.w2 === 'win') return -1;
-                        if (match.w2 === 'loss') return 1;
-                    }
-
-                    // Критерий 4: Общее количество побед
-                    if ((Number(b.wins) || 0) !== (Number(a.wins) || 0)) {
-                        return (Number(b.wins) || 0) - (Number(a.wins) || 0);
-                    }
-
-                    return 0;
-                }
-
-                players.sort(comparePlayers);
+                    return a.originalIndex - b.originalIndex;
+                });
                 
                 const isStageTwo = (group.stage === 2);
 
