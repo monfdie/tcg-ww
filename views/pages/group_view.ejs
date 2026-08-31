@@ -124,8 +124,9 @@
 
 <div class="container mt-4 mb-5" style="max-width: 1100px;">
     
+    <!-- КНОПКА НАЗАД С ПЕРЕДАЧЕЙ СТАДИИ ГРУППЫ -->
     <div class="mb-3">
-        <a href="/tournament/<%= tour.slug %>" class="back-btn-glass">&larr; BACK TO TOURNAMENT</a>
+        <a href="/tournament/<%= tour.slug %>?stage=<%= group.stage || 1 %>" class="back-btn-glass">&larr; BACK TO TOURNAMENT</a>
     </div>
 
     <h2 class="text-center group-main-title"><%= group.name %></h2>
