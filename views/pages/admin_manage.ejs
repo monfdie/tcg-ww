@@ -56,6 +56,24 @@
         -moz-appearance: textfield;
     }
 
+    /* Кнопки порядка */
+    .order-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #8fa0c9;
+        border-radius: 3px;
+        cursor: pointer;
+        padding: 0 4px;
+        font-size: 9px;
+        line-height: 12px;
+        transition: 0.15s;
+    }
+    .order-btn:hover {
+        background: rgba(0, 210, 255, 0.2);
+        color: #00d2ff;
+        border-color: #00d2ff;
+    }
+
     /* Компактные слоты дек */
     .deck-slot { 
         width: 28px; 
@@ -405,7 +423,7 @@
                 <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
                     <thead>
                         <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: #8fa0c9; font-size: 11px; font-weight: 700;">
-                            <th style="width: 130px; padding: 4px; text-align: left;">PLAYER</th>
+                            <th style="width: 145px; padding: 4px; text-align: left;">PLAYER</th>
                             <th style="width: 32px; text-align: center;">PTS</th>
                             <th style="width: 32px; text-align: center;">W</th>
                             <th style="width: 32px; text-align: center;">D</th>
@@ -421,7 +439,13 @@
                 html += `
                         <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
                             <td style="padding: 3px 2px;">
-                                <input type="text" class="player-input" value="${player.name || ''}" placeholder="P${pIdx+1}" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'name', this.value)">
+                                <div style="display: flex; gap: 4px; align-items: center;">
+                                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                                        <button type="button" class="order-btn" title="Move Up" onclick="movePlayerUp(${realGroupIdx}, ${pIdx})" ${pIdx === 0 ? 'disabled style="opacity:0.3; cursor:default;"' : ''}>▲</button>
+                                        <button type="button" class="order-btn" title="Move Down" onclick="movePlayerDown(${realGroupIdx}, ${pIdx})" ${pIdx === group.players.length - 1 ? 'disabled style="opacity:0.3; cursor:default;"' : ''}>▼</button>
+                                    </div>
+                                    <input type="text" class="player-input" value="${player.name || ''}" placeholder="P${pIdx+1}" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'name', this.value)">
+                                </div>
                             </td>
                             <td style="text-align: center; color: #ffcc00; font-weight: 700; font-size: 13px;">${pts}</td>
                             <td style="text-align: center; padding: 1px;"><input type="number" class="player-input num-input" style="padding: 4px 2px;" value="${player.wins || 0}" min="0" onchange="updatePlayer(${realGroupIdx}, ${pIdx}, 'wins', this.value)"></td>
@@ -537,31 +561,43 @@
 
     function updateGroupData(idx, field, value) { tournamentData[idx][field] = value; }
 
-function updatePlayer(gIdx, pIdx, field, value) {
+    function updatePlayer(gIdx, pIdx, field, value) {
         if(field === 'name') {
             tournamentData[gIdx].players[pIdx].name = value;
         } else {
-            // При изменении W, D или L пересчитываем очки напрямую
             tournamentData[gIdx].players[pIdx][field] = parseInt(value) || 0;
             const p = tournamentData[gIdx].players[pIdx];
             p.points = (Number(p.wins) || 0) * 3 + (Number(p.draws) || 0);
             renderGroups();
         }
     }
-   function duplicateToStage2() {
+
+    function movePlayerUp(gIdx, pIdx) {
+        if (pIdx <= 0) return;
+        const players = tournamentData[gIdx].players;
+        const temp = players[pIdx];
+        players[pIdx] = players[pIdx - 1];
+        players[pIdx - 1] = temp;
+        renderGroups();
+    }
+
+    function movePlayerDown(gIdx, pIdx) {
+        const players = tournamentData[gIdx].players;
+        if (pIdx >= players.length - 1) return;
+        const temp = players[pIdx];
+        players[pIdx] = players[pIdx + 1];
+        players[pIdx + 1] = temp;
+        renderGroups();
+    }
+
+    function duplicateToStage2() {
         if(!confirm('Copy Stage 1 groups to Stage 2 (keeping current scores and decks)?')) return;
-        
-        // Удаляем старый Stage 2
         tournamentData = tournamentData.filter(g => g.stage !== 2);
-        
-        // Копируем группы из Stage 1
         const stage1Groups = tournamentData.filter(g => g.stage === 1);
         stage1Groups.forEach(g => {
             const newGroup = JSON.parse(JSON.stringify(g));
             newGroup.stage = 2;
             newGroup._id = undefined;
-            
-            // Сохраняем игроков со всеми их победами, ничьими, поражениями и колодами
             newGroup.players.forEach(p => { 
                 p._id = undefined; 
                 p.wins = Number(p.wins) || 0;
@@ -572,7 +608,6 @@ function updatePlayer(gIdx, pIdx, field, value) {
             });
             tournamentData.push(newGroup);
         });
-        
         switchStage(2);
     }
 
