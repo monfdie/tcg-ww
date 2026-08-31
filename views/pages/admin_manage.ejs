@@ -537,30 +537,42 @@
 
     function updateGroupData(idx, field, value) { tournamentData[idx][field] = value; }
 
-    function updatePlayer(gIdx, pIdx, field, value) {
-        if(field === 'name') tournamentData[gIdx].players[pIdx].name = value;
-        else { tournamentData[gIdx].players[pIdx][field] = parseInt(value) || 0; renderGroups(); }
+function updatePlayer(gIdx, pIdx, field, value) {
+        if(field === 'name') {
+            tournamentData[gIdx].players[pIdx].name = value;
+        } else {
+            // При изменении W, D или L пересчитываем очки напрямую
+            tournamentData[gIdx].players[pIdx][field] = parseInt(value) || 0;
+            const p = tournamentData[gIdx].players[pIdx];
+            p.points = (Number(p.wins) || 0) * 3 + (Number(p.draws) || 0);
+            renderGroups();
+        }
     }
-
    function duplicateToStage2() {
-        if(!confirm('Copy Stage 1 groups to Stage 2 with scores and decks?')) return;
+        if(!confirm('Copy Stage 1 groups to Stage 2 (keeping current scores and decks)?')) return;
+        
+        // Удаляем старый Stage 2
         tournamentData = tournamentData.filter(g => g.stage !== 2);
+        
+        // Копируем группы из Stage 1
         const stage1Groups = tournamentData.filter(g => g.stage === 1);
         stage1Groups.forEach(g => {
             const newGroup = JSON.parse(JSON.stringify(g));
             newGroup.stage = 2;
             newGroup._id = undefined;
+            
+            // Сохраняем игроков со всеми их победами, ничьими, поражениями и колодами
             newGroup.players.forEach(p => { 
                 p._id = undefined; 
-                // Сохраняем счет, победы, поражения, ничьи и все деки из Stage 1
-                p.wins = p.wins || 0;
-                p.draws = p.draws || 0;
-                p.losses = p.losses || 0;
-                p.points = (Number(p.wins) || 0) * 3 + (Number(p.draws) || 0);
+                p.wins = Number(p.wins) || 0;
+                p.draws = Number(p.draws) || 0;
+                p.losses = Number(p.losses) || 0;
+                p.points = p.wins * 3 + p.draws;
                 p.decks = Array.isArray(p.decks) ? p.decks : [[], [], [], []];
             });
             tournamentData.push(newGroup);
         });
+        
         switchStage(2);
     }
 
