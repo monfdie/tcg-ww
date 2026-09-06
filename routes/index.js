@@ -44,7 +44,6 @@ async function getTierlistVersions() {
     const docs = await PlayerTierlist.find({}, 'key').lean();
     let versions = docs.map(d => d.key).filter(k => k && k !== 'official');
     
-    // Сортировка версий (числовые по убыванию, текстовые по алфавиту)
     versions.sort((a, b) => {
         const numA = parseFloat(a);
         const numB = parseFloat(b);
@@ -134,7 +133,11 @@ router.post('/admin/tierlist/rename', isAdmin, express.json(), async (req, res) 
             return res.status(400).json({ error: `Version "${newVersion}" already exists` });
         }
 
-        const doc = await PlayerTierlist.findOne({ key: oldVersion });
+        let doc = await PlayerTierlist.findOne({ key: oldVersion });
+        if (!doc && oldVersion === '1.0') {
+            doc = await PlayerTierlist.findOne({ key: 'official' });
+        }
+
         if (!doc) {
             return res.status(404).json({ error: 'Version not found' });
         }
@@ -156,6 +159,10 @@ router.post('/admin/tierlist/delete', isAdmin, express.json(), async (req, res) 
         }
 
         await PlayerTierlist.findOneAndDelete({ key: version });
+        if (version === '1.0') {
+            await PlayerTierlist.findOneAndDelete({ key: 'official' });
+        }
+
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Failed to delete tierlist version' });
