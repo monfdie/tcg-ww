@@ -42,10 +42,15 @@ const PlayerTierlist = require('../models/PlayerTierlist');
 
 async function getTierlistVersions() {
     const docs = await PlayerTierlist.find({}, 'key').lean();
-    let versions = docs.map(d => d.key).filter(k => k && !isNaN(parseFloat(k)));
+    let versions = docs.map(d => d.key).filter(k => k && k !== 'official');
     
-    // Сортировка по убыванию версий: 5.4, 5.3, 5.2...
-    versions.sort((a, b) => parseFloat(b) - parseFloat(a));
+    // Сортировка версий (числовые по убыванию, текстовые по алфавиту)
+    versions.sort((a, b) => {
+        const numA = parseFloat(a);
+        const numB = parseFloat(b);
+        if (!isNaN(numA) && !isNaN(numB)) return numB - numA;
+        return b.localeCompare(a);
+    });
     
     if (versions.length === 0) return ['1.0'];
     return versions;
@@ -103,7 +108,7 @@ router.get('/admin/tierlist', isAdmin, async (req, res) => {
 
 router.post('/admin/tierlist/save', isAdmin, express.json(), async (req, res) => {
     try {
-        const version = req.body.version || '1.0';
+        const version = (req.body.version || '1.0').trim();
         await PlayerTierlist.findOneAndUpdate(
             { key: version }, 
             { data: req.body.data }, 
@@ -112,6 +117,48 @@ router.post('/admin/tierlist/save', isAdmin, express.json(), async (req, res) =>
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Failed to save tierlist' });
+    }
+});
+
+router.post('/admin/tierlist/rename', isAdmin, express.json(), async (req, res) => {
+    try {
+        const oldVersion = (req.body.oldVersion || '').trim();
+        const newVersion = (req.body.newVersion || '').trim();
+
+        if (!oldVersion || !newVersion) {
+            return res.status(400).json({ error: 'Both old and new version names are required' });
+        }
+
+        const existing = await PlayerTierlist.findOne({ key: newVersion });
+        if (existing) {
+            return res.status(400).json({ error: `Version "${newVersion}" already exists` });
+        }
+
+        const doc = await PlayerTierlist.findOne({ key: oldVersion });
+        if (!doc) {
+            return res.status(404).json({ error: 'Version not found' });
+        }
+
+        doc.key = newVersion;
+        await doc.save();
+
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to rename tierlist version' });
+    }
+});
+
+router.post('/admin/tierlist/delete', isAdmin, express.json(), async (req, res) => {
+    try {
+        const version = (req.body.version || '').trim();
+        if (!version) {
+            return res.status(400).json({ error: 'Version name is required' });
+        }
+
+        await PlayerTierlist.findOneAndDelete({ key: version });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to delete tierlist version' });
     }
 });
 
