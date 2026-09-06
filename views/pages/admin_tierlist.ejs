@@ -2,11 +2,14 @@
 
 <style>
     .tierlist-wrapper { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
-    .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #2a3454; padding-bottom: 15px; }
+    .tl-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-bottom: 2px solid #2a3454; padding-bottom: 15px; }
     .tl-title { font-family: 'Cinzel', serif; color: #fff; font-size: 2em; margin: 0; }
     
     .btn-save { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #050b14; font-weight: bold; border: none; padding: 10px 22px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .btn-save:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(79, 172, 254, 0.4); }
+
+    .version-select { background: #0b0d17; color: #00f2fe; border: 1px solid #3c4b70; padding: 8px 12px; border-radius: 4px; font-weight: bold; outline: none; cursor: pointer; }
+    .version-select:focus { border-color: #00f2fe; }
     
     #capture-tierlist { background-color: #0d111a; border: 2px solid #2a3454; border-radius: 0; overflow: hidden; }
     .tier-row { display: flex; border-bottom: 1px solid #1a2235; min-height: 80px; background-color: rgba(16, 22, 36, 0.6); }
@@ -14,7 +17,6 @@
     
     .tier-label { width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; font-size: 24px; font-weight: 800; color: #222; text-shadow: none; user-select: none; border-right: 1px solid #0d111a; }
     
-    /* Классические цвета TierMaker */
     .tier-t0 { background-color: #ff7f7f !important; background-image: none !important; }
     .tier-t1 { background-color: #ffbf7f !important; background-image: none !important; }
     .tier-t2 { background-color: #ffdf7f !important; background-image: none !important; }
@@ -28,11 +30,30 @@
     .player-card:hover { border-color: #4facfe; background: #202a40; }
     .player-name { color: #e6edf8; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
     
-    /* Кнопка смены стрелочки */
-    .trend-toggle { position: absolute; right: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%; background: #0d111a; border: 1px solid #2e3b52; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 10; transition: 0.2s;}
+    /* Кнопка смены тренда */
+    .trend-toggle { 
+        position: absolute; 
+        right: -6px; 
+        top: -6px; 
+        min-width: 18px; 
+        height: 18px; 
+        border-radius: 10px; 
+        background: #0d111a; 
+        border: 1px solid #2e3b52; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 10px; 
+        font-weight: bold; 
+        cursor: pointer; 
+        z-index: 10; 
+        transition: 0.2s;
+        padding: 0 3px;
+    }
     .trend-toggle:hover { transform: scale(1.1); }
     .trend-up { color: #2ecc71; border-color: #2ecc71; }
     .trend-down { color: #e74c3c; border-color: #e74c3c; }
+    .trend-new { color: #00f2fe; border-color: #00f2fe; background: #002b33; font-size: 8px; font-weight: 800; box-shadow: 0 0 6px rgba(0, 242, 254, 0.4); }
     .trend-none { color: #8da4c4; }
 
     /* Кнопка удаления */
@@ -47,12 +68,23 @@
 
 <div class="tierlist-wrapper">
     <div class="tl-header">
-        <h1 class="tl-title">ADMIN: Edit Official Tierlist</h1>
-        <button class="btn-save" onclick="saveTierlist()">PUBLISH CHANGES</button>
+        <div>
+            <h1 class="tl-title">ADMIN: Edit Tierlist</h1>
+            <div style="display: flex; gap: 10px; margin-top: 15px; align-items: center;">
+                <span style="color: #8da4c4; font-size: 13px; font-weight: bold; text-transform: uppercase;">Version:</span>
+                <select class="version-select" onchange="window.location.href='/admin/tierlist?v=' + this.value">
+                    <% versions.forEach(v => { %>
+                        <option value="<%= v %>" <%= v === currentVersion ? 'selected' : '' %>>v<%= v %></option>
+                    <% }) %>
+                </select>
+                <button class="btn-save" style="padding: 8px 12px; font-size: 12px; background: transparent; border: 1px solid #00f2fe; color: #00f2fe; box-shadow: none;" onclick="createNewVersion()">+ NEW VERSION</button>
+            </div>
+        </div>
+        <button class="btn-save" onclick="saveTierlist()">PUBLISH V<%= currentVersion %></button>
     </div>
 
     <div style="background: rgba(79, 172, 254, 0.1); border-left: 4px solid #4facfe; padding: 10px 15px; margin-bottom: 20px; color: #fff; font-size: 14px;">
-        <b>Instruction:</b> Drag players to tiers. Click the circle on the right to cycle trends. Click the Red X on the left to delete a player.
+        <b>Instruction:</b> Drag players to tiers. Click the circle on the right to cycle trends (<b>-</b> &rarr; <b>▲</b> &rarr; <b>▼</b> &rarr; <b style="color:#00f2fe;">NEW</b>). Click Red X on the left to delete a player.
     </div>
 
     <div id="capture-tierlist">
@@ -62,11 +94,16 @@
         <div class="tier-row">
             <div class="tier-label tier-<%= tier %>"><%= tierLabels[index] %></div>
             <div class="tier-dropzone" id="<%= tier %>">
-                <% tierlistData[tier].forEach(player => { %>
-                    <div class="player-card" data-name="<%= player.name %>" data-trend="<%= player.trend %>">
+                <% tierlistData[tier].forEach(player => { 
+                    let trendText = '-';
+                    if (player.trend === 'up') trendText = '▲';
+                    else if (player.trend === 'down') trendText = '▼';
+                    else if (player.trend === 'new') trendText = 'NEW';
+                %>
+                    <div class="player-card" data-name="<%= player.name %>" data-trend="<%= player.trend || 'none' %>">
                         <div class="delete-btn" onmousedown="event.stopPropagation();" onclick="deletePlayer(this)">X</div>
                         <span class="player-name"><%= player.name %></span>
-                        <div class="trend-toggle trend-<%= player.trend %>" onmousedown="event.stopPropagation();" onclick="cycleTrend(this)"><%= player.trend === 'up' ? '▲' : (player.trend === 'down' ? '▼' : '-') %></div>
+                        <div class="trend-toggle trend-<%= player.trend || 'none' %>" onmousedown="event.stopPropagation();" onclick="cycleTrend(this)"><%= trendText %></div>
                     </div>
                 <% }) %>
             </div>
@@ -96,6 +133,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
+    let activeVersion = "<%= currentVersion %>";
+
     const zones = ['t0', 't1', 't2', 't3', 't4', 'unassigned'].map(id => document.getElementById(id));
     zones.forEach(zone => {
         new Sortable(zone, { 
@@ -109,11 +148,14 @@
     function cycleTrend(btn) {
         const card = btn.parentElement;
         let current = card.dataset.trend;
-        let next = 'none'; let icon = '-';
+        let next = 'none'; 
+        let icon = '-';
         
+        // Цикл: none -> up -> down -> new -> none
         if (current === 'none') { next = 'up'; icon = '▲'; }
         else if (current === 'up') { next = 'down'; icon = '▼'; }
-        else if (current === 'down') { next = 'none'; icon = '-'; }
+        else if (current === 'down') { next = 'new'; icon = 'NEW'; }
+        else if (current === 'new') { next = 'none'; icon = '-'; }
 
         card.dataset.trend = next;
         btn.className = `trend-toggle trend-${next}`;
@@ -146,6 +188,14 @@
         input.value = '';
     }
 
+    function createNewVersion() {
+        const v = prompt("Enter new version number (e.g. 5.4):");
+        if (v && v.trim() !== '') {
+            activeVersion = v.trim();
+            saveTierlist();
+        }
+    }
+
     async function saveTierlist() {
         const data = { t0: [], t1: [], t2: [], t3: [], t4: [], unassigned: [] };
         
@@ -163,10 +213,11 @@
             const res = await fetch('/admin/tierlist/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify({ version: activeVersion, data: data })
             });
             if (res.ok) {
-                alert('Official Tierlist has been successfully updated and published!');
+                alert(`Tierlist v${activeVersion} successfully saved!`);
+                window.location.href = '/admin/tierlist?v=' + activeVersion;
             } else {
                 alert('Error saving tierlist.');
             }
