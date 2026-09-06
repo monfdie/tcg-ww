@@ -2,30 +2,59 @@
 
 <style>
     .tierlist-wrapper { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
-    .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #2a3454; padding-bottom: 15px; }
+    
+    .tl-header { 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        margin-bottom: 20px; 
+        border-bottom: 2px solid #2a3454; 
+        padding-bottom: 15px; 
+        position: relative;
+    }
+    
     .tl-title { font-family: 'Cinzel', serif; color: #fff; font-size: 2.2em; margin: 0; }
     
     .btn-action { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #050b14; font-weight: bold; border: none; padding: 10px 22px; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .btn-action:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(79, 172, 254, 0.4); }
 
-    /* Темный строгий фон тирлиста (как в первой версии) */
+    /* Переключение версий */
+    .version-controls { display: flex; align-items: center; gap: 15px; }
+    .version-arrow {
+        color: #e6edf8;
+        font-size: 20px;
+        text-decoration: none;
+        transition: 0.2s;
+        cursor: pointer;
+        padding: 4px 12px;
+        background: rgba(16, 22, 36, 0.6);
+        border: 1px solid #3c4b70;
+        border-radius: 6px;
+        user-select: none;
+    }
+    .version-arrow:hover:not(.disabled) {
+        background: #202a40;
+        border-color: #4facfe;
+        color: #4facfe;
+    }
+    .version-arrow.disabled { opacity: 0.2; cursor: default; }
+
+    /* Фон тирлиста */
     #capture-tierlist { background-color: #0d111a; border: 2px solid #2a3454; border-radius: 0; overflow: hidden; }
     .tier-row { display: flex; border-bottom: 1px solid #1a2235; min-height: 80px; background-color: rgba(16, 22, 36, 0.6); }
     .tier-row:last-child { border-bottom: none; }
     
-    /* Шрифты тиров классические, темный текст */
     .tier-label { width: 100px; min-width: 100px; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; font-size: 24px; font-weight: 800; color: #222; user-select: none; border-right: 1px solid #0d111a; }
     
-    /* Классические цвета TierMaker (с защитой от бага html2canvas) */
-    .tier-t0 { background-color: #ff7f7f !important; background-image: none !important; } /* S - Лососевый */
-    .tier-t1 { background-color: #ffbf7f !important; background-image: none !important; } /* A - Оранжевый */
-    .tier-t2 { background-color: #ffdf7f !important; background-image: none !important; } /* B - Желто-оранжевый */
-    .tier-t3 { background-color: #ffff7f !important; background-image: none !important; } /* C - Желтый */
-    .tier-t4 { background-color: #bfff7f !important; background-image: none !important; } /* D - Светло-зеленый */
+    .tier-t0 { background-color: #ff7f7f !important; background-image: none !important; }
+    .tier-t1 { background-color: #ffbf7f !important; background-image: none !important; }
+    .tier-t2 { background-color: #ffdf7f !important; background-image: none !important; }
+    .tier-t3 { background-color: #ffff7f !important; background-image: none !important; }
+    .tier-t4 { background-color: #bfff7f !important; background-image: none !important; }
     
     .tier-dropzone { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; align-content: center; min-height: 80px; }
 
-    /* Темные карточки игроков (как в первой версии) */
+    /* Карточки игроков */
     .player-card { position: relative; width: 125px; height: 38px; background: linear-gradient(135deg, #182238, #101726); border: 1px solid #3c4b70; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0 8px; user-select: none; transition: 0.15s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
     .player-card.draggable { cursor: grab; }
     .player-card.draggable:active { cursor: grabbing; border-color: #4facfe; }
@@ -33,10 +62,25 @@
 
     .player-name { color: #e6edf8; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; width: 100%; }
     
-    /* Индикаторы стрелочек */
+    /* Индикаторы стрелочек и плашки NEW */
     .trend-icon { position: absolute; right: -6px; top: -6px; font-size: 11px; font-weight: bold; background: #0d111a; border: 1px solid #2e3b52; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
     .trend-up { color: #2ecc71; border-color: #2ecc71; }
     .trend-down { color: #e74c3c; border-color: #e74c3c; }
+    
+    .trend-new {
+        position: absolute;
+        right: -8px;
+        top: -7px;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        background: #002b33;
+        color: #00f2fe;
+        border: 1px solid #00f2fe;
+        border-radius: 10px;
+        padding: 1px 5px;
+        box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+    }
     .trend-none { display: none; }
 
     .pool-section { margin-top: 30px; background: rgba(16, 22, 36, 0.6); border: 1px dashed #3c4b70; border-radius: 4px; padding: 15px; display: none; }
@@ -52,8 +96,24 @@
 
 <div class="tierlist-wrapper">
     <div class="tl-header">
-        <h1 class="tl-title" id="page-title">OFFICIAL TIERLIST</h1>
-        <button class="btn-action" onclick="downloadTierlist()">SAVE IMAGE</button>
+        
+        <div class="version-controls" id="version-controls">
+            <% if (prevVersion) { %>
+                <a href="/tierlist?v=<%= prevVersion %>" class="version-arrow" title="Older Version">❮</a>
+            <% } else { %>
+                <span class="version-arrow disabled">❮</span>
+            <% } %>
+
+            <h1 class="tl-title" id="page-title">OFFICIAL TIERLIST <span style="color:#00f2fe;">v<%= currentVersion %></span></h1>
+
+            <% if (nextVersion) { %>
+                <a href="/tierlist?v=<%= nextVersion %>" class="version-arrow" title="Newer Version">❯</a>
+            <% } else { %>
+                <span class="version-arrow disabled">❯</span>
+            <% } %>
+        </div>
+
+        <button class="btn-action" style="position: absolute; right: 0;" onclick="downloadTierlist()">SAVE IMAGE</button>
     </div>
 
     <div id="capture-tierlist">
@@ -66,7 +126,11 @@
                 <% tierlistData[tier].forEach(player => { %>
                     <div class="player-card">
                         <span class="player-name"><%= player.name %></span>
-                        <div class="trend-icon trend-<%= player.trend %>"><%= player.trend === 'up' ? '▲' : (player.trend === 'down' ? '▼' : '') %></div>
+                        <% if (player.trend === 'new') { %>
+                            <div class="trend-new">NEW</div>
+                        <% } else { %>
+                            <div class="trend-icon trend-<%= player.trend %>"><%= player.trend === 'up' ? '▲' : (player.trend === 'down' ? '▼' : '') %></div>
+                        <% } %>
                     </div>
                 <% }) %>
             </div>
@@ -102,6 +166,8 @@
 <script>
     function enableBuilderMode() {
         document.getElementById('page-title').innerText = "MY TIERLIST";
+        document.querySelectorAll('.version-arrow').forEach(el => el.style.display = 'none');
+        
         document.getElementById('pool-container').style.display = 'block';
         document.getElementById('user-add-player-box').style.display = 'flex';
         document.getElementById('create-own-container').style.display = 'none';
@@ -109,7 +175,7 @@
         const unassignedPool = document.getElementById('unassigned');
         
         document.querySelectorAll('.player-card').forEach(card => {
-            const trend = card.querySelector('.trend-icon');
+            const trend = card.querySelector('.trend-icon, .trend-new');
             if(trend) trend.remove();
             
             card.classList.add('draggable');
