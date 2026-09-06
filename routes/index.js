@@ -40,12 +40,25 @@ router.use((req, res, next) => {
 // ==========================================
 const PlayerTierlist = require('../models/PlayerTierlist');
 
-async function getTierlistData() {
+async function getTierlistVersions() {
+    const docs = await PlayerTierlist.find({}, 'key').lean();
+    let versions = docs.map(d => d.key).filter(k => k && !isNaN(parseFloat(k)));
+    
+    // Сортировка по убыванию версий: 5.4, 5.3, 5.2...
+    versions.sort((a, b) => parseFloat(b) - parseFloat(a));
+    
+    if (versions.length === 0) return ['1.0'];
+    return versions;
+}
+
+async function getTierlistData(versionKey) {
     try {
-        let doc = await PlayerTierlist.findOne({ key: 'official' });
+        let doc = await PlayerTierlist.findOne({ key: versionKey });
+        if (!doc && versionKey === '1.0') {
+            doc = await PlayerTierlist.findOne({ key: 'official' });
+        }
         if (!doc) {
-            const defaultData = { t0: [], t1: [], t2: [], t3: [], t4: [], unassigned: [] };
-            doc = await PlayerTierlist.create({ key: 'official', data: defaultData });
+            return { t0: [], t1: [], t2: [], t3: [], t4: [], unassigned: [] };
         }
         return doc.data;
     } catch (e) {
@@ -54,18 +67,48 @@ async function getTierlistData() {
 }
 
 router.get('/tierlist', async (req, res) => {
-    const tierlistData = await getTierlistData();
-    res.render('pages/tierlist', { title: 'Player Tierlist', tierlistData });
+    const versions = await getTierlistVersions();
+    let currentVersion = req.query.v || versions[0];
+    if (!versions.includes(currentVersion)) currentVersion = versions[0];
+
+    const tierlistData = await getTierlistData(currentVersion);
+
+    const currentIndex = versions.indexOf(currentVersion);
+    const nextVersion = currentIndex > 0 ? versions[currentIndex - 1] : null;
+    const prevVersion = currentIndex < versions.length - 1 ? versions[currentIndex + 1] : null;
+
+    res.render('pages/tierlist', { 
+        title: `Tierlist v${currentVersion}`, 
+        tierlistData, 
+        currentVersion, 
+        prevVersion, 
+        nextVersion 
+    });
 });
 
 router.get('/admin/tierlist', isAdmin, async (req, res) => {
-    const tierlistData = await getTierlistData();
-    res.render('pages/admin_tierlist', { title: 'Manage Tierlist', tierlistData });
+    const versions = await getTierlistVersions();
+    let currentVersion = req.query.v || versions[0];
+    if (!versions.includes(currentVersion)) currentVersion = versions[0];
+
+    const tierlistData = await getTierlistData(currentVersion);
+    
+    res.render('pages/admin_tierlist', { 
+        title: 'Manage Tierlist', 
+        tierlistData, 
+        currentVersion, 
+        versions 
+    });
 });
 
 router.post('/admin/tierlist/save', isAdmin, express.json(), async (req, res) => {
     try {
-        await PlayerTierlist.findOneAndUpdate({ key: 'official' }, { data: req.body }, { upsert: true });
+        const version = req.body.version || '1.0';
+        await PlayerTierlist.findOneAndUpdate(
+            { key: version }, 
+            { data: req.body.data }, 
+            { upsert: true }
+        );
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Failed to save tierlist' });
@@ -77,9 +120,7 @@ router.post('/admin/tierlist/save', isAdmin, express.json(), async (req, res) =>
 // ==========================================
 router.get('/', async (req, res) => {
     try {
-        // Загружаем турниры из базы
         const tournaments = await Tournament.find().sort({ createdAt: -1 }).lean();
-        
         res.render('pages/home', {
             tournaments: tournaments || [],
             user: req.user || null
@@ -105,7 +146,6 @@ router.get('/tournaments', async (req, res) => {
     }
 });
 
-// ПРОСМОТР ТУРНИРА
 router.get('/tournament/:slug', async (req, res) => {
     try {
         const tour = await Tournament.findOne({ slug: req.params.slug });
@@ -124,12 +164,8 @@ router.get('/tournament/:slug', async (req, res) => {
             };
         });
 
-        // ==========================================
-        // РАСЧЕТ СТАТИСТИКИ (DECKS И CHARACTERS)
-        // ==========================================
         const deckStats = { 1: [], 2: [], 3: [] };
         const charStats = { 1: [], 2: [], 3: [] };
-
         const deckCounts = { 1: {}, 2: {}, 3: {} };
         const charCounts = { 1: {}, 2: {}, 3: {} };
 
@@ -146,11 +182,9 @@ router.get('/tournament/:slug', async (req, res) => {
                                 if (deck && deck.length === 3) {
                                     const validDeck = deck.filter(id => id && id.trim() !== '');
                                     if (validDeck.length === 3) {
-                                        // 1. Статистика по колодам
                                         const sortedDeckKey = [...validDeck].sort().join(',');
                                         deckCounts[stage][sortedDeckKey] = (deckCounts[stage][sortedDeckKey] || 0) + 1;
 
-                                        // 2. Статистика по персонажам
                                         validDeck.forEach(charId => {
                                             charCounts[stage][charId] = (charCounts[stage][charId] || 0) + 1;
                                         });
@@ -162,7 +196,6 @@ router.get('/tournament/:slug', async (req, res) => {
                 }
             });
 
-            // Формируем отсортированные списки
             for (let stage in deckCounts) {
                 deckStats[stage] = Object.keys(deckCounts[stage]).map(key => ({
                     deck: key.split(','),
@@ -190,7 +223,6 @@ router.get('/tournament/:slug', async (req, res) => {
     }
 });
 
-// ПРОСМОТР КОНКРЕТНОЙ ГРУППЫ (ПУБЛИЧНАЯ)
 router.get('/tournament/:slug/group/:groupId', async (req, res) => {
     try {
         const tour = await Tournament.findOne({ slug: req.params.slug });
@@ -199,7 +231,6 @@ router.get('/tournament/:slug/group/:groupId', async (req, res) => {
         const group = tour.groups.id(req.params.groupId);
         if (!group) return res.status(404).send('Group not found');
 
-        // Сортируем игроков по очкам от большего к меньшему
         const sortedPlayers = [...group.players].sort((a, b) => b.points - a.points);
 
         res.render('pages/group_view', { 
@@ -245,9 +276,6 @@ router.post('/profile/save-box', express.json(), async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// ==========================================
-// АДМИНКА
-// ==========================================
 router.get('/admin/tiers', isAdmin, async (req, res) => {
     let config = await TierConfig.findOne({ settingsKey: 'main' });
     if (!config) { config = await TierConfig.create({ settingsKey: 'main' }); }
@@ -291,7 +319,6 @@ router.post('/admin/delete/:id', isAdmin, async (req, res) => {
 router.get('/admin/manage/:slug', isAdmin, async (req, res) => {
     const tour = await Tournament.findOne({ slug: req.params.slug });
     if(!tour) return res.send("Tournament not found");
-    // ПЕРЕДАЕМ ПЕРСОНАЖЕЙ В АДМИНКУ ДЛЯ ВЫБОРА КОЛОД
     res.render('pages/admin_manage', { tour: tour, chars: CHARACTERS_BY_ELEMENT });
 });
 
@@ -315,10 +342,8 @@ router.post('/admin/edit/:id', isAdmin, upload.single('image'), async (req, res)
     } catch (err) { res.status(500).send('Error: ' + err.message); }
 });
 
-// СОХРАНЕНИЕ ГРУПП (АЯКС ИЗ АДМИНКИ)
 router.post('/admin/edit-groups/:id', isAdmin, express.json(), async (req, res) => {
     try {
-        // req.body.groups - массив объектов групп
         await Tournament.findByIdAndUpdate(req.params.id, { groups: req.body.groups });
         res.json({ success: true });
     } catch (err) {
