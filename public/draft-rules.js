@@ -15,18 +15,18 @@ const DRAFT_RULES = {
         { team: 'red', type: 'ban' }, 
         { team: 'red', type: 'pick' },
         { team: 'blue', type: 'ban' }, 
-        { team: 'blue', type: 'pick' },
+        { team: 'blue', type: 'pick' }, 
         { team: 'red', type: 'ban' }, 
         { team: 'red', type: 'pick' },
         { team: 'blue', type: 'pick' }, { team: 'blue', type: 'pick' },
         { team: 'red', type: 'pick' }, { team: 'red', type: 'pick' }
     ],
     'classic': [
-        { team: 'blue', type: 'ban' }, { team: 'red', type: 'ban' },       
+        { team: 'blue', type: 'ban' }, { team: 'red', type: 'ban' },        
         { team: 'red', type: 'pick' }, { team: 'blue', type: 'ban' },      
-        { team: 'blue', type: 'pick' }, { team: 'red', type: 'ban' },       
+        { team: 'blue', type: 'pick' }, { team: 'red', type: 'ban' },        
         { team: 'red', type: 'pick' }, { team: 'blue', type: 'pick' },     
-        { team: 'blue', type: 'pick' }, { team: 'red', type: 'pick' }       
+        { team: 'blue', type: 'pick' }, { team: 'red', type: 'pick' }        
     ],
     'generals_2': [
         { team: 'blue', type: 'ban' }, { team: 'red', type: 'ban' },
@@ -38,6 +38,34 @@ const DRAFT_RULES = {
         { team: 'blue', type: 'ban' }, { team: 'blue', type: 'pick' },
         { team: 'red', type: 'ban' }, { team: 'red', type: 'pick' },
         { team: 'red', type: 'pick' }, { team: 'blue', type: 'pick' }
+    ],
+    // Новый MOBA драфт: 3 фазы, 14 банов, 6 пиков
+    'moba_3phase': [
+        // Фаза 1: 4 бана, 2 пика
+        { team: 'blue', type: 'ban', phase: 1 },
+        { team: 'red',  type: 'ban', phase: 1 },
+        { team: 'blue', type: 'ban', phase: 1 },
+        { team: 'red',  type: 'ban', phase: 1 },
+        { team: 'blue', type: 'pick', phase: 1 },
+        { team: 'red',  type: 'pick', phase: 1 },
+
+        // Фаза 2: 6 банов, 2 пика
+        { team: 'red',  type: 'ban', phase: 2 },
+        { team: 'blue', type: 'ban', phase: 2 },
+        { team: 'red',  type: 'ban', phase: 2 },
+        { team: 'blue', type: 'ban', phase: 2 },
+        { team: 'red',  type: 'ban', phase: 2 },
+        { team: 'blue', type: 'ban', phase: 2 },
+        { team: 'red',  type: 'pick', phase: 2 },
+        { team: 'blue', type: 'pick', phase: 2 },
+
+        // Фаза 3: 4 бана, 2 пика
+        { team: 'red',  type: 'ban', phase: 3 },
+        { team: 'blue', type: 'ban', phase: 3 },
+        { team: 'red',  type: 'ban', phase: 3 },
+        { team: 'blue', type: 'ban', phase: 3 },
+        { team: 'blue', type: 'pick', phase: 3 },
+        { team: 'red',  type: 'pick', phase: 3 }
     ]
 };
 
@@ -49,7 +77,7 @@ gitcg2[25].immunity = true;
 gitcg2[27].immunity = true;
 DRAFT_RULES['gitcg_cup_2'] = gitcg2;
 
-// --- НОВЫЙ РЕЖИМ (ABYSS BOX) ИСПОЛЬЗУЕТ ТЕ ЖЕ ПРАВИЛА ---
+// Abyss Box
 DRAFT_RULES['abyss_box'] = gitcg2;
 
 const IMMUNITY_ORDER = [
