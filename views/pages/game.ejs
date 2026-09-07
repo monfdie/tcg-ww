@@ -33,37 +33,59 @@
     .left-box-label { left: 40px; }
     .right-box-label { right: 40px; }
 
-    /* Контейнер для хронологической линии кружков */
-    .sequence-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px; max-width: 420px; }
+    /* Контейнер для оригинального расположения кружков */
+    .sequence-row { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 12px; 
+        justify-content: center; 
+        margin-top: 15px; 
+        max-width: 580px; 
+    }
     
-    /* Слоты для кружков */
+    /* Исходный классический размер и стили слотов */
     .slot-circle {
-        width: 38px;
-        height: 38px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
-        background: rgba(13, 17, 26, 0.85);
-        border: 2px solid rgba(255, 255, 255, 0.15);
+        background: rgba(13, 17, 26, 0.9);
+        border: 2px solid rgba(255, 255, 255, 0.7);
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
         overflow: hidden;
         transition: 0.2s;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     }
-    .slot-circle img { width: 100%; height: 100%; object-fit: cover; }
-    .slot-pick { border-color: #00d2ff; box-shadow: 0 0 6px rgba(0, 210, 255, 0.3); }
-    .red-side .slot-pick { border-color: #ff9f43; box-shadow: 0 0 6px rgba(255, 159, 67, 0.3); }
-    .slot-ban { border-color: #ff5252; }
+    .slot-circle img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+    }
+    .slot-ban { 
+        border-color: #8b0000 !important; 
+        box-shadow: 0 0 8px rgba(139, 0, 0, 0.6) !important;
+    }
     .slot-ban.has-char::after {
         content: "✕";
         position: absolute;
         color: #ff5252;
-        font-size: 20px;
+        font-size: 24px;
         font-weight: 900;
         text-shadow: 0 0 6px #000;
     }
-    .active-slot { transform: scale(1.15); border-color: #fff !important; box-shadow: 0 0 12px #fff !important; }
-    .step-number { font-size: 10px; color: #8fa0c9; font-weight: bold; }
+    .active-slot { 
+        transform: scale(1.15); 
+        border-color: #00d2ff !important; 
+        box-shadow: 0 0 16px rgba(0, 210, 255, 0.9) !important; 
+    }
+    .step-number { 
+        font-size: 14px; 
+        color: #aee3ff; 
+        font-weight: 700; 
+        font-family: 'Cinzel', serif, sans-serif;
+    }
 </style>
 
 <div id="game-screen">
@@ -290,7 +312,7 @@
         updateImmunityTop(state);
         renderSlots(state);
         
-        // Логика блокировки карт для MOBA 3-Phase:
+        // Логика блокировки персонажей для MOBA 3-Phase
         if (state.draftType === 'moba_3phase') {
             const allBanned = (state.bans || []).map(b => b.id);
             const allPicked = [...(state.bluePicks || []), ...(state.redPicks || [])];
@@ -306,7 +328,7 @@
             return;
         }
 
-        // Логика блокировки карт для остальных классических режимов
+        // Логика блокировки персонажей для классических режимов
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
         const isImmunePhase = state.immunityPhaseActive;
@@ -532,7 +554,7 @@
 
                 if (charId) {
                     if (charId === 'skipped') {
-                        slot.innerHTML = `<span style="color:#aaa; font-size:16px;">✖</span>`;
+                        slot.innerHTML = `<span style="color:#ff5252; font-size:22px; font-weight:bold;">✖</span>`;
                     } else {
                         let allFlat = []; 
                         Object.values(charsData).forEach(arr => allFlat.push(...arr));
