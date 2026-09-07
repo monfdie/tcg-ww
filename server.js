@@ -90,21 +90,16 @@ function generateChaosPool() {
     let pool = { cryo: [], hydro: [], pyro: [], electro: [], anemo: [], geo: [], dendro: [] };
     let remainingToPickFrom = [];
     
-    // 1. Берем по 5 случайных из каждой стихии (5 * 7 = 35)
     for (let element in CHARACTERS_BY_ELEMENT) {
         let shuffled = shuffleArray(CHARACTERS_BY_ELEMENT[element]);
-        pool[element] = shuffled.slice(0, 4); // Гарантированные 5
-        
-        // Остальных скидываем в общую "корзину" для добора
+        pool[element] = shuffled.slice(0, 4);
         let leftovers = shuffled.slice(5).map(c => ({ ...c, element }));
         remainingToPickFrom = remainingToPickFrom.concat(leftovers);
     }
     
-    // 2. Перемешиваем общую корзину и берем оставшиеся 11 персонажей (35 + 11 = 46)
     remainingToPickFrom = shuffleArray(remainingToPickFrom);
     let extraChars = remainingToPickFrom.slice(0, 7);
     
-    // 3. Раскидываем эти 11 случайных персонажей обратно по их стихиям в пуле
     extraChars.forEach(c => {
         const charData = { id: c.id, name: c.name, img: c.img };
         pool[c.element].push(charData);
@@ -112,7 +107,6 @@ function generateChaosPool() {
     
     return pool;
 }
-// ---------------------------------
 
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
@@ -125,9 +119,13 @@ io.on('connection', (socket) => {
     socket.on('create_game', ({ nickname, draftType, userId, discordId, avatar }) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = draftType || 'gitcg';
-        // Если это хаос, временно берем правила от classic, чтобы игра не крашилась
         const orderType = type === 'chaos' ? 'classic' : type; 
         
+        // Раздельные стартовые таймеры: 30 / 130 для moba_3phase, 45 / 180 для остальных
+        const isMoba = type === 'moba_3phase';
+        const baseTimer = isMoba ? 30 : 45;
+        const baseReserve = isMoba ? 130 : 180;
+
         sessions[roomId] = {
             id: roomId, 
             bluePlayer: null, blueUserId: null, blueDiscordId: null, blueAvatar: null, blueBox: [],
@@ -136,7 +134,7 @@ io.on('connection', (socket) => {
             draftType: type, draftOrder: DRAFT_RULES[orderType], gameStarted: false,
             immunityPhaseActive: false, immunityStepIndex: 0, immunityPool: [], immunityBans: [],
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
-            timer: 45, blueReserve: 180, redReserve: 180, timerInterval: null,
+            timer: baseTimer, blueReserve: baseReserve, redReserve: baseReserve, timerInterval: null,
             bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false },
             draftFinished: false, finishedAt: null
         };
@@ -339,7 +337,9 @@ io.on('connection', (socket) => {
 });
 
 function nextImmunityStep(roomId) {
-    const s = sessions[roomId]; s.immunityStepIndex++; s.timer = 45;
+    const s = sessions[roomId]; 
+    s.immunityStepIndex++; 
+    s.timer = 45;
     if (s.immunityStepIndex >= IMMUNITY_ORDER.length) {
         s.immunityPhaseActive = false; s.stepIndex = 0;
         s.currentTeam = s.draftOrder[0].team; s.currentAction = s.draftOrder[0].type;
@@ -350,7 +350,11 @@ function nextImmunityStep(roomId) {
 }
 
 function nextStep(roomId) {
-    const s = sessions[roomId]; s.stepIndex++; s.timer = 45;
+    const s = sessions[roomId]; 
+    s.stepIndex++; 
+    // Сброс таймера хода: 30 сек для moba_3phase, 45 сек для остальных
+    s.timer = (s.draftType === 'moba_3phase') ? 30 : 45;
+
     if (s.stepIndex >= s.draftOrder.length) {
         clearInterval(s.timerInterval);
         s.draftFinished = true;
@@ -358,7 +362,9 @@ function nextStep(roomId) {
         saveMatchImmediately(s);
         return;
     }
-    const c = s.draftOrder[s.stepIndex]; s.currentTeam = c.team; s.currentAction = c.type;
+    const c = s.draftOrder[s.stepIndex]; 
+    s.currentTeam = c.team; 
+    s.currentAction = c.type;
     io.to(roomId).emit('update_state', getPublicState(s));
 }
 
@@ -392,7 +398,6 @@ function autoPick(roomId) {
     const session = sessions[roomId];
     let available = [];
     
-    // Если это chaos draft, выбираем из сгенерированного пула, иначе из всех персонажей
     if (session.draftType === 'chaos' && session.chaosPool) {
         Object.values(session.chaosPool).forEach(arr => available.push(...arr));
     } else {
@@ -400,6 +405,27 @@ function autoPick(roomId) {
     }
     
     session.lastActive = Date.now();
+
+    // Особый случай для нового режима MOBA 3-Phase при истощении времени:
+    if (session.draftType === 'moba_3phase') {
+        if (session.currentAction === 'ban') {
+            // Бан просто сгорает
+            session.bans.push({ id: 'skipped', team: session.currentTeam });
+            nextStep(roomId);
+            return;
+        } else {
+            // Автопик случайного незанятого персонажа
+            const taken = [...session.bans.map(b => b.id), ...session.bluePicks, ...session.redPicks];
+            available = available.filter(c => !taken.includes(c.id));
+            if (available.length > 0) {
+                const randomChar = available[Math.floor(Math.random() * available.length)];
+                if (session.currentTeam === 'blue') session.bluePicks.push(randomChar.id);
+                else session.redPicks.push(randomChar.id);
+            }
+            nextStep(roomId);
+            return;
+        }
+    }
 
     if (session.immunityPhaseActive) {
         available = available.filter(c => {
