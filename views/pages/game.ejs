@@ -35,6 +35,35 @@
 
     /* Контейнер для хронологической линии кружков */
     .sequence-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px; max-width: 420px; }
+    
+    /* Слоты для кружков */
+    .slot-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(13, 17, 26, 0.85);
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        transition: 0.2s;
+    }
+    .slot-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .slot-pick { border-color: #00d2ff; box-shadow: 0 0 6px rgba(0, 210, 255, 0.3); }
+    .red-side .slot-pick { border-color: #ff9f43; box-shadow: 0 0 6px rgba(255, 159, 67, 0.3); }
+    .slot-ban { border-color: #ff5252; }
+    .slot-ban.has-char::after {
+        content: "✕";
+        position: absolute;
+        color: #ff5252;
+        font-size: 20px;
+        font-weight: 900;
+        text-shadow: 0 0 6px #000;
+    }
+    .active-slot { transform: scale(1.15); border-color: #fff !important; box-shadow: 0 0 12px #fff !important; }
+    .step-number { font-size: 10px; color: #8fa0c9; font-weight: bold; }
 </style>
 
 <div id="game-screen">
@@ -117,6 +146,17 @@
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
 
+    function applyDefaultTimers(draftType) {
+        const isMoba = (draftType === 'moba_3phase');
+        const defaultTurn = isMoba ? '30' : '45';
+        const defaultBank = isMoba ? '2:10' : '3:00';
+        
+        document.getElementById('blue-timer').innerText = defaultTurn;
+        document.getElementById('red-timer').innerText = defaultTurn;
+        document.getElementById('blue-res').innerText = defaultBank;
+        document.getElementById('red-res').innerText = defaultBank;
+    }
+
     if (savedData) {
         socket.disconnect(); charsData = serverChars;
         const mockState = {
@@ -131,6 +171,7 @@
             draftFinished: true, isBlueTaken: true, isRedTaken: true
         };
         currentDraftType = mockState.draftType;
+        applyDefaultTimers(currentDraftType);
         renderRows(mockState);
         updateUI(mockState);
     } else {
@@ -141,6 +182,7 @@
         });
         socket.on('init_game', (data) => {
             myRole = data.role; charsData = data.chars; currentDraftType = data.state.draftType || 'gitcg';
+            applyDefaultTimers(currentDraftType);
             document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
             renderRows(data.state); updateUI(data.state);
         });
@@ -174,6 +216,7 @@
         currentState = state;
         isGameStarted = state.gameStarted;
         isDraftFinishedLocal = state.draftFinished;
+        currentDraftType = state.draftType || currentDraftType;
         const isMyTurn = (myRole === state.currentTeam);
         
         if (state.draftType === 'abyss_box') {
@@ -247,7 +290,7 @@
         updateImmunityTop(state);
         renderSlots(state);
         
-        // Логика отключения персонажей для MOBA 3-Phase:
+        // Логика блокировки карт для MOBA 3-Phase:
         if (state.draftType === 'moba_3phase') {
             const allBanned = (state.bans || []).map(b => b.id);
             const allPicked = [...(state.bluePicks || []), ...(state.redPicks || [])];
@@ -263,7 +306,7 @@
             return;
         }
 
-        // Логика отключения персонажей для остальных классических режимов
+        // Логика блокировки карт для остальных классических режимов
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
         const isImmunePhase = state.immunityPhaseActive;
@@ -496,6 +539,7 @@
                         const char = allFlat.find(c => c.id === charId);
                         if (char) {
                             slot.innerHTML = `<img src="${char.img}">`;
+                            if (isBan) slot.classList.add('has-char');
                         }
                     }
                 } else {
