@@ -1,6 +1,7 @@
 <%- include('../partials/header') %>
 
 <style>
+    /* === ОРИГИНАЛЬНЫЙ ДИЗАЙН ИЗ ПРЕДЫДУЩЕЙ ВЕРСИИ === */
     body, html { background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important; background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important; background-attachment: fixed !important; min-height: 100vh; }
     .page-container, #game-screen, .char-pool { background: transparent !important; }
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
@@ -33,17 +34,10 @@
     .left-box-label { left: 40px; }
     .right-box-label { right: 40px; }
 
-    /* Контейнер для оригинального расположения кружков */
-    .sequence-row { 
-        display: flex; 
-        flex-wrap: wrap; 
-        gap: 12px; 
-        justify-content: center; 
-        margin-top: 15px; 
-        max-width: 580px; 
-    }
-    
-    /* Исходный классический размер и стили слотов */
+    /* Контейнер для хронологической линии кружков */
+    .sequence-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px; max-width: 450px; }
+
+    /* === СТИЛИ КРУЖКОВ (как на скриншоте) === */
     .slot-circle {
         width: 48px;
         height: 48px;
@@ -168,6 +162,7 @@
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
 
+    // === ТАЙМЕРЫ ПО НОВОЙ СИСТЕМЕ ===
     function applyDefaultTimers(draftType) {
         const isMoba = (draftType === 'moba_3phase');
         const defaultTurn = isMoba ? '30' : '45';
@@ -310,9 +305,9 @@
         document.getElementById('status').innerText = txt.toUpperCase();
 
         updateImmunityTop(state);
-        renderSlots(state);
+        renderSlots(state); // Обновленный рендер кружков
         
-        // Логика блокировки персонажей для MOBA 3-Phase
+        // Логика блокировки карт для MOBA 3-Phase
         if (state.draftType === 'moba_3phase') {
             const allBanned = (state.bans || []).map(b => b.id);
             const allPicked = [...(state.bluePicks || []), ...(state.redPicks || [])];
@@ -328,7 +323,7 @@
             return;
         }
 
-        // Логика блокировки персонажей для классических режимов
+        // Логика блокировки персонажей для остальных классических режимов
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
         const isImmunePhase = state.immunityPhaseActive;
@@ -509,6 +504,7 @@
          });
     }
 
+    // === ФУНКЦИЯ ДЛЯ ОТРИСОВКИ КРУЖОЧКОВ ПО ПОРЯДКУ ===
     function renderSlots(state) {
         const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
         const currentSchema = DRAFT_RULES[rulesType];
@@ -554,7 +550,7 @@
 
                 if (charId) {
                     if (charId === 'skipped') {
-                        slot.innerHTML = `<span style="color:#ff5252; font-size:22px; font-weight:bold;">✖</span>`;
+                        slot.innerHTML = `<span style="color:#ff5252; font-size:24px; font-weight:bold;">✖</span>`;
                     } else {
                         let allFlat = []; 
                         Object.values(charsData).forEach(arr => allFlat.push(...arr));
