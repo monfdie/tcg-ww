@@ -97,11 +97,21 @@ router.get('/admin/tierlist', isAdmin, async (req, res) => {
 
     const tierlistData = await getTierlistData(currentVersion);
     
+    // Подгружаем данные предыдущей версии для авторасчета трендов
+    const currentIndex = versions.indexOf(currentVersion);
+    const prevVersion = currentIndex < versions.length - 1 ? versions[currentIndex + 1] : null;
+    let prevTierlistData = null;
+    if (prevVersion) {
+        prevTierlistData = await getTierlistData(prevVersion);
+    }
+    
     res.render('pages/admin_tierlist', { 
         title: 'Manage Tierlist', 
         tierlistData, 
         currentVersion, 
-        versions 
+        versions,
+        prevVersion,
+        prevTierlistData
     });
 });
 
