@@ -2,15 +2,67 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title><%= locals.title || 'GITCG' %></title>
     
     <link rel="icon" type="image/png" href="/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <meta name="referrer" content="no-referrer">
+
+    <style>
+        /* Стили мобильного меню */
+        .mobile-menu-btn { 
+            display: none; 
+            position: fixed; 
+            top: 15px; 
+            left: 15px; 
+            z-index: 1100; 
+            background: rgba(16, 22, 36, 0.95); 
+            border: 1px solid #4facfe; 
+            color: #4facfe; 
+            border-radius: 6px; 
+            padding: 8px 14px; 
+            cursor: pointer; 
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .sidebar-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            background: rgba(0,0,0,0.6); 
+            backdrop-filter: blur(3px);
+            z-index: 999; 
+        }
+        
+        @media (max-width: 992px) {
+            .mobile-menu-btn { display: block; }
+            .sidebar { 
+                transform: translateX(-100%); 
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+                position: fixed; 
+                z-index: 1000; 
+                height: 100vh; 
+                left: 0;
+                top: 0;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0 !important; width: 100% !important; padding-top: 60px; }
+        }
+    </style>
 </head>
 <body>
+
+<% if (!locals.hideSidebar) { %>
+    <!-- Гамбургер и оверлей для телефонов -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰ MENU</button>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<% } %>
 
 <div class="app-container">
     
@@ -63,6 +115,13 @@
             <% } %>
         </div>
     </aside>
+
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('open');
+            document.querySelector('.sidebar-overlay').classList.toggle('active');
+        }
+    </script>
     <% } %>
 
     <main class="main-content">
