@@ -1,6 +1,7 @@
 <%- include('../partials/header') %>
 
 <style>
+    /* === ОРИГИНАЛЬНЫЙ ДИЗАЙН ИЗ ПРЕДЫДУЩЕЙ ВЕРСИИ === */
     body, html { background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important; background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important; background-attachment: fixed !important; min-height: 100vh; }
     .page-container, #game-screen, .char-pool { background: transparent !important; }
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
@@ -87,65 +88,48 @@
         font-family: 'Cinzel', serif, sans-serif;
     }
 
-    /* === МОБИЛЬНАЯ ВЕРСТКА ДЛЯ ТЕЛЕФОНОВ === */
+    /* === МОБИЛЬНАЯ ВЕРСТКА (ФИКС НАЛОЖЕНИЙ И РАЗМЕРОВ) === */
     @media (max-width: 768px) {
-        /* Перестройка шапки */
-        .game-header { flex-wrap: wrap; gap: 8px; justify-content: space-between; padding: 10px; margin-top: 15px; }
-        .home-logo-link { position: relative; left: auto; top: auto; transform: none; order: 1; }
-        #room-container { position: relative !important; right: auto !important; top: auto !important; transform: none !important; order: 2; font-size: 12px; }
-        .reserve-timer { font-size: 12px; padding: 4px 8px; }
-        .blue-res { order: 3; }
-        .red-res { order: 4; }
-        #status { width: 100%; text-align: center; font-size: 14px; order: 5; margin-top: 5px; }
+        /* Шапка: фикс наложения текста, таймеров и кода */
+        .game-header { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 10px; 
+            padding: 10px 5px; 
+            height: auto; 
+        }
+        .home-logo-link { position: relative; left: 0; transform: none; order: 1; }
+        .home-logo-link img { height: 28px; }
+        .blue-res { order: 2; }
+        .red-res { order: 3; }
+        #room-container { position: relative !important; right: 0 !important; top: 0 !important; transform: none !important; order: 4; margin: 0 !important; font-size: 12px; }
+        #status { width: 100%; order: 5; text-align: center; font-size: 12px; margin-top: 5px; }
 
-        /* Перестройка игроков в вертикаль */
-        .draft-area { flex-direction: column; gap: 15px; padding: 10px; }
-        .team-side { width: 100%; background: rgba(16, 25, 45, 0.5); padding: 12px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
-        .player-header { min-height: unset; flex-wrap: wrap; justify-content: space-around; gap: 10px; }
-        .player-info-wrapper { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+        /* Драфт зона: аккуратное разделение пополам */
+        .draft-area { gap: 10px; padding: 0 5px; }
+        .team-side { width: 48%; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Иконки банов/пиков: уменьшаем чтобы ровно влезали в ряд */
+        .sequence-row, .ban-row, .pick-row, .pick-row-small { gap: 4px; justify-content: center; margin-top: 10px; max-width: 100%; }
+        .slot-circle { width: 30px; height: 30px; border-width: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .slot-ban.has-char::after { font-size: 16px; }
+        .step-number { font-size: 10px; }
+
+        /* Игрок: компактный вид */
+        .player-header { gap: 6px; }
+        .player-info-wrapper h2 { font-size: 12px; margin: 0; text-align: center; word-break: break-word; }
         .player-avatar { width: 36px; height: 36px; }
-        .turn-timer { font-size: 26px; order: -1; width: 100%; text-align: center; margin-bottom: 5px; }
+        .turn-timer { font-size: 22px; }
 
-        /* Делаем ряды свайпаемыми горизонтально */
-        .ban-row, .pick-row, .pick-row-small, .sequence-row { 
-            flex-wrap: nowrap !important; 
-            overflow-x: auto; 
-            justify-content: flex-start !important; 
-            padding-bottom: 8px; 
-            -webkit-overflow-scrolling: touch; 
-        }
-        /* Убираем видимый скроллбар для эстетики */
-        .ban-row::-webkit-scrollbar, .pick-row::-webkit-scrollbar, .pick-row-small::-webkit-scrollbar, .sequence-row::-webkit-scrollbar { display: none; }
+        /* Пул персонажей: убираем огромную дыру по центру и чуть уменьшаем иконки */
+        .row-gap { display: none; }
+        .row-half { gap: 4px; justify-content: center; }
+        .char-option { width: 36px; height: 36px; }
         
-        .slot-circle { flex-shrink: 0; width: 44px; height: 44px; } /* Чуть-чуть компактнее для карусели */
-
-        /* Плавающая кнопка SELECT внизу экрана */
-        .controls-area {
-            position: fixed;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            background: rgba(10, 12, 20, 0.95);
-            padding: 8px 30px;
-            border-radius: 40px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8), 0 0 20px rgba(0, 242, 254, 0.4);
-            border: 1px solid #00f2fe;
-            min-height: auto;
-            margin: 0;
-            display: flex;
-            gap: 10px;
-        }
-        .confirm-btn { margin: 0 !important; font-size: 16px !important; }
-        
-        /* Отступ снизу, чтобы сетка персонажей не перекрывалась кнопкой */
-        #char-pool-container { padding-bottom: 100px; }
-        
-        /* Компактная сетка пула */
-        .element-row { justify-content: space-between; }
-        .row-gap { display: none; } /* Убираем дырку посередине на телефонах */
-        .row-half { justify-content: center; gap: 6px; flex-wrap: wrap; width: 100%; }
-        .char-option { width: 44px; height: 44px; margin-bottom: 4px; }
+        .controls-area { margin: 15px 0; }
+        .confirm-btn { padding: 8px 24px; font-size: 14px; }
     }
 </style>
 
@@ -313,7 +297,7 @@
         isDraftFinishedLocal = state.draftFinished;
         currentDraftType = state.draftType || currentDraftType;
         const isMyTurn = (myRole === state.currentTeam);
-
+        
         if (state.draftType === 'abyss_box') {
             const currentBlueHash = (state.blueBox || []).join(',');
             const currentRedHash = (state.redBox || []).join(',');
@@ -634,7 +618,7 @@
 
                      if (charId) {
                          if (charId === 'skipped') {
-                             slot.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`;
+                             slot.innerHTML = `<span style="color:#aaa; font-size:24px; line-height:48px; display:block; text-align:center;">✖</span>`;
                          } else {
                              let allFlat = []; 
                              Object.values(charsData).forEach(arr => allFlat.push(...arr));
@@ -691,7 +675,7 @@
                      
                      if (charId) {
                          if (charId === 'skipped') {
-                             slot.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`;
+                             slot.innerHTML = `<span style="color:#aaa; font-size:24px; line-height:48px; display:block; text-align:center;">✖</span>`;
                          } else {
                              let allFlat = []; 
                              Object.values(charsData).forEach(arr => allFlat.push(...arr));
