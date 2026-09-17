@@ -1,7 +1,6 @@
 <%- include('../partials/header') %>
 
 <style>
-    /* === ОРИГИНАЛЬНЫЙ ДИЗАЙН ИЗ ПРЕДЫДУЩЕЙ ВЕРСИИ === */
     body, html { background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important; background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important; background-attachment: fixed !important; min-height: 100vh; }
     .page-container, #game-screen, .char-pool { background: transparent !important; }
     .page-container { padding: 0 !important; max-width: 100% !important; height: 100%; display: flex; flex-direction: column; }
@@ -33,104 +32,6 @@
     .box-label { position: absolute; top: -15px; font-size: 11px; color: #8da4c4; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
     .left-box-label { left: 40px; }
     .right-box-label { right: 40px; }
-
-    /* Контейнер для оригинального расположения кружков */
-    .sequence-row { 
-        display: flex; 
-        flex-wrap: wrap; 
-        gap: 12px; 
-        justify-content: center; 
-        margin-top: 15px; 
-        max-width: 580px; 
-    }
-    
-    /* Исходный классический размер и стили слотов */
-    .slot-circle {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: rgba(13, 17, 26, 0.9);
-        border: 2px solid rgba(255, 255, 255, 0.7);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        overflow: hidden;
-        transition: 0.2s;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    }
-    .slot-circle img { 
-        width: 100%; 
-        height: 100%; 
-        object-fit: cover; 
-    }
-    .slot-ban { 
-        border-color: #8b0000 !important; 
-        box-shadow: 0 0 8px rgba(139, 0, 0, 0.6) !important;
-    }
-    .slot-ban.has-char::after {
-        content: "✕";
-        position: absolute;
-        color: #ff5252;
-        font-size: 24px;
-        font-weight: 900;
-        text-shadow: 0 0 6px #000;
-    }
-    .active-slot { 
-        transform: scale(1.15); 
-        border-color: #00d2ff !important; 
-        box-shadow: 0 0 16px rgba(0, 210, 255, 0.9) !important; 
-    }
-    .step-number { 
-        font-size: 14px; 
-        color: #aee3ff; 
-        font-weight: 700; 
-        font-family: 'Cinzel', serif, sans-serif;
-    }
-
-    /* === МОБИЛЬНАЯ ВЕРСТКА (ФИКС НАЛОЖЕНИЙ И РАЗМЕРОВ) === */
-    @media (max-width: 768px) {
-        /* Шапка: фикс наложения текста, таймеров и кода */
-        .game-header { 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 10px; 
-            padding: 10px 5px; 
-            height: auto; 
-        }
-        .home-logo-link { position: relative; left: 0; transform: none; order: 1; }
-        .home-logo-link img { height: 28px; }
-        .blue-res { order: 2; }
-        .red-res { order: 3; }
-        #room-container { position: relative !important; right: 0 !important; top: 0 !important; transform: none !important; order: 4; margin: 0 !important; font-size: 12px; }
-        #status { width: 100%; order: 5; text-align: center; font-size: 12px; margin-top: 5px; }
-
-        /* Драфт зона: аккуратное разделение пополам */
-        .draft-area { gap: 10px; padding: 0 5px; }
-        .team-side { width: 48%; display: flex; flex-direction: column; align-items: center; }
-        
-        /* Иконки банов/пиков: уменьшаем чтобы ровно влезали в ряд */
-        .sequence-row, .ban-row, .pick-row, .pick-row-small { gap: 4px; justify-content: center; margin-top: 10px; max-width: 100%; }
-        .slot-circle { width: 30px; height: 30px; border-width: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-        .slot-ban.has-char::after { font-size: 16px; }
-        .step-number { font-size: 10px; }
-
-        /* Игрок: компактный вид */
-        .player-header { gap: 6px; }
-        .player-info-wrapper h2 { font-size: 12px; margin: 0; text-align: center; word-break: break-word; }
-        .player-avatar { width: 36px; height: 36px; }
-        .turn-timer { font-size: 22px; }
-
-        /* Пул персонажей: убираем огромную дыру по центру и чуть уменьшаем иконки */
-        .row-gap { display: none; }
-        .row-half { gap: 4px; justify-content: center; }
-        .char-option { width: 36px; height: 36px; }
-        
-        .controls-area { margin: 15px 0; }
-        .confirm-btn { padding: 8px 24px; font-size: 14px; }
-    }
 </style>
 
 <div id="game-screen">
@@ -150,7 +51,6 @@
              <div class="im-label">IMMUNE</div>
              <div class="im-row" id="immunity-icons-row"></div>
          </div>
-         
          <div class="team-side blue-side">
              <div class="player-header">
                  <div id="blue-timer" class="turn-timer">45</div>
@@ -167,7 +67,6 @@
              <div class="ban-row" id="blue-bans"></div>
              <div class="pick-row" id="blue-picks-1"></div>
              <div class="pick-row-small" id="blue-picks-2"></div>
-             <div class="sequence-row" id="blue-sequence"></div> <!-- Под MOBA -->
          </div>
          
          <div class="team-side red-side">
@@ -186,7 +85,6 @@
              <div class="ban-row" id="red-bans"></div>
              <div class="pick-row" id="red-picks-1"></div>
              <div class="pick-row-small" id="red-picks-2"></div>
-             <div class="sequence-row" id="red-sequence"></div> <!-- Под MOBA -->
          </div>
      </div>
 
@@ -236,7 +134,7 @@
         socket.disconnect(); charsData = serverChars;
         const mockState = {
             gameStarted: true, currentTeam: 'none', currentAction: 'none',
-            bans: savedData.bans || [], bluePicks: savedData.bluePicks || [], redPicks: savedData.redPicks || [],
+            bans: savedData.bans, bluePicks: savedData.bluePicks, redPicks: savedData.redPicks,
             blueName: savedData.blueName, redName: savedData.redName,
             blueDiscordId: savedData.blueDiscordId, redDiscordId: savedData.redDiscordId,
             blueAvatar: savedData.blueAvatar, redAvatar: savedData.redAvatar,
@@ -297,7 +195,7 @@
         isDraftFinishedLocal = state.draftFinished;
         currentDraftType = state.draftType || currentDraftType;
         const isMyTurn = (myRole === state.currentTeam);
-        
+
         if (state.draftType === 'abyss_box') {
             const currentBlueHash = (state.blueBox || []).join(',');
             const currentRedHash = (state.redBox || []).join(',');
@@ -367,7 +265,7 @@
         document.getElementById('status').innerText = txt.toUpperCase();
 
         updateImmunityTop(state);
-        renderSlots(state); 
+        renderSlots(state); // Обновленный рендер в старом дизайне
         
         // Логика блокировки персонажей для MOBA 3-Phase
         if (state.draftType === 'moba_3phase') {
@@ -570,142 +468,60 @@
          const currentSchema = DRAFT_RULES[rulesType];
          if (!currentSchema) return;
 
-         if (currentDraftType === 'moba_3phase') {
-             // Скрываем старые ряды для нового режима, показываем только sequence-row
-             document.getElementById('blue-bans').style.display = 'none';
-             document.getElementById('blue-picks-1').style.display = 'none';
-             document.getElementById('blue-picks-2').style.display = 'none';
-             document.getElementById('red-bans').style.display = 'none';
-             document.getElementById('red-picks-1').style.display = 'none';
-             document.getElementById('red-picks-2').style.display = 'none';
-             document.getElementById('blue-sequence').style.display = 'flex';
-             document.getElementById('red-sequence').style.display = 'flex';
-
-             const renderSequence = (team, containerId) => {
-                 const container = document.getElementById(containerId);
-                 if (!container) return;
-                 container.innerHTML = '';
-
-                 let teamPicksIndex = 0;
-                 let teamBansIndex = 0;
-
-                 currentSchema.forEach((step, globalIndex) => {
-                     if (step.team !== team) return;
-                     const isBan = step.type.includes('ban');
-                     const slot = document.createElement('div');
-                     slot.className = 'slot-circle';
-                     
-                     if (isBan) slot.classList.add('slot-ban');
-                     
-                     if (!state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && (globalIndex + 1) === state.stepIndex) {
-                         slot.classList.add('active-slot');
-                     }
-
-                     let charId = null;
-                     if (isBan) {
-                         const teamBans = (state.bans || []).filter(b => b.team === team);
-                         if (teamBans[teamBansIndex]) {
-                             charId = teamBans[teamBansIndex].id;
-                             teamBansIndex++;
-                         }
-                     } else {
-                         const teamPicks = team === 'blue' ? (state.bluePicks || []) : (state.redPicks || []);
-                         if (teamPicks[teamPicksIndex]) {
-                             charId = teamPicks[teamPicksIndex];
-                             teamPicksIndex++;
-                         }
-                     }
-
-                     if (charId) {
-                         if (charId === 'skipped') {
-                             slot.innerHTML = `<span style="color:#aaa; font-size:24px; line-height:48px; display:block; text-align:center;">✖</span>`;
-                         } else {
-                             let allFlat = []; 
-                             Object.values(charsData).forEach(arr => allFlat.push(...arr));
-                             const char = allFlat.find(c => c.id === charId);
-                             if (char) {
-                                slot.innerHTML = `<img src="${char.img}">`;
-                                if (isBan) slot.classList.add('has-char');
-                             }
-                         }
-                     } else {
-                         slot.innerHTML = `<span class="step-number">${globalIndex + 1}</span>`;
-                     }
-                     container.appendChild(slot);
-                 });
-             };
-
-             renderSequence('blue', 'blue-sequence');
-             renderSequence('red', 'red-sequence');
-         } else {
-             // Классические режимы - показываем старые ряды, скрываем sequence-row
-             document.getElementById('blue-sequence').style.display = 'none';
-             document.getElementById('red-sequence').style.display = 'none';
-             document.getElementById('blue-bans').style.display = 'flex';
-             document.getElementById('blue-picks-1').style.display = 'flex';
-             document.getElementById('blue-picks-2').style.display = 'flex';
-             document.getElementById('red-bans').style.display = 'flex';
-             document.getElementById('red-picks-1').style.display = 'flex';
-             document.getElementById('red-picks-2').style.display = 'flex';
-
-             const getStepsFor = (schema, team, type) => schema.map((step, index) => ({ ...step, globalIndex: index + 1 })).filter(step => step.team === team && step.type === type).map(step => ({ num: step.globalIndex, immunity: step.immunity }));
+         const getStepsFor = (schema, team, type) => schema.map((step, index) => ({ ...step, globalIndex: index + 1 })).filter(step => step.team === team && step.type === type).map(step => ({ num: step.globalIndex, immunity: step.immunity }));
+         
+         const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban'); 
+         const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
+         const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick'); 
+         const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
+         
+         const fill = (containerId, items, stepData, isBan) => {
+             const div = document.getElementById(containerId);
+             if(!div) return; 
+             div.innerHTML = ''; 
              
-             const blueBanSteps = getStepsFor(currentSchema, 'blue', 'ban'); 
-             const redBanSteps = getStepsFor(currentSchema, 'red', 'ban');
-             const bluePickSteps = getStepsFor(currentSchema, 'blue', 'pick'); 
-             const redPickSteps = getStepsFor(currentSchema, 'red', 'pick');
-             
-             const fill = (containerId, items, stepData, isBan) => {
-                 const div = document.getElementById(containerId);
-                 if(!div) return; 
-                 div.innerHTML = ''; 
+             stepData.forEach((step, i) => {
+                 const slot = document.createElement('div'); 
+                 slot.className = 'slot-circle';
                  
-                 stepData.forEach((step, i) => {
-                     const slot = document.createElement('div'); 
-                     slot.className = 'slot-circle';
-                     
-                     if (isBan) slot.classList.add('slot-ban');
-                     if (step.immunity) slot.classList.add('slot-immunity-pick');
-                     if (!state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && step.num === state.stepIndex) {
-                         slot.classList.add('active-slot');
-                     }
-      
-                     let charId = null; 
-                     if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
-                     
-                     if (charId) {
-                         if (charId === 'skipped') {
-                             slot.innerHTML = `<span style="color:#aaa; font-size:24px; line-height:48px; display:block; text-align:center;">✖</span>`;
-                         } else {
-                             let allFlat = []; 
-                             Object.values(charsData).forEach(arr => allFlat.push(...arr));
-                             const char = allFlat.find(c => c.id === charId);
-                             if (char) {
-                                slot.innerHTML = `<img src="${char.img}">`;
-                                if (isBan) slot.classList.add('has-char');
-                             }
-                         }
+                 if (isBan) slot.classList.add('slot-ban');
+                 if (step.immunity) slot.classList.add('slot-immunity-pick');
+                 if (!state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && step.num === state.stepIndex) {
+                     slot.classList.add('active-slot');
+                 }
+  
+                 let charId = null; 
+                 if (items[i]) charId = typeof items[i] === 'object' ? items[i].id : items[i];
+                 
+                 if (charId) {
+                     if (charId === 'skipped') {
+                         slot.innerHTML = `<span style="color:#aaa; font-size:20px; line-height:36px; display:block; text-align:center;">✖</span>`;
                      } else {
-                         slot.innerHTML = `<span class="step-number">${step.num}</span>`;
+                         let allFlat = []; 
+                         Object.values(charsData).forEach(arr => allFlat.push(...arr));
+                         const char = allFlat.find(c => c.id === charId);
+                         if (char) slot.innerHTML = `<img src="${char.img}">`;
                      }
-                     div.appendChild(slot);
-                 });
-             };
-             
-             fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true); 
-             fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
-             
-             if (currentDraftType === 'generals_2' || currentDraftType === 'classic') {
-                 fill('blue-picks-1', state.bluePicks, bluePickSteps, false); 
-                 fill('blue-picks-2', [], [], false); 
-                 fill('red-picks-1', state.redPicks, redPickSteps, false); 
-                 fill('red-picks-2', [], [], false);
-             } else {
-                 fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false); 
-                 fill('blue-picks-2', state.bluePicks.slice(5, 9), bluePickSteps.slice(5, 9), false);
-                 fill('red-picks-1', state.redPicks.slice(0, 5), redPickSteps.slice(0, 5), false); 
-                 fill('red-picks-2', state.redPicks.slice(5, 9), redPickSteps.slice(5, 9), false);
-             }
+                 } else {
+                     slot.innerHTML = `<span class="step-number">${step.num}</span>`;
+                 }
+                 div.appendChild(slot);
+             });
+         };
+         
+         fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true); 
+         fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
+         
+         if (currentDraftType === 'generals_2' || currentDraftType === 'classic' || currentDraftType === 'moba_3phase') {
+             fill('blue-picks-1', state.bluePicks, bluePickSteps, false); 
+             fill('blue-picks-2', [], [], false); 
+             fill('red-picks-1', state.redPicks, redPickSteps, false); 
+             fill('red-picks-2', [], [], false);
+         } else {
+             fill('blue-picks-1', state.bluePicks.slice(0, 5), bluePickSteps.slice(0, 5), false); 
+             fill('blue-picks-2', state.bluePicks.slice(5, 9), bluePickSteps.slice(5, 9), false);
+             fill('red-picks-1', state.redPicks.slice(0, 5), redPickSteps.slice(0, 5), false); 
+             fill('red-picks-2', state.redPicks.slice(5, 9), redPickSteps.slice(5, 9), false);
          }
     }
 </script>
