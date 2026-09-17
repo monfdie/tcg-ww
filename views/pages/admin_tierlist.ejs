@@ -29,6 +29,10 @@
     .btn-del-ver { border: 1px solid #ff7f7f; color: #ff7f7f; }
     .btn-del-ver:hover { background: rgba(255, 127, 127, 0.1); }
     
+    /* Стили магической кнопки авторасчета */
+    .btn-magic { border: 1px solid #d4af37; color: #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); }
+    .btn-magic:hover { background: rgba(212, 175, 55, 0.15); box-shadow: 0 0 15px rgba(212, 175, 55, 0.5); }
+
     #capture-tierlist { background-color: #0d111a; border: 2px solid #2a3454; border-radius: 0; overflow: hidden; }
     .tier-row { display: flex; border-bottom: 1px solid #1a2235; min-height: 80px; background-color: rgba(16, 22, 36, 0.6); }
     .tier-row:last-child { border-bottom: none; }
@@ -48,7 +52,6 @@
     .player-card:hover { border-color: #4facfe; background: #202a40; }
     .player-name { color: #e6edf8; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
     
-    /* Кнопка смены тренда */
     .trend-toggle { 
         position: absolute; 
         right: -6px; 
@@ -74,7 +77,6 @@
     .trend-new { color: #00f2fe; border-color: #00f2fe; background: #002b33; font-size: 8px; font-weight: 800; box-shadow: 0 0 6px rgba(0, 242, 254, 0.4); }
     .trend-none { color: #8da4c4; }
 
-    /* Кнопка удаления */
     .delete-btn { position: absolute; left: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%; background: #e74c3c; border: 1px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; z-index: 10; transition: 0.2s; color: #fff; font-family: sans-serif; font-weight: bold; }
     .delete-btn:hover { background: #c0392b; transform: scale(1.1); }
 
@@ -98,13 +100,27 @@
                 <button class="btn-action-outline btn-new-ver" onclick="createNewVersion()">+ NEW</button>
                 <button class="btn-action-outline btn-rename-ver" onclick="renameCurrentVersion()">RENAME</button>
                 <button class="btn-action-outline btn-del-ver" onclick="deleteCurrentVersion()">DELETE</button>
+                
+                <!-- ВОТ КНОПКА МАГИЧЕСКОГО РАСЧЕТА -->
+                <button class="btn-action-outline btn-magic" onclick="autoCalculateTrends()">🪄 AUTO-CALCULATE</button>
             </div>
+            
+            <% if (prevVersion) { %>
+                <div style="font-size: 12px; color: #8da4c4; margin-top: 8px;">
+                    <i>Auto-calculate compares with <b>v<%= prevVersion %></b></i>
+                </div>
+            <% } else { %>
+                <div style="font-size: 12px; color: #ff7f7f; margin-top: 8px;">
+                    <i>No previous version found for auto-calculation.</i>
+                </div>
+            <% } %>
+
         </div>
         <button class="btn-save" onclick="saveTierlist()">PUBLISH V<%= currentVersion %></button>
     </div>
 
     <div style="background: rgba(79, 172, 254, 0.1); border-left: 4px solid #4facfe; padding: 10px 15px; margin-bottom: 20px; color: #fff; font-size: 14px;">
-        <b>Instruction:</b> Drag players to tiers. Click the circle on the right to cycle trends (<b>-</b> &rarr; <b>▲</b> &rarr; <b>▼</b> &rarr; <b style="color:#00f2fe;">NEW</b>). Click Red X on the left to remove a player from THIS version only.
+        <b>Instruction:</b> Drag players to tiers. Click <b>🪄 AUTO-CALCULATE</b> to magically update all arrows based on the previous version, or click the right circle to cycle manually. Red X removes a player from THIS version only.
     </div>
 
     <div id="capture-tierlist">
@@ -155,6 +171,9 @@
 <script>
     let activeVersion = "<%= currentVersion %>";
 
+    // Подгружаем данные предыдущего тирлиста для авторасчета
+    const prevTierlistData = <%- JSON.stringify(locals.prevTierlistData || null) %>;
+
     const zones = ['t0', 't1', 't2', 't3', 't4', 'unassigned'].map(id => document.getElementById(id));
     zones.forEach(zone => {
         new Sortable(zone, { 
@@ -179,6 +198,61 @@
         card.dataset.trend = next;
         btn.className = `trend-toggle trend-${next}`;
         btn.innerText = icon;
+    }
+
+    // ЛОГИКА АВТОМАТИЧЕСКОГО РАСЧЕТА СТРЕЛОК
+    function autoCalculateTrends() {
+        if (!prevTierlistData) {
+            alert("No previous version found! Cannot calculate trends automatically.");
+            return;
+        }
+
+        // Создаем карту весов прошлой версии
+        const weights = { t0: 5, t1: 4, t2: 3, t3: 2, t4: 1, unassigned: 0 };
+        const prevMap = {};
+        
+        for (let tierId in weights) {
+            if (prevTierlistData[tierId]) {
+                prevTierlistData[tierId].forEach(player => {
+                    prevMap[player.name] = weights[tierId];
+                });
+            }
+        }
+
+        // Проходим по текущей расстановке в браузере
+        for (let tierId in weights) {
+            const currentWeight = weights[tierId];
+            const container = document.getElementById(tierId);
+            if (!container) continue;
+
+            container.querySelectorAll('.player-card').forEach(card => {
+                const name = card.dataset.name;
+                const prevWeight = prevMap[name];
+                
+                let nextTrend = 'none';
+                let icon = '-';
+
+                // Если игрок в анэссайнеде, трендов у него нет
+                if (currentWeight > 0) {
+                    if (prevWeight === undefined || prevWeight === 0) {
+                        nextTrend = 'new'; icon = 'NEW';
+                    } else if (currentWeight > prevWeight) {
+                        nextTrend = 'up'; icon = '▲';
+                    } else if (currentWeight < prevWeight) {
+                        nextTrend = 'down'; icon = '▼';
+                    }
+                }
+
+                // Применяем к элементу
+                card.dataset.trend = nextTrend;
+                const btn = card.querySelector('.trend-toggle');
+                btn.className = `trend-toggle trend-${nextTrend}`;
+                btn.innerText = icon;
+            });
+        }
+        
+        // Маленький визуальный фидбек
+        alert("✨ Trends calculated successfully based on the previous version!");
     }
 
     function deletePlayer(btn) {
