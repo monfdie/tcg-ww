@@ -46,7 +46,8 @@
         { "id": "crocodile", "name": "Hydro Crocodile", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/5ea3cab5d35d44096106216727b4670e.png" },
         { "id": "aino", "name": "Aino", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cbe/751c2a66dfbd3fb158870012ff33b364.png" },
         { "id": "dahlia", "name": "Dahlia", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/69d58cbe/3d819990ea80ea82815395ae7d0fef32.png" },
-        { "id": "hcube", "name": "Hydro Cube", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba981/55561420e1c18c08f59e637bfa30366b.png" }
+        { "id": "hcube", "name": "Hydro Cube", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a7ba981/55561420e1c18c08f59e637bfa30366b.png" },
+        { "id": "columbina", "name": "Columbina", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31694/5b79a7f688ef8cba6e67d099886a6e61.png?x-oss-process=image/format,jpg/quality,Q_60" }
     ],
     "pyro": [
         { "id": "diluc", "name": "Diluc", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/ae3db9ad714e4247e905058c516a9172.png" },
@@ -137,7 +138,8 @@
         { "id": "azhdaha", "name": "Azhdaha", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/49a22819d87fa079dc84f38e296837d2.png" },
         { "id": "wolflord", "name": "Wolflord", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/f044aff3ff33df2fc01dc2eb76b7f3e6.png" },
         { "id": "knight", "name": "Serpent Knight", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/6b0da779da3b68ef954646eca97de8d9.png" },
-        { "id": "efg", "name": "Efg", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9ce/91477535a8d52b6a10c3e91cf2819d83.png" }
+        { "id": "efg", "name": "Efg", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6a0cf9ce/91477535a8d52b6a10c3e91cf2819d83.png" },
+        { "id": "illuga", "name": "Illuga", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/6ab31694/bfc7b6b56e4623431a1da7ea77546cd6.png?x-oss-process=image/format,jpg/quality,Q_60" }
     ],
     "dendro": [
         { "id": "collei", "name": "Collei", "img": "https://act-webstatic.hoyoverse.com/hk4e/e20200928calculate/item_icon/67c7f716/51d1c32dae931062c50d12bce3a35b33.png" },
