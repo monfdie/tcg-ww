@@ -29,9 +29,6 @@
     .home-logo-link:hover img { transform: scale(1.1); filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.6)); }
     #room-container { position: absolute !important; right: 20px !important; left: auto !important; top: 50% !important; transform: translateY(-50%) !important; margin: 0 !important; z-index: 100; }
 
-    .box-label { position: absolute; top: -15px; font-size: 11px; color: #8da4c4; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
-    .left-box-label { left: 40px; }
-    .right-box-label { right: 40px; }
 </style>
 
 <div id="game-screen">
@@ -98,20 +95,16 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/draft-rules.js"></script>
+<script src="/player-avatar.js"></script>
 
 <script>
     const socket = io({ transports: ['websocket'] });
     const currentRoom = '<%= roomId %>';
-    const myUserId = sessionStorage.getItem('draft_user_id') || Math.random().toString(36).substring(2);
-    sessionStorage.setItem('draft_user_id', myUserId);
     
     let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
     let charsData = {}, selectedCharId = null, currentState = null;
     let isDraftFinishedLocal = false;
-    let lastBlueBoxHash = '', lastRedBoxHash = '';
     
-    const myRealDiscordId = '<%= locals.user ? locals.user.discordId : "" %>';
-    const myAvatarHash = '<%= locals.user ? locals.user.avatar : "" %>';
     const myNick = <%- locals.user ? JSON.stringify(locals.user.username) : '""' %>;
     const localNick = sessionStorage.getItem('draft_nickname') || 'Player';
     const finalNick = myNick || localNick;
@@ -132,13 +125,14 @@
 
     if (savedData) {
         socket.disconnect(); charsData = serverChars;
+        // Archived drafts use their original pick/ban sequence.
         const mockState = {
             gameStarted: true, currentTeam: 'none', currentAction: 'none',
             bans: savedData.bans, bluePicks: savedData.bluePicks, redPicks: savedData.redPicks,
             blueName: savedData.blueName, redName: savedData.redName,
             blueDiscordId: savedData.blueDiscordId, redDiscordId: savedData.redDiscordId,
             blueAvatar: savedData.blueAvatar, redAvatar: savedData.redAvatar,
-            draftType: savedData.draftType || 'gitcg', immunityPhaseActive: false,
+            draftType: savedData.draftType === 'abyss_box' ? 'gitcg_cup_2' : (savedData.draftType === 'chaos' ? 'classic' : (savedData.draftType || 'gitcg')), immunityPhaseActive: false,
             immunityPool: savedData.immunityPool||[], immunityBans: savedData.immunityBans||[],
             stepIndex: 999, ready: { blue: true, red: true },
             draftFinished: true, isBlueTaken: true, isRedTaken: true
@@ -149,8 +143,8 @@
         updateUI(mockState);
     } else {
         socket.on('connect', () => {
-            if (currentRoom && myUserId) {
-                socket.emit('rejoin_game', { roomId: currentRoom, userId: myUserId, discordId: myRealDiscordId, avatar: myAvatarHash, nickname: finalNick });
+            if (currentRoom) {
+                socket.emit('rejoin_game', { roomId: currentRoom });
             }
         });
         
@@ -170,6 +164,7 @@
         socket.on('game_started', () => { isGameStarted = true; });
         socket.on('game_over', (state) => { updateUI(state); alert("Draft is complete and saved!"); });
         socket.on('error_msg', (msg) => { alert(msg); });
+        socket.on('connect_error', (error) => { alert(error.message); });
         
         socket.on('timer_tick', (data) => {
             const t = typeof data === 'object' ? data.main : data;
@@ -186,8 +181,8 @@
     function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
     function copyRoomCode() { navigator.clipboard.writeText(currentRoom); }
     function skipTurn() { if(currentRoom && !savedData && !isDraftFinishedLocal) socket.emit('skip_action', currentRoom); }
-    function takeSeat(side) { socket.emit('take_seat', { roomId: currentRoom, userId: myUserId, side: side, nickname: finalNick, discordId: myRealDiscordId, avatar: myAvatarHash }); }
-    function leaveSeat() { socket.emit('leave_seat', { roomId: currentRoom, userId: myUserId }); }
+    function takeSeat(side) { socket.emit('take_seat', { roomId: currentRoom, side: side, nickname: finalNick }); }
+    function leaveSeat() { socket.emit('leave_seat', { roomId: currentRoom }); }
     
     function updateUI(state) {
         currentState = state;
@@ -195,15 +190,6 @@
         isDraftFinishedLocal = state.draftFinished;
         currentDraftType = state.draftType || currentDraftType;
         const isMyTurn = (myRole === state.currentTeam);
-
-        if (state.draftType === 'abyss_box') {
-            const currentBlueHash = (state.blueBox || []).join(',');
-            const currentRedHash = (state.redBox || []).join(',');
-            if (currentBlueHash !== lastBlueBoxHash || currentRedHash !== lastRedBoxHash) {
-                lastBlueBoxHash = currentBlueHash; lastRedBoxHash = currentRedHash;
-                renderRows(state);
-            }
-        }
 
         const blueJoinBtn = document.getElementById('join-blue-btn');
         const redJoinBtn = document.getElementById('join-red-btn');
@@ -252,11 +238,12 @@
         document.getElementById('blue-name-display').innerText = state.blueName;
         document.getElementById('red-name-display').innerText = state.redName;
         
-        const blueAv = document.getElementById('blue-avatar');
-        if (state.blueAvatar && state.blueDiscordId && state.isBlueTaken) { blueAv.src = `https://cdn.discordapp.com/avatars/${state.blueDiscordId}/${state.blueAvatar}.png`; blueAv.style.display = 'block'; } else { blueAv.style.display = 'none'; }
-        
-        const redAv = document.getElementById('red-avatar');
-        if (state.redAvatar && state.redDiscordId && state.isRedTaken) { redAv.src = `https://cdn.discordapp.com/avatars/${state.redDiscordId}/${state.redAvatar}.png`; redAv.style.display = 'block'; } else { redAv.style.display = 'none'; }
+        renderPlayerAvatar(document.getElementById('blue-avatar'), {
+            taken: state.isBlueTaken, discordId: state.blueDiscordId, avatar: state.blueAvatar
+        });
+        renderPlayerAvatar(document.getElementById('red-avatar'), {
+            taken: state.isRedTaken, discordId: state.redDiscordId, avatar: state.redAvatar
+        });
         
         let txt = "WAITING...";
         if (state.draftFinished) txt = "DRAFT FINISHED";
@@ -286,7 +273,7 @@
         const immuneChars = state.immunityPool ? state.immunityPool.filter(id => id !== 'skipped') : [];
         const immunityBans = state.immunityBans ? state.immunityBans.filter(id => id !== 'skipped') : [];
         const isImmunePhase = state.immunityPhaseActive;
-        const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
+        const rulesType = currentDraftType;
         const currentStepData = (DRAFT_RULES[rulesType] && DRAFT_RULES[rulesType][state.stepIndex - 1]) ? DRAFT_RULES[rulesType][state.stepIndex - 1] : {};
         const isImmuneStep = currentStepData.immunity === true;
         const isPickPhase = state.currentAction && state.currentAction.includes('pick');
@@ -297,43 +284,6 @@
             if (!state.gameStarted) return; 
 
             const charId = el.getAttribute('data-id');
-            const side = el.id.includes('-left-') ? 'left' : (el.id.includes('-right-') ? 'right' : 'none');
-
-            if (state.draftType === 'abyss_box') {
-                let leftBox = myRole === 'red' ? state.redBox : state.blueBox;
-                let rightBox = myRole === 'red' ? state.blueBox : state.redBox;
-                if (myRole === 'spectator') { leftBox = state.blueBox; rightBox = state.redBox; }
-                 
-                let inBoth = leftBox.includes(charId) && rightBox.includes(charId);
-
-                if (isImmunePhase) {
-                    if (!inBoth) el.classList.add('disabled');
-                    if (immuneChars.includes(charId)) el.classList.add('immunity-highlight', 'disabled');
-                    if (immunityBans.includes(charId)) el.classList.add('disabled');
-                } else {
-                    if (state.bans.some(b => b.id === charId)) el.classList.add('disabled');
-                    
-                    if (isPickPhase) {
-                        if (side === 'right') el.classList.add('disabled'); 
-                        if (!isImmuneStep && immuneChars.includes(charId)) el.classList.add('disabled');
-                    } else {
-                        if (immuneChars.includes(charId)) el.classList.add('disabled');
-                    }
-                    
-                    if (state.bluePicks.includes(charId) || state.redPicks.includes(charId)) {
-                        if (!immuneChars.includes(charId)) el.classList.add('disabled');
-                        else {
-                            if (side === 'left') {
-                                const myPicks = myRole === 'red' ? state.redPicks : state.bluePicks;
-                                if (myPicks.includes(charId)) el.classList.add('disabled');
-                            } else if (side === 'right') {
-                                const oppPicks = myRole === 'red' ? state.bluePicks : state.redPicks;
-                                if (oppPicks.includes(charId)) el.classList.add('disabled');
-                            }
-                        }
-                    }
-                }
-            } else {
                 if (isImmunePhase) {
                     if (immuneChars.includes(charId)) el.classList.add('immunity-highlight', 'disabled');
                     if (immunityBans.includes(charId)) el.classList.add('disabled');
@@ -349,7 +299,6 @@
                         if (myRole === 'red') el.classList.add('disabled'); else if (!immuneChars.includes(charId)) el.classList.add('disabled');
                     }
                 }
-            }
         });
     }
 
@@ -357,18 +306,8 @@
         const container = document.getElementById('char-pool-container');
         container.innerHTML = '';
         
-        if (currentDraftType === 'abyss_box') {
-            const labels = document.createElement('div');
-            labels.style.position = 'relative'; labels.style.width = '100%'; labels.style.height = '15px';
-            labels.innerHTML = `
-                <div class="box-label left-box-label">${myRole === 'red' ? 'PLAYER 2 BOX' : (myRole === 'spectator' ? 'BLUE BOX' : 'MY BOX')}</div>
-                <div class="box-label right-box-label">${myRole === 'red' ? 'PLAYER 1 BOX' : (myRole === 'spectator' ? 'RED BOX' : 'OPPONENT BOX')}</div>
-            `;
-            container.appendChild(labels);
-        }
-
         const ladder = document.createElement('div'); ladder.className = 'ladder-container';
-        const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
+        const rulesType = currentDraftType;
         const schema = DRAFT_RULES[rulesType];
         
         if(schema) {
@@ -384,28 +323,17 @@
             container.appendChild(ladder);
         }
 
-        const renderData = (currentDraftType === 'chaos' && state && state.chaosPool) ? state.chaosPool : charsData;
-
         ['cryo','hydro','pyro','electro','anemo','geo','dendro'].forEach(elem => {
             const row = document.createElement('div'); row.className = `element-row row-${elem}`;
-            const chars = renderData[elem];
+            const chars = charsData[elem];
             if(!chars || chars.length === 0) return; 
             
             const l = document.createElement('div'); l.className = 'row-half left-half';
             const r = document.createElement('div'); r.className = 'row-half right-half';
             
-            if (currentDraftType === 'abyss_box' && state) {
-                let leftIds = state.blueBox || [];
-                let rightIds = state.redBox || [];
-                if (myRole === 'red') { leftIds = state.redBox || []; rightIds = state.blueBox || []; }
-                
-                chars.filter(c => leftIds.includes(c.id)).forEach(c => l.appendChild(createChar(c, 'left')));
-                chars.filter(c => rightIds.includes(c.id)).forEach(c => r.appendChild(createChar(c, 'right')));
-            } else {
-                const mid = Math.ceil(chars.length/2);
-                chars.slice(0,mid).forEach(c => l.appendChild(createChar(c, 'left')));
-                chars.slice(mid).forEach(c => r.appendChild(createChar(c, 'right')));
-            }
+            const mid = Math.ceil(chars.length/2);
+            chars.slice(0,mid).forEach(c => l.appendChild(createChar(c, 'left')));
+            chars.slice(mid).forEach(c => r.appendChild(createChar(c, 'right')));
      
             const gap = document.createElement('div'); gap.className = 'row-gap';
             row.appendChild(l); row.appendChild(gap); row.appendChild(r);
@@ -423,11 +351,6 @@
         el.onclick = () => {
             if(!isGameStarted || myRole === 'spectator' || savedData || isDraftFinishedLocal) return;
             
-            if (currentDraftType === 'abyss_box' && currentState) {
-                const isPick = currentState.currentAction.includes('pick');
-                if (isPick && side === 'right') return; 
-            }
-
             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
             selectedCharId = char.id; 
             el.classList.add('selected-pending');
@@ -446,7 +369,7 @@
 
     function updateImmunityTop(state) {
          const topDisp = document.getElementById('immunity-top-display');
-         if(state.draftType !== 'gitcg_cup_2' && state.draftType !== 'abyss_box') { topDisp.style.display = 'none'; return; }
+         if(state.draftType !== 'gitcg_cup_2') { topDisp.style.display = 'none'; return; }
          topDisp.style.display = 'flex';
          const row = document.getElementById('immunity-icons-row'); row.innerHTML = '';
          const bans = state.immunityBans || []; const picks = state.immunityPool || [];
@@ -464,7 +387,7 @@
     }
 
     function renderSlots(state) {
-         const rulesType = (currentDraftType === 'chaos') ? 'classic' : currentDraftType;
+         const rulesType = currentDraftType;
          const currentSchema = DRAFT_RULES[rulesType];
          if (!currentSchema) return;
 

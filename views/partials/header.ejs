@@ -8,9 +8,12 @@
     <link rel="icon" type="image/png" href="/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
+    <% if (!locals.hideSidebar && !(locals.path || '').startsWith('/game/')) { %>
+    <link rel="stylesheet" href="/site-theme.css">
+    <% } %>
     <meta name="referrer" content="no-referrer">
 </head>
-<body>
+<body<% if (!locals.hideSidebar && !(locals.path || '').startsWith('/game/')) { %> class="modern-site"<% } %>>
 
 <div class="app-container">
     
@@ -24,6 +27,7 @@
             <a href="/tierlist" class="<%= locals.path === '/tierlist' ? 'active' : '' %>" style="color: #4facfe;">Tierlist</a>
             <a href="/tournaments" class="<%= locals.path === '/tournaments' ? 'active' : '' %>">Tournaments</a>            
             <a href="/history" class="<%= locals.path === '/history' ? 'active' : '' %>">History</a>
+            <a href="/bets" class="<%= locals.path && locals.path.startsWith('/bets') ? 'active' : '' %>">Bets</a>
             <% if (locals.isAdmin) { %>
                 <div style="margin: 15px 15px 5px 15px; border-top: 1px solid #2a3454;"></div>
                 

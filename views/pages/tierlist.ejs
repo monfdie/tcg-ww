@@ -63,26 +63,6 @@
     .player-name { color: #e6edf8; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; width: 100%; }
     
     /* Индикаторы стрелочек и плашки NEW */
-    .trend-icon { position: absolute; right: -6px; top: -6px; font-size: 11px; font-weight: bold; background: #0d111a; border: 1px solid #2e3b52; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
-    .trend-up { color: #2ecc71; border-color: #2ecc71; }
-    .trend-down { color: #e74c3c; border-color: #e74c3c; }
-    
-    .trend-new {
-        position: absolute;
-        right: -8px;
-        top: -7px;
-        font-size: 9px;
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        background: #002b33;
-        color: #00f2fe;
-        border: 1px solid #00f2fe;
-        border-radius: 10px;
-        padding: 1px 5px;
-        box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
-    }
-    .trend-none { display: none; }
-
     .pool-section { margin-top: 30px; background: rgba(16, 22, 36, 0.6); border: 1px dashed #3c4b70; border-radius: 4px; padding: 15px; display: none; }
     .pool-title { color: #8da4c4; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
     .pool-dropzone { display: flex; flex-wrap: wrap; gap: 8px; min-height: 90px; }
@@ -93,6 +73,7 @@
     .add-player-box input { flex: 1; padding: 12px; background: #0b0d17; color: #fff; border: 1px solid #3c4b70; border-radius: 4px; outline: none; }
     .add-player-box input:focus { border-color: #4facfe; }
 </style>
+<link rel="stylesheet" href="/tierlist-trends.css">
 
 <div class="tierlist-wrapper">
     <div class="tl-header">
@@ -127,9 +108,9 @@
                     <div class="player-card">
                         <span class="player-name"><%= player.name %></span>
                         <% if (player.trend === 'new') { %>
-                            <div class="trend-new">NEW</div>
+                            <span class="trend-new" title="New entry" aria-label="New entry">NEW</span>
                         <% } else { %>
-                            <div class="trend-icon trend-<%= player.trend %>"><%= player.trend === 'up' ? '▲' : (player.trend === 'down' ? '▼' : '') %></div>
+                            <span class="trend-icon trend-<%= player.trend || 'none' %>" title="<%= player.trend === 'up' ? 'Moved up' : player.trend === 'down' ? 'Moved down' : '' %>" aria-label="<%= player.trend === 'up' ? 'Moved up' : player.trend === 'down' ? 'Moved down' : 'Unchanged' %>"><%= player.trend === 'up' ? '↑' : (player.trend === 'down' ? '↓' : '') %></span>
                         <% } %>
                     </div>
                 <% }) %>

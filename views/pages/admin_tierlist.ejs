@@ -52,31 +52,6 @@
     .player-card:hover { border-color: #4facfe; background: #202a40; }
     .player-name { color: #e6edf8; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
     
-    .trend-toggle { 
-        position: absolute; 
-        right: -6px; 
-        top: -6px; 
-        min-width: 18px; 
-        height: 18px; 
-        border-radius: 10px; 
-        background: #0d111a; 
-        border: 1px solid #2e3b52; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        font-size: 10px; 
-        font-weight: bold; 
-        cursor: pointer; 
-        z-index: 10; 
-        transition: 0.2s;
-        padding: 0 3px;
-    }
-    .trend-toggle:hover { transform: scale(1.1); }
-    .trend-up { color: #2ecc71; border-color: #2ecc71; }
-    .trend-down { color: #e74c3c; border-color: #e74c3c; }
-    .trend-new { color: #00f2fe; border-color: #00f2fe; background: #002b33; font-size: 8px; font-weight: 800; box-shadow: 0 0 6px rgba(0, 242, 254, 0.4); }
-    .trend-none { color: #8da4c4; }
-
     .delete-btn { position: absolute; left: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%; background: #e74c3c; border: 1px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; z-index: 10; transition: 0.2s; color: #fff; font-family: sans-serif; font-weight: bold; }
     .delete-btn:hover { background: #c0392b; transform: scale(1.1); }
 
@@ -85,6 +60,7 @@
     .add-player-box input { flex: 1; padding: 12px; background: #0b0d17; color: #fff; border: 1px solid #3c4b70; border-radius: 4px; outline: none; }
     .add-player-box input:focus { border-color: #4facfe; }
 </style>
+<link rel="stylesheet" href="/tierlist-trends.css">
 
 <div class="tierlist-wrapper">
     <div class="tl-header">
@@ -132,8 +108,8 @@
             <div class="tier-dropzone" id="<%= tier %>">
                 <% tierlistData[tier].forEach(player => { 
                     let trendText = '-';
-                    if (player.trend === 'up') trendText = '▲';
-                    else if (player.trend === 'down') trendText = '▼';
+                    if (player.trend === 'up') trendText = '↑';
+                    else if (player.trend === 'down') trendText = '↓';
                     else if (player.trend === 'new') trendText = 'NEW';
                 %>
                     <div class="player-card" data-name="<%= player.name %>" data-trend="<%= player.trend || 'none' %>">
@@ -190,8 +166,8 @@
         let next = 'none'; 
         let icon = '-';
         
-        if (current === 'none') { next = 'up'; icon = '▲'; }
-        else if (current === 'up') { next = 'down'; icon = '▼'; }
+        if (current === 'none') { next = 'up'; icon = '↑'; }
+        else if (current === 'up') { next = 'down'; icon = '↓'; }
         else if (current === 'down') { next = 'new'; icon = 'NEW'; }
         else if (current === 'new') { next = 'none'; icon = '-'; }
 
@@ -237,9 +213,9 @@
                     if (prevWeight === undefined || prevWeight === 0) {
                         nextTrend = 'new'; icon = 'NEW';
                     } else if (currentWeight > prevWeight) {
-                        nextTrend = 'up'; icon = '▲';
+                        nextTrend = 'up'; icon = '↑';
                     } else if (currentWeight < prevWeight) {
-                        nextTrend = 'down'; icon = '▼';
+                        nextTrend = 'down'; icon = '↓';
                     }
                 }
 

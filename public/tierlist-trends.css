@@ -1,0 +1,41 @@
+/* Compact movement markers shared by the tierlist and its editor. */
+.tierlist-wrapper :is(.trend-icon, .trend-new, .trend-toggle) {
+    position: absolute;
+    top: -9px;
+    right: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 1px solid #65738b;
+    border-radius: 999px;
+    background: #142031;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    user-select: none;
+}
+.tierlist-wrapper .trend-up { color: #75f0a5; border-color: #47bc7c; background: #143027; }
+.tierlist-wrapper .trend-down { color: #ff9b9b; border-color: #db707a; background: #361e2a; }
+.tierlist-wrapper :is(.trend-up, .trend-down) {
+    font-weight: 800;
+    -webkit-text-stroke: .35px currentColor;
+}
+.tierlist-wrapper .trend-new {
+    color: #a0e7ff;
+    border-color: #56b9dd;
+    background: #163447;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .6px;
+    padding: 0 7px;
+}
+.tierlist-wrapper .trend-icon.trend-none { display: none; }
+.tierlist-wrapper .trend-toggle { cursor: pointer; z-index: 10; transition: background .15s, border-color .15s; }
+.tierlist-wrapper .trend-toggle.trend-none { color: #8190a6; }
+.tierlist-wrapper .trend-toggle:hover { background: #243247; border-color: #71819a; }

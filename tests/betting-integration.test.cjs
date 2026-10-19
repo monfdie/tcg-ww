@@ -1,0 +1,186 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const mongoose = require('mongoose');
+const { randomUUID } = require('node:crypto');
+const service = require('../lib/betting-service');
+const { Event, Wallet, Bet, Ledger } = require('../models/Betting');
+const User = require('../models/User');
+
+// Explicit opt-in. Every run uses a brand new database, never the application's database.
+test('betting MongoDB transactions: concurrent spending, fixed odds, one side, weekly bonus, recovery and refunds', { skip: process.env.BETTING_INTEGRATION !== '1', timeout: 120000 }, async () => {
+    require('dotenv').config();
+    const database = 'betting_test_' + randomUUID().replaceAll('-', '').slice(0, 20);
+    let httpServer;
+    try {
+        await mongoose.connect(process.env.MONGO_URI, { dbName: database, serverSelectionTimeoutMS: 15000 });
+        await service.initialize();
+        const [alice, bob] = await User.create([{ discordId: 'alice', username: 'Alice' }, { discordId: 'bob', username: 'Bob' }]);
+        await Promise.all([service.walletFor(alice._id), service.walletFor(alice._id), service.walletFor(bob._id)]);
+        assert.equal(await Ledger.countDocuments({ user: alice._id, kind: 'start' }), 1);
+        const event = await Event.create({ title: 'Test', sides: ['A', 'B'], odds: [180, 200], status: 'open', createdBy: alice._id });
+        const request = randomUUID();
+        await Promise.all([service.place(alice._id, event._id, 0, 100, 180, request), service.place(alice._id, event._id, 0, 100, 180, request)]);
+        assert.equal(await Bet.countDocuments({ user: alice._id }), 1);
+        await assert.rejects(service.place(alice._id, event._id, 1, 10, 200, randomUUID()), /only/);
+        await Event.updateOne({ _id: event._id }, { $set: { odds: [210, 200] }, $inc: { version: 1 } });
+        await assert.rejects(service.place(alice._id, event._id, 0, 100, 180, randomUUID()), /changed/);
+        await service.place(alice._id, event._id, 0, 100, 210, randomUUID());
+        const concurrent = await Promise.allSettled([service.place(bob._id, event._id, 1, 700, 200, randomUUID()), service.place(bob._id, event._id, 1, 700, 200, randomUUID())]);
+        assert.equal(concurrent.filter(r => r.status === 'fulfilled').length, 1);
+        assert.equal((await Wallet.findOne({ user: bob._id })).balance, 300);
+        assert.equal((await Wallet.findOne({ user: alice._id })).wealth, 1000);
+        await Event.updateOne({ _id: event._id }, { $set: { status: 'closed' }, $inc: { version: 1 } });
+        await assert.rejects(service.place(alice._id, event._id, 0, 10, 210, randomUUID()), /closed/);
+        const closed = await Event.findById(event._id);
+        await service.decide(event._id, 0, false, alice._id, closed.version);
+        await assert.rejects(service.decide(event._id, 1, false, alice._id, closed.version));
+        // Process one payment twice, then resume the remaining payments as after a restart.
+        const first = await Bet.findOne({ event: event._id });
+        await Promise.all([service.settleOne(first._id), service.settleOne(first._id)]);
+        await service.maintenance();
+        await service.maintenance();
+        assert.equal((await Wallet.findOne({ user: alice._id })).balance, 1190);
+        assert.equal((await Wallet.findOne({ user: alice._id })).pending, 0);
+        assert.equal((await Wallet.findOne({ user: bob._id })).wealth, 300);
+        assert.equal((await Event.findById(event._id)).status, 'settled');
+        assert.equal(await Ledger.countDocuments({ kind: 'won' }), 2);
+        const bonuses = await Promise.allSettled([service.claim(alice._id), service.claim(alice._id)]);
+        assert.equal(bonuses.filter(r => r.status === 'fulfilled').length, 1);
+        assert.equal((await Wallet.findOne({ user: alice._id })).balance, 1440);
+        const grantRequest = randomUUID();
+        await Promise.all([service.grant(bob._id, 100, 'Test grant', alice._id, grantRequest), service.grant(bob._id, 100, 'Test grant', alice._id, grantRequest)]);
+        assert.equal((await Wallet.findOne({ user: bob._id })).balance, 400);
+        const refund = await Event.create({ title: 'Cancel', sides: ['A', 'B'], odds: [180, 200], status: 'open', createdBy: alice._id });
+        await service.place(bob._id, refund._id, 1, 50, 200, randomUUID());
+        const preview = await Event.findById(refund._id);
+        await service.decide(refund._id, null, true, alice._id, preview.version);
+        await service.maintenance();
+        assert.equal((await Wallet.findOne({ user: bob._id })).balance, 400);
+        assert.equal((await Event.findById(refund._id)).status, 'cancelled');
+        const expired = await Event.create({ title: 'Expired', sides: ['A', 'B'], odds: [180, 200], status: 'open', closesAt: new Date(Date.now() - 1000), createdBy: alice._id });
+        await assert.rejects(service.place(bob._id, expired._id, 1, 50, 200, randomUUID()), /closed/);
+        await service.maintenance();
+        assert.equal((await Event.findById(expired._id)).status, 'closed');
+
+        // Exercise the real router and forms with isolated session/auth fixtures.
+        const express = require('express');
+        const session = require('express-session');
+        const app = express();
+        app.set('view engine', 'ejs');
+        app.set('views', require('node:path').join(__dirname, '../views'));
+        app.use(express.urlencoded({ extended: true }));
+        app.use(session({ secret: 'isolated-betting-test', resave: false, saveUninitialized: false }));
+        app.use((req, res, next) => {
+            req.user = req.headers['x-test-user'] === 'alice' ? { ...alice.toObject(), role: 'admin' } : req.headers['x-test-user'] === 'bob' ? bob : null;
+            next();
+        });
+        app.use('/bets', require('../routes/betting'));
+        httpServer = await new Promise(resolve => { const server = app.listen(0, '127.0.0.1', () => resolve(server)); });
+        const base = `http://127.0.0.1:${httpServer.address().port}`;
+        const cookies = {};
+        async function http(url, user, body) {
+            const headers = { 'x-test-user': user || '', ...(cookies[user] ? { cookie: cookies[user] } : {}) };
+            if (body) headers['content-type'] = 'application/x-www-form-urlencoded';
+            const response = await fetch(base + url, { method: body ? 'POST' : 'GET', headers, body: body ? new URLSearchParams(body) : undefined, redirect: 'manual' });
+            const cookie = response.headers.get('set-cookie');
+            if (cookie) cookies[user] = cookie.split(';')[0];
+            return { status: response.status, body: await response.text(), location: response.headers.get('location') };
+        }
+        assert.equal((await http('/bets/admin', 'bob')).status, 403);
+        assert.equal((await http('/bets/admin')).status, 403);
+        const adminPage = await http('/bets/admin', 'alice');
+        assert.doesNotMatch(adminPage.body, /Admin activity|\/bets\/admin\/audit/);
+        assert.equal((await http('/bets/admin/audit', 'alice')).status, 404);
+        const csrf = adminPage.body.match(/name="csrf" value="([^"]+)"/)[1];
+        assert.equal((await http('/bets/admin/settings', 'alice', { starting: 1, weekly: 1 })).status, 403);
+        const newId = new mongoose.Types.ObjectId().toString();
+        const creation = { csrf, id: newId, title: 'HTTP event', description: 'Test', side0: 'A', side1: 'B', odds0: '1.80', odds1: '2', closesAt: '' };
+        assert.equal((await http('/bets/admin/create', 'alice', creation)).status, 303);
+        assert.equal((await http('/bets/admin/create', 'alice', creation)).status, 303);
+        assert.equal(await Event.countDocuments({ _id: newId }), 1);
+        assert.equal((await http(`/bets/event/${newId}`, 'bob')).status, 404);
+        assert.equal((await http(`/bets/event/${newId}/publish`, 'alice', { csrf, version: 0 })).status, 303);
+        const bobPage = await http(`/bets/event/${newId}`, 'bob');
+        const bobCsrf = bobPage.body.match(/name="csrf" value="([^"]+)"/)[1];
+        assert.equal((await http(`/bets/event/${newId}/bet`, 'bob', { csrf: bobCsrf, request: randomUUID(), side: 0, amount: 100, odds: 180 })).status, 303);
+        assert.equal((await http(`/bets/event/${newId}/close`, 'bob', { csrf: bobCsrf })).status, 403);
+        assert.equal((await http(`/bets/event/${newId}/close`, 'alice', { csrf })).status, 303);
+        const previewPage = await http(`/bets/event/${newId}/confirm?winner=0`, 'alice');
+        assert.equal(previewPage.status, 200);
+        assert.match(previewPage.body, /180/);
+        const version = (await Event.findById(newId)).version;
+        assert.equal((await http(`/bets/event/${newId}/decide`, 'alice', { csrf, version, winner: 0, cancelled: '0' })).status, 303);
+        // The route starts a background pass; wait for that pass without running a second worker.
+        for (let i = 0; i < 100 && (await Event.findById(newId)).status === 'settling'; i++) await new Promise(r => setTimeout(r, 50));
+        assert.equal((await Event.findById(newId)).status, 'settled');
+        assert.equal((await Wallet.findOne({ user: bob._id })).balance, 480);
+        const history = await http('/bets/mine?status=won', 'bob');
+        assert.equal(history.status, 200);
+        assert.match(history.body, /HTTP event/);
+        const removal = randomUUID();
+        await Promise.all([service.removePoints(bob._id, 80, 'Correction', alice._id, removal), service.removePoints(bob._id, 80, 'Correction', alice._id, removal)]);
+        assert.equal((await Wallet.findOne({ user: bob._id })).balance, 400);
+        assert.equal((await Wallet.findOne({ user: bob._id })).wealth, 400);
+        assert.equal(await Ledger.countDocuments({ user: bob._id, kind: 'remove' }), 1);
+        await assert.rejects(service.removePoints(bob._id, 401, 'Too much', alice._id, randomUUID()), /Insufficient/);
+        assert.equal((await http('/bets/admin/points', 'bob')).status, 403);
+        assert.match((await http('/bets/admin/points', 'alice')).body, /Find player/);
+        const search = await http('/bets/admin/points?q=bo', 'alice');
+        assert.match(search.body, /Bob/);
+        assert.match(search.body, /400/);
+        assert.match((await http('/bets/admin/points?q=.*', 'alice')).body, /No players found/);
+        assert.match((await http(`/bets/admin/points?player=${bob._id}`, 'alice')).body, /Review deduction/);
+        assert.equal((await http(`/bets/admin/event/${newId}/bets`, 'bob')).status, 403);
+        assert.equal((await http(`/bets/admin/event/${newId}/bets`)).status, 403);
+        const participantPage = await http(`/bets/admin/event/${newId}/bets`, 'alice');
+        assert.match(participantPage.body, /Bob/);
+        assert.match(participantPage.body, /100 ◆ total/);
+        assert.match(participantPage.body, /1 bets/);
+        assert.doesNotMatch((await http(`/bets/event/${newId}`, 'bob')).body, /View all bets|Admin only/);
+        assert.equal((await http('/bets/admin/remove', 'alice', { csrf, discordId: 'bob', amount: 10, reason: 'Bypass' })).status, 400);
+        const removalPreview = await http('/bets/admin/remove/preview', 'alice', { csrf, discordId: 'bob', amount: 20, reason: 'HTTP correction' });
+        assert.equal(removalPreview.status, 200);
+        assert.match(removalPreview.body, /Balance after/);
+        assert.match(removalPreview.body, /380/);
+        assert.equal((await Wallet.findOne({ user: bob._id })).balance, 400);
+        const token = removalPreview.body.match(/name="token" value="([^"]+)"/)[1];
+        assert.equal((await http('/bets/admin/remove', 'alice', { csrf, token, confirmed: '1', amount: 999 })).status, 303);
+        assert.equal((await Wallet.findOne({ user: bob._id })).balance, 380);
+        assert.equal((await http('/bets/admin/remove', 'alice', { csrf, token, confirmed: '1' })).status, 400);
+        const stale = await http('/bets/admin/remove/preview', 'alice', { csrf, discordId: 'bob', amount: 20, reason: 'Stale correction' });
+        const staleToken = stale.body.match(/name="token" value="([^"]+)"/)[1];
+        await service.grant(bob._id, 20, 'Balance changed', alice._id, randomUUID());
+        assert.equal((await http('/bets/admin/remove', 'alice', { csrf, token: staleToken, confirmed: '1' })).status, 400);
+        assert.equal((await Wallet.findOne({ user: bob._id })).balance, 400);
+        assert.equal((await http(`/bets/event/${newId}/delete`, 'alice', { csrf })).status, 400);
+        assert.equal((await http(`/bets/event/${newId}/delete-confirm`, 'alice')).status, 200);
+        const completed = await Bet.findOne({ user: bob._id, event: newId });
+        assert.equal((await http(`/bets/history/${completed._id}/delete-confirm`, 'bob')).status, 403);
+        assert.equal((await http(`/bets/history/${completed._id}/delete`, 'alice', { csrf })).status, 400);
+        assert.notEqual((await Bet.findById(completed._id)).historyDeleted, true);
+        assert.equal((await http(`/bets/history/${completed._id}/delete`, 'bob', { csrf: bobCsrf, confirmed: '1' })).status, 403);
+        assert.notEqual((await Bet.findById(completed._id)).historyDeleted, true);
+        assert.doesNotMatch((await http('/bets/mine', 'bob')).body, new RegExp(`/bets/history/${completed._id}/delete`));
+        assert.equal((await http(`/bets/event/${newId}/delete`, 'bob', { csrf: bobCsrf })).status, 403);
+        assert.equal((await http(`/bets/event/${newId}/delete`, 'alice', { csrf, confirmed: '1' })).status, 303);
+        assert.doesNotMatch((await http('/bets/admin', 'alice')).body, /HTTP event/);
+        assert.match((await http(`/bets/admin/event/${newId}/bets`, 'alice')).body, /Bob/);
+        assert.equal((await Wallet.findOne({ user: bob._id })).balance, 400);
+        for (let i = 0; i < 11; i++) {
+            const rich = await User.create({ discordId: `rich-${i}`, username: `Rich ${i}` });
+            await service.grant(rich._id, 1000, 'Leaderboard fixture', alice._id, randomUUID());
+        }
+        assert.equal(await mongoose.connection.db.listCollections({ name: 'bettingaudits' }).hasNext(), false);
+        const leaderboard = await http('/bets/leaders', 'alice');
+        assert.equal(leaderboard.status, 200);
+        assert.match(leaderboard.body, /Your rank: <strong>#12<\/strong>/);
+    } catch (error) {
+        console.error('Integration failure:', error.name, error.code, error.message.replace(/mongodb(?:\+srv)?:\/\/\S+/g, '[redacted]'));
+        throw error;
+    } finally {
+        if (httpServer) await new Promise(resolve => httpServer.close(resolve));
+        try {
+            if (mongoose.connection.readyState === 1 && mongoose.connection.name === database && database.startsWith('betting_test_')) await mongoose.connection.dropDatabase();
+        } finally { await mongoose.disconnect(); }
+    }
+});

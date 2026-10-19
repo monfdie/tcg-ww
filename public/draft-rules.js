@@ -77,9 +77,6 @@ gitcg2[25].immunity = true;
 gitcg2[27].immunity = true;
 DRAFT_RULES['gitcg_cup_2'] = gitcg2;
 
-// Abyss Box
-DRAFT_RULES['abyss_box'] = gitcg2;
-
 const IMMUNITY_ORDER = [
     { team: 'blue', type: 'immunity_ban' },
     { team: 'red', type: 'immunity_ban' },

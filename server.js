@@ -8,6 +8,8 @@ const MongoStore = require('connect-mongo');
 const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const mongoose = require('mongoose');
+const { randomBytes } = require('node:crypto');
+const { ensureGuestIdentity, socketIdentity } = require('./lib/socket-identity');
 
 const User = require('./models/User');
 const Match = require('./models/Match');
@@ -23,12 +25,17 @@ mongoose.connect(process.env.MONGO_URI)
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // --- 2. MIDDLEWARE ---
-app.use(session({
-    secret: 'gitcg-super-secret-key',
+const sessionMiddleware = session({
+    secret: process.env.SESSION_SECRET || randomBytes(32).toString('hex'),
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI })
-}));
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+    cookie: { httpOnly: true, sameSite: 'lax' }
+});
+app.use(sessionMiddleware);
+app.use(ensureGuestIdentity);
+io.engine.use(sessionMiddleware);
+io.use(socketIdentity(User));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -76,38 +83,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 const CHARACTERS_BY_ELEMENT = require('./characters.json');
 const { DRAFT_RULES, IMMUNITY_ORDER } = require('./public/draft-rules.js'); 
 
-// --- ФУНКЦИИ ДЛЯ CHAOS DRAFT ---
-function shuffleArray(array) {
-    let arr = [...array];
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
-
-function generateChaosPool() {
-    let pool = { cryo: [], hydro: [], pyro: [], electro: [], anemo: [], geo: [], dendro: [] };
-    let remainingToPickFrom = [];
-    
-    for (let element in CHARACTERS_BY_ELEMENT) {
-        let shuffled = shuffleArray(CHARACTERS_BY_ELEMENT[element]);
-        pool[element] = shuffled.slice(0, 4);
-        let leftovers = shuffled.slice(5).map(c => ({ ...c, element }));
-        remainingToPickFrom = remainingToPickFrom.concat(leftovers);
-    }
-    
-    remainingToPickFrom = shuffleArray(remainingToPickFrom);
-    let extraChars = remainingToPickFrom.slice(0, 7);
-    
-    extraChars.forEach(c => {
-        const charData = { id: c.id, name: c.name, img: c.img };
-        pool[c.element].push(charData);
-    });
-    
-    return pool;
-}
-
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 
@@ -115,11 +90,15 @@ const sessions = {};
 
 // --- 3. SOCKET.IO LOGIC ---
 io.on('connection', (socket) => {
+    const identity = socket.data.identity;
+    const userId = identity.id;
     
-    socket.on('create_game', ({ nickname, draftType, userId, discordId, avatar }) => {
+    socket.on('create_game', ({ draftType } = {}) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = draftType || 'gitcg';
-        const orderType = type === 'chaos' ? 'classic' : type; 
+        if (!Object.hasOwn(DRAFT_RULES, type)) {
+            return socket.emit('error_msg', 'Unsupported draft mode');
+        }
         
         // Раздельные стартовые таймеры: 30 / 130 для moba_3phase, 45 / 180 для остальных
         const isMoba = type === 'moba_3phase';
@@ -128,20 +107,16 @@ io.on('connection', (socket) => {
 
         sessions[roomId] = {
             id: roomId, 
-            bluePlayer: null, blueUserId: null, blueDiscordId: null, blueAvatar: null, blueBox: [],
-            redPlayer: null, redUserId: null, redDiscordId: null, redAvatar: null, redBox: [],
+            bluePlayer: null, blueUserId: null, blueDiscordId: null, blueAvatar: null,
+            redPlayer: null, redUserId: null, redDiscordId: null, redAvatar: null,
             spectators: [socket.id], blueName: 'Waiting...', redName: 'Waiting...',
-            draftType: type, draftOrder: DRAFT_RULES[orderType], gameStarted: false,
+            draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
             immunityPhaseActive: false, immunityStepIndex: 0, immunityPool: [], immunityBans: [],
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: baseTimer, blueReserve: baseReserve, redReserve: baseReserve, timerInterval: null,
             bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false },
             draftFinished: false, finishedAt: null
         };
-
-        if (type === 'chaos') {
-            sessions[roomId].chaosPool = generateChaosPool();
-        }
 
         socket.join(roomId);
         socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
@@ -157,7 +132,7 @@ io.on('connection', (socket) => {
         socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    socket.on('rejoin_game', ({ roomId, userId, nickname, discordId, avatar }) => { 
+    socket.on('rejoin_game', ({ roomId } = {}) => {
         const session = sessions[roomId];
         if (!session) return socket.emit('error_msg', 'Session expired');
         
@@ -165,9 +140,9 @@ io.on('connection', (socket) => {
         let role = 'spectator';
         
         if (session.blueUserId === userId) { 
-            session.bluePlayer = socket.id; session.blueDiscordId = discordId || session.blueDiscordId; session.blueAvatar = avatar || session.blueAvatar; role = 'blue'; 
+            session.bluePlayer = socket.id; role = 'blue';
         } else if (session.redUserId === userId) { 
-            session.redPlayer = socket.id; session.redDiscordId = discordId || session.redDiscordId; session.redAvatar = avatar || session.redAvatar; role = 'red'; 
+            session.redPlayer = socket.id; role = 'red';
         } else {
             session.spectators.push(socket.id);
         }
@@ -176,65 +151,48 @@ io.on('connection', (socket) => {
         socket.emit('init_game', { roomId, role, state: getPublicState(session), chars: CHARACTERS_BY_ELEMENT });
     });
 
-    socket.on('take_seat', async ({ roomId, userId, side, nickname, discordId, avatar }) => {
+    socket.on('take_seat', ({ roomId, side, nickname } = {}) => {
         const session = sessions[roomId];
         if (!session || session.gameStarted) return;
-
-        let userBox = [];
-        if (session.draftType === 'abyss_box') {
-            try {
-                const userDb = await User.findOne({ discordId: discordId });
-                let activeBox = [];
-                if (userDb && userDb.boxes && userDb.boxes.length > 0) {
-                    const idx = userDb.activeBoxIndex || 0;
-                    activeBox = userDb.boxes[idx]?.characters || [];
-                } else if (userDb && userDb.box) {
-                    activeBox = userDb.box;
-                }
-                
-                if (!activeBox || activeBox.length === 0) {
-                    socket.emit('error_msg', 'You must assemble an Abyss Box in your Profile first!');
-                    return;
-                }
-                userBox = activeBox;
-            } catch (e) {
-                console.error(e);
-                socket.emit('error_msg', 'Database error loading your box.');
-                return;
-            }
-        }
+        if (side !== 'blue' && side !== 'red') return;
+        if (session[`${side}UserId`] && session[`${side}UserId`] !== userId) return;
+        socket.join(roomId);
+        const playerName = identity.nickname || (typeof nickname === 'string' && nickname.trim().slice(0, 32)) || 'Player';
 
         if (session.blueUserId === userId) { 
-            session.blueUserId = null; session.bluePlayer = null; session.blueName = 'Waiting...'; session.ready.blue = false; session.blueBox = [];
+            session.blueUserId = null; session.bluePlayer = null; session.blueName = 'Waiting...'; session.ready.blue = false;
+            session.blueDiscordId = null; session.blueAvatar = null;
         }
         if (session.redUserId === userId) { 
-            session.redUserId = null; session.redPlayer = null; session.redName = 'Waiting...'; session.ready.red = false; session.redBox = [];
+            session.redUserId = null; session.redPlayer = null; session.redName = 'Waiting...'; session.ready.red = false;
+            session.redDiscordId = null; session.redAvatar = null;
         }
 
         if (side === 'blue' && !session.blueUserId) {
             session.blueUserId = userId; session.bluePlayer = socket.id; 
-            session.blueName = nickname || 'Player 1'; session.blueDiscordId = discordId; session.blueAvatar = avatar;
-            if (session.draftType === 'abyss_box') session.blueBox = userBox;
+            session.blueName = playerName; session.blueDiscordId = identity.discordId; session.blueAvatar = identity.avatar;
             io.to(socket.id).emit('role_update', 'blue');
         } else if (side === 'red' && !session.redUserId) {
             session.redUserId = userId; session.redPlayer = socket.id; 
-            session.redName = nickname || 'Player 2'; session.redDiscordId = discordId; session.redAvatar = avatar;
-            if (session.draftType === 'abyss_box') session.redBox = userBox;
+            session.redName = playerName; session.redDiscordId = identity.discordId; session.redAvatar = identity.avatar;
             io.to(socket.id).emit('role_update', 'red');
         }
 
         io.to(roomId).emit('update_state', getPublicState(session));
     });
 
-    socket.on('leave_seat', ({ roomId, userId }) => {
+    socket.on('leave_seat', ({ roomId } = {}) => {
         const session = sessions[roomId];
         if (!session || session.gameStarted) return;
+        if (session.blueUserId !== userId && session.redUserId !== userId) return;
 
         if (session.blueUserId === userId) { 
-            session.blueUserId = null; session.bluePlayer = null; session.blueName = 'Waiting...'; session.ready.blue = false; session.blueBox = [];
+            session.blueUserId = null; session.bluePlayer = null; session.blueName = 'Waiting...'; session.ready.blue = false;
+            session.blueDiscordId = null; session.blueAvatar = null;
         }
         if (session.redUserId === userId) { 
-            session.redUserId = null; session.redPlayer = null; session.redName = 'Waiting...'; session.ready.red = false; session.redBox = [];
+            session.redUserId = null; session.redPlayer = null; session.redName = 'Waiting...'; session.ready.red = false;
+            session.redDiscordId = null; session.redAvatar = null;
         }
 
         io.to(socket.id).emit('role_update', 'spectator');
@@ -252,7 +210,7 @@ io.on('connection', (socket) => {
         
         if (session.ready.blue && session.ready.red && !session.gameStarted) {
             session.gameStarted = true;
-            if (session.draftType === 'gitcg_cup_2' || session.draftType === 'abyss_box') {
+            if (session.draftType === 'gitcg_cup_2') {
                 session.immunityPhaseActive = true;
                 session.currentTeam = IMMUNITY_ORDER[0].team;
                 session.currentAction = IMMUNITY_ORDER[0].type;
@@ -286,21 +244,6 @@ io.on('connection', (socket) => {
         session.lastActive = Date.now();
         const isBlue = session.currentTeam === 'blue';
         if ((isBlue && socket.id !== session.bluePlayer) || (!isBlue && socket.id !== session.redPlayer)) return;
-
-        if (session.draftType === 'abyss_box') {
-            const isImmunePhase = session.immunityPhaseActive;
-            const myBox = isBlue ? session.blueBox : session.redBox;
-            
-            if (isImmunePhase) {
-                if (!session.blueBox.includes(charId) || !session.redBox.includes(charId)) return;
-            } else {
-                if (session.currentAction === 'ban') {
-                    if (!session.blueBox.includes(charId) && !session.redBox.includes(charId)) return;
-                } else {
-                    if (!myBox.includes(charId)) return;
-                }
-            }
-        }
 
         if (session.immunityPhaseActive) {
             if (session.immunityBans.includes(charId) || session.immunityPool.includes(charId)) return;
@@ -398,11 +341,7 @@ function autoPick(roomId) {
     const session = sessions[roomId];
     let available = [];
     
-    if (session.draftType === 'chaos' && session.chaosPool) {
-        Object.values(session.chaosPool).forEach(arr => available.push(...arr));
-    } else {
-        Object.values(CHARACTERS_BY_ELEMENT).forEach(arr => available.push(...arr));
-    }
+    Object.values(CHARACTERS_BY_ELEMENT).forEach(arr => available.push(...arr));
     
     session.lastActive = Date.now();
 
@@ -429,7 +368,6 @@ function autoPick(roomId) {
 
     if (session.immunityPhaseActive) {
         available = available.filter(c => {
-            if (session.draftType === 'abyss_box' && (!session.blueBox.includes(c.id) || !session.redBox.includes(c.id))) return false;
             return !session.immunityBans.includes(c.id) && !session.immunityPool.includes(c.id);
         });
         if (available.length > 0) {
@@ -449,15 +387,6 @@ function autoPick(roomId) {
     const isImmunityTurn = !!currentConfig.immunity;
 
     available = available.filter(c => {
-        if (session.draftType === 'abyss_box') {
-            if (session.currentAction === 'ban') {
-                if (!session.blueBox.includes(c.id) && !session.redBox.includes(c.id)) return false;
-            } else {
-                const myBox = session.currentTeam === 'blue' ? session.blueBox : session.redBox;
-                if (!myBox.includes(c.id)) return false;
-            }
-        }
-
         const isBanned = session.bans.some(b => b.id === c.id);
         if (isBanned) return false;
         
@@ -521,16 +450,20 @@ function getPublicState(session) {
         blueDiscordId: session.blueDiscordId, redDiscordId: session.redDiscordId, 
         blueAvatar: session.blueAvatar, redAvatar: session.redAvatar,
         isBlueTaken: !!session.blueUserId, isRedTaken: !!session.redUserId,
-        blueBox: session.blueBox || [], redBox: session.redBox || [], 
         immunityPhaseActive: session.immunityPhaseActive,
         immunityPool: session.immunityPool || [], immunityBans: session.immunityBans || [],
-        chaosPool: session.chaosPool || null,
         draftFinished: session.draftFinished, ready: session.ready, gameStarted: session.gameStarted
     };
 }
 
 const CLEANUP_INTERVAL = 60 * 1000; 
 const SESSION_TIMEOUT = 60 * 60 * 1000; 
+
+// Resume interrupted payouts and close expired betting events independently of drafts.
+const bettingService = require('./lib/betting-service');
+setInterval(() => {
+    bettingService.maintenance().catch(error => console.error('Betting maintenance:', error.message));
+}, 10000).unref();
 
 setInterval(() => {
     const now = Date.now();

@@ -4,7 +4,8 @@
   "description": "Multipage Draft Platform",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test tests/*.test.cjs"
   },
   "dependencies": {
     "connect-mongo": "^5.1.0",

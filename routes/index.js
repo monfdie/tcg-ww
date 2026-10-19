@@ -35,6 +35,9 @@ router.use((req, res, next) => {
     next();
 });
 
+// Independent virtual-points events; no draft or tournament state is shared.
+router.use('/bets', require('../routes/betting'));
+
 // ==========================================
 // ЛОГИКА TIERLIST
 // ==========================================
@@ -180,7 +183,7 @@ router.post('/admin/tierlist/delete', isAdmin, express.json(), async (req, res) 
 });
 
 // ==========================================
-// ГЛАВНАЯ, ТУРНИРЫ, ПРОФИЛЬ
+// ГЛАВНАЯ, ТУРНИРЫ
 // ==========================================
 router.get('/', async (req, res) => {
     try {
@@ -315,42 +318,6 @@ router.get('/history', async (req, res) => {
         }
         res.render('pages/history', { title: 'My History', matches });
     } catch (e) { res.render('pages/history', { title: 'History', matches: [] }); }
-});
-
-const TierConfig = require('../models/TierConfig'); 
-
-router.get('/profile', async (req, res) => {
-    if (!req.isAuthenticated()) return res.redirect('/auth/discord');
-    let config = await TierConfig.findOne({ settingsKey: 'main' });
-    if (!config) { config = await TierConfig.create({ settingsKey: 'main' }); }
-    if (req.user.boxes.length === 1 && req.user.boxes[0].characters.length === 0 && req.user.box && req.user.box.length > 0) {
-        req.user.boxes[0].characters = req.user.box;
-        await req.user.save();
-    }
-    res.render('pages/profile', { title: 'My Profile', user: req.user, chars: CHARACTERS_BY_ELEMENT, tiers: config });
-});
-
-router.post('/profile/save-box', express.json(), async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
-    try {
-        const { boxes, activeBoxIndex } = req.body;
-        req.user.boxes = boxes; req.user.activeBoxIndex = activeBoxIndex;
-        if (boxes[activeBoxIndex]) req.user.box = boxes[activeBoxIndex].characters;
-        await req.user.save(); res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'Server error' }); }
-});
-
-router.get('/admin/tiers', isAdmin, async (req, res) => {
-    let config = await TierConfig.findOne({ settingsKey: 'main' });
-    if (!config) { config = await TierConfig.create({ settingsKey: 'main' }); }
-    res.render('pages/admin_manage_tiers', { title: 'Manage Tiers', chars: CHARACTERS_BY_ELEMENT, tiers: config });
-});
-
-router.post('/admin/tiers/save', isAdmin, express.json(), async (req, res) => {
-    try {
-        await TierConfig.findOneAndUpdate({ settingsKey: 'main' }, req.body, { upsert: true });
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 
 router.get('/admin/dashboard', isAdmin, async (req, res) => {
