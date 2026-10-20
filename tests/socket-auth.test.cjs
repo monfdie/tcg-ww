@@ -14,8 +14,7 @@ const projectRequire = createRequire(path.join(root, 'server.js'));
 const { socketIdentity } = require('../lib/socket-identity');
 
 // Real Express/session/Passport/Socket.IO, with only external persistence replaced.
-function startApp() {
-    const store = new session.MemoryStore();
+function startApp({ store = new session.MemoryStore(), env = {} } = {}) {
     const passport = new Passport();
     const saved = [], statistics = [];
     const users = {
@@ -50,7 +49,7 @@ function startApp() {
             },
             module, exports: module.exports,
             __dirname: path.dirname(path.join(root, filename)),
-            process: { env: { PORT: '0', SESSION_SECRET: 'test-secret', DISCORD_CLIENT_ID: 'test', DISCORD_CLIENT_SECRET: 'test' } },
+            process: { env: { PORT: '0', SESSION_SECRET: 'test-secret', DISCORD_CLIENT_ID: 'test', DISCORD_CLIENT_SECRET: 'test', ...env } },
             console: { log() {}, error() {} },
             setInterval: (...args) => { const timer = setInterval(...args); timers.push(timer); return timer; },
             clearInterval
@@ -234,6 +233,66 @@ test('HTTP sessions secure seats, reconnects, draft actions, history and statist
         app.server.closeAllConnections();
         await new Promise(resolve => app.io.close(resolve));
     }
+});
+
+async function closeApp(app) {
+    app.timers.forEach(clearInterval);
+    app.server.closeAllConnections();
+    await new Promise(resolve => app.io.close(resolve));
+}
+async function appOrigin(app) {
+    if (!app.server.listening) await new Promise(resolve => app.server.once('listening', resolve));
+    return `http://127.0.0.1:${app.server.address().port}`;
+}
+
+test('login cookie persists for 30 days, survives server restart and renews on a visit', async () => {
+    const store = new session.MemoryStore();
+    let app = startApp({ store });
+    try {
+        let origin = await appOrigin(app);
+        const first = await fetch(origin + '/create');
+        const cookieHeader = first.headers.get('set-cookie');
+        const cookie = cookieHeader.split(';')[0];
+        assert.match(cookieHeader, /Expires=/i);
+        const sid = signature.unsign(decodeURIComponent(cookie.slice(cookie.indexOf('=') + 1)).slice(2), 'test-secret');
+        const saved = await new Promise((resolve, reject) => store.get(sid, (error, value) => error ? reject(error) : resolve(value)));
+        saved.passport = { user: 'alice' };
+        // An existing login with one day remaining must get a fresh 30 days.
+        saved.cookie.expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        await new Promise((resolve, reject) => store.set(sid, saved, error => error ? reject(error) : resolve()));
+        await closeApp(app);
+        app = null;
+        app = startApp({ store });
+        origin = await appOrigin(app);
+        const returning = await fetch(origin + '/create', { headers: { Cookie: cookie } });
+        assert.equal(returning.status, 200);
+        assert.match(await returning.text(), /Alice/);
+        const renewed = returning.headers.get('set-cookie');
+        const expires = new Date(renewed.match(/Expires=([^;]+)/i)[1]);
+        const remaining = expires.getTime() - Date.now();
+        assert(remaining > 30 * 24 * 60 * 60 * 1000 - 10000);
+        assert(remaining <= 30 * 24 * 60 * 60 * 1000);
+        assert.equal(renewed.split(';')[0], cookie);
+        await fetch(origin + '/logout', { headers: { Cookie: cookie }, redirect: 'manual' });
+        const loggedOut = await fetch(origin + '/create', { headers: { Cookie: cookie } });
+        assert.doesNotMatch(await loggedOut.text(), /href="\/logout"/);
+    } finally {
+        if (app) await closeApp(app);
+    }
+});
+
+test('production login uses secure cookies behind HTTPS proxy and requires a permanent secret', async () => {
+    assert.throws(() => startApp({ env: { SESSION_SECRET: '' } }), /permanent SESSION_SECRET/);
+    const app = startApp({ env: { NODE_ENV: 'production' } });
+    try {
+        const origin = await appOrigin(app);
+        const httpResponse = await fetch(origin + '/create');
+        assert.equal(httpResponse.headers.get('set-cookie'), null);
+        const httpsResponse = await fetch(origin + '/create', { headers: { 'X-Forwarded-Proto': 'https' } });
+        assert.match(httpsResponse.headers.get('set-cookie'), /; Secure/);
+        assert.match(httpsResponse.headers.get('set-cookie'), /; HttpOnly/);
+        assert.match(httpsResponse.headers.get('set-cookie'), /SameSite=Lax/);
+    } finally { await closeApp(app); }
 });
 
 test('all templates compile and game/create browser scripts parse', () => {

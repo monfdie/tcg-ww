@@ -8,8 +8,12 @@ const MongoStore = require('connect-mongo');
 const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const mongoose = require('mongoose');
-const { randomBytes } = require('node:crypto');
 const { ensureGuestIdentity, socketIdentity } = require('./lib/socket-identity');
+
+const sessionSecret = process.env.SESSION_SECRET?.trim();
+if (!sessionSecret) throw new Error('Set a permanent SESSION_SECRET in the server environment before starting the app.');
+const sessionLifetime = 30 * 24 * 60 * 60 * 1000;
+const isProduction = process.env.NODE_ENV === 'production';
 
 const User = require('./models/User');
 const Match = require('./models/Match');
@@ -25,12 +29,14 @@ mongoose.connect(process.env.MONGO_URI)
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // --- 2. MIDDLEWARE ---
+if (isProduction) app.set('trust proxy', 1);
 const sessionMiddleware = session({
-    secret: process.env.SESSION_SECRET || randomBytes(32).toString('hex'),
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    cookie: { httpOnly: true, sameSite: 'lax' }
+    rolling: true,
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI, ttl: sessionLifetime / 1000 }),
+    cookie: { httpOnly: true, sameSite: 'lax', secure: isProduction, maxAge: sessionLifetime }
 });
 app.use(sessionMiddleware);
 app.use(ensureGuestIdentity);
