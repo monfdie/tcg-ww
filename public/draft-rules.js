@@ -71,6 +71,7 @@ const DRAFT_RULES = {
 
 // Генерация схемы GITCG CUP 2
 const gitcg2 = JSON.parse(JSON.stringify(DRAFT_RULES['gitcg']));
+DRAFT_RULES['global_ban_sys'] = DRAFT_RULES['moba_3phase'].map(step => ({ ...step }));
 gitcg2[13].immunity = true; 
 gitcg2[14].immunity = true;
 gitcg2[25].immunity = true; 

@@ -238,6 +238,18 @@ button {
 .im-pick { border: 2px solid #4facfe; } 
 .im-empty { background: rgba(255,255,255,0.05); } 
 .im-icon img { width: 100%; height: 100%; object-fit: cover; }
+.global-bans-display { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 3px; width: max-content; max-width: calc(100% - 16px); padding: 5px 8px; border: 1px solid #394862; border-radius: 10px; background: rgba(10, 17, 30, .92); box-shadow: 0 8px 20px rgba(0,0,0,.3); pointer-events: none; }
+.global-bans-sides { display: flex; gap: 10px; text-align: center; color: #aee3ff; font-size: 10px; font-weight: bold; }
+.global-bans-sides .im-row { margin-top: 2px; min-height: 0; gap: 3px; padding: 3px; }
+.global-bans-display .im-icon { width: 26px; height: 26px; }
+.global-bans-display .im-ban::after { display: none; }
+.global-ban-panel { padding: 20px; margin: 20px 0; border: 1px solid rgba(79,172,254,.4); border-radius: 12px; background: rgba(16,25,45,.75); color: #e0f2ff; }
+.global-ban-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; max-height: 280px; overflow-y: auto; margin: 12px 0; }
+.global-ban-option { position: relative; display: flex; align-items: center; justify-content: center; padding: 5px; border: 2px solid #3c4566; border-radius: 6px; color: #e0f2ff; cursor: pointer; }
+.global-ban-option:has(input:checked) { border-color: #ff6b6b; background: rgba(255,107,107,.2); }
+.global-ban-option:has(input:focus-visible) { outline: 2px solid #7dd9ee; outline-offset: 2px; }
+.global-ban-option img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; }
+.global-ban-option input { position: absolute; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 
 .char-pool { 
     flex-grow: 1; background: rgba(10, 12, 20, 0.95); border-top: 1px solid #333; 
@@ -333,6 +345,10 @@ button {
     .im-icon { width: 22px; height: 22px; }
     .im-label { font-size: 8px; margin-bottom: 2px; }
     .im-row { gap: 4px; padding: 3px; }
+    .global-bans-display { top: 2px; padding: 3px 5px; gap: 1px; }
+    .global-bans-sides { gap: 5px; font-size: 8px; }
+    .global-bans-sides .im-row { gap: 2px; padding: 2px; margin-top: 1px; }
+    .global-bans-display .im-icon { width: 18px; height: 18px; }
 
     .cards-container { transform: scale(0.6); }
     .toss-title { font-size: 1.3em; text-align: center; margin-bottom: 10px; }

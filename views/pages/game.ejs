@@ -44,6 +44,13 @@
     </div>
 
      <div class="draft-area">
+         <div id="global-bans-display" class="global-bans-display" style="display:none;">
+             <div class="im-label">GLOBAL BANS</div>
+             <div class="global-bans-sides">
+                 <div><span>BLUE</span><div class="im-row" id="global-blue-bans"></div></div>
+                 <div><span>RED</span><div class="im-row" id="global-red-bans"></div></div>
+             </div>
+         </div>
          <div id="immunity-top-display" class="immunity-top-container" style="display: none;">
              <div class="im-label">IMMUNE</div>
              <div class="im-row" id="immunity-icons-row"></div>
@@ -113,7 +120,7 @@
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
 
     function applyDefaultTimers(draftType) {
-        const isMoba = (draftType === 'moba_3phase');
+        const isMoba = (draftType === 'moba_3phase' || draftType === 'global_ban_sys');
         const defaultTurn = isMoba ? '30' : '45';
         const defaultBank = isMoba ? '2:10' : '3:00';
         
@@ -134,6 +141,7 @@
             blueAvatar: savedData.blueAvatar, redAvatar: savedData.redAvatar,
             draftType: savedData.draftType === 'abyss_box' ? 'gitcg_cup_2' : (savedData.draftType === 'chaos' ? 'classic' : (savedData.draftType || 'gitcg')), immunityPhaseActive: false,
             immunityPool: savedData.immunityPool||[], immunityBans: savedData.immunityBans||[],
+            globalBans: savedData.globalBans || { blue: [], red: [] },
             stepIndex: 999, ready: { blue: true, red: true },
             draftFinished: true, isBlueTaken: true, isRedTaken: true
         };
@@ -252,11 +260,13 @@
         document.getElementById('status').innerText = txt.toUpperCase();
 
         updateImmunityTop(state);
+        updateGlobalBansTop(state);
         renderSlots(state); // Обновленный рендер в старом дизайне
         
         // Логика блокировки персонажей для MOBA 3-Phase
-        if (state.draftType === 'moba_3phase') {
-            const allBanned = (state.bans || []).map(b => b.id);
+        if (state.draftType === 'moba_3phase' || state.draftType === 'global_ban_sys') {
+            const allBanned = [...(state.bans || []).map(b => b.id),
+                ...(state.globalBans?.blue || []), ...(state.globalBans?.red || [])];
             const allPicked = [...(state.bluePicks || []), ...(state.redPicks || [])];
             document.querySelectorAll('.char-option').forEach(el => {
                 el.classList.remove('disabled', 'immunity-highlight');
@@ -350,6 +360,7 @@
         
         el.onclick = () => {
             if(!isGameStarted || myRole === 'spectator' || savedData || isDraftFinishedLocal) return;
+            if (el.classList.contains('disabled')) return;
             
             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
             selectedCharId = char.id; 
@@ -384,6 +395,29 @@
              } else div.classList.add('im-empty');
              row.appendChild(div);
          });
+    }
+
+    function updateGlobalBansTop(state) {
+        const display = document.getElementById('global-bans-display');
+        display.style.display = state.draftType === 'global_ban_sys' ? 'flex' : 'none';
+        if (state.draftType !== 'global_ban_sys') return;
+        const byId = new Map(Object.values(charsData).flat().map(char => [char.id, char]));
+        for (const side of ['blue', 'red']) {
+            const row = document.getElementById(`global-${side}-bans`);
+            row.replaceChildren();
+            for (const id of state.globalBans?.[side] || []) {
+                const character = byId.get(id);
+                if (!character) continue;
+                const icon = document.createElement('div');
+                icon.className = 'im-icon im-ban';
+                icon.title = character.name;
+                const img = document.createElement('img');
+                img.src = character.img;
+                img.alt = character.name;
+                icon.appendChild(img);
+                row.appendChild(icon);
+            }
+        }
     }
 
     function renderSlots(state) {
@@ -435,7 +469,7 @@
          fill('blue-bans', state.bans.filter(b => b.team === 'blue'), blueBanSteps, true); 
          fill('red-bans', state.bans.filter(b => b.team === 'red'), redBanSteps, true);
          
-         if (currentDraftType === 'generals_2' || currentDraftType === 'classic' || currentDraftType === 'moba_3phase') {
+         if (currentDraftType === 'generals_2' || currentDraftType === 'classic' || currentDraftType === 'moba_3phase' || currentDraftType === 'global_ban_sys') {
              fill('blue-picks-1', state.bluePicks, bluePickSteps, false); 
              fill('blue-picks-2', [], [], false); 
              fill('red-picks-1', state.redPicks, redPickSteps, false); 

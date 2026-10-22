@@ -6,6 +6,9 @@ const path = require('path');
 const fs = require('fs');
 const Match = require('../models/Match');
 const Tournament = require('../models/Tournament');
+const TournamentGlobalBan = require('../models/TournamentGlobalBan');
+const User = require('../models/User');
+const { validateGlobalBans } = require('../lib/global-bans');
 const CHARACTERS_BY_ELEMENT = require('../characters.json');
 
 const uploadDir = path.join(__dirname, '../public/uploads');
@@ -201,7 +204,11 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/create', (req, res) => { res.render('pages/create', { title: 'Create Game' }); });
+router.get('/create', async (req, res) => {
+    const globalBanTournaments = await Tournament.find({ type: 'tournament', isLive: true, isMine: true, globalBansEnabled: true })
+        .select('title slug globalBansLocked').sort({ createdAt: -1 }).lean();
+    res.render('pages/create', { title: 'Create Game', globalBanTournaments, selectedTournament: req.query.tournament || '' });
+});
 
 router.get('/tournaments', async (req, res) => {
     try {
@@ -218,6 +225,8 @@ router.get('/tournament/:slug', async (req, res) => {
         const tour = await Tournament.findOne({ slug: req.params.slug });
         if (!tour) return res.status(404).send('Tournament not found');
         if (tour.isMine === false) return res.redirect('/tournaments');
+        const myGlobalBans = tour.globalBansEnabled && req.user
+            ? await TournamentGlobalBan.findOne({ tournamentId: tour._id, discordId: req.user.discordId }).lean() : null;
 
         const roomIds = tour.matches ? tour.matches.map(m => m.roomId) : [];
         const dbMatches = await Match.find({ roomId: { $in: roomIds } });
@@ -282,12 +291,29 @@ router.get('/tournament/:slug', async (req, res) => {
             matches: enrichedMatches,
             deckStats: deckStats,
             charStats: charStats,
-            chars: CHARACTERS_BY_ELEMENT
+            chars: CHARACTERS_BY_ELEMENT,
+            myGlobalBans
         });
     } catch (err) {
         console.error(err);
         res.redirect('/tournaments');
     }
+});
+
+router.post('/tournament/:slug/global-bans', express.json(), async (req, res) => {
+    if (!req.user?.discordId) return res.status(401).json({ error: 'Sign in with Discord first.' });
+    const tour = await Tournament.findOne({ slug: req.params.slug, type: 'tournament', isMine: true, isLive: true, globalBansEnabled: true });
+    if (!tour) return res.status(404).json({ error: 'Global bans are unavailable for this tournament.' });
+    if (tour.globalBansLocked) return res.status(409).json({ error: 'Player selections are locked for this tournament.' });
+    if (!validateGlobalBans(req.body.characterIds, tour.globalBanCount)) {
+        return res.status(400).json({ error: `Choose ${tour.globalBanCount} different characters.` });
+    }
+    await TournamentGlobalBan.updateOne(
+        { tournamentId: tour._id, discordId: req.user.discordId },
+        { $set: { characterIds: req.body.characterIds, updatedAt: new Date() } },
+        { upsert: true }
+    );
+    res.json({ success: true });
 });
 
 router.get('/tournament/:slug/group/:groupId', async (req, res) => {
@@ -330,6 +356,10 @@ router.post('/admin/add-tournament', isAdmin, upload.single('image'), async (req
     try {
         const data = req.body;
         data.type = 'tournament'; data.image = req.file ? req.file.filename : ''; data.isMine = data.isMine === 'on'; data.isLive = true;
+        data.globalBansEnabled = data.globalBansEnabled === 'on';
+        data.globalBansLocked = false;
+        data.globalBanCount = Number(data.globalBanCount) || 3;
+        if (!Number.isInteger(data.globalBanCount) || data.globalBanCount < 1 || data.globalBanCount > 10) return res.status(400).send('Global ban count must be between 1 and 10.');
         await Tournament.create(data); res.redirect('/admin/dashboard');
     } catch (err) { res.status(500).send(`Error: ${err.message}`); }
 });
@@ -350,12 +380,31 @@ router.post('/admin/delete/:id', isAdmin, async (req, res) => {
 router.get('/admin/manage/:slug', isAdmin, async (req, res) => {
     const tour = await Tournament.findOne({ slug: req.params.slug });
     if(!tour) return res.send("Tournament not found");
-    res.render('pages/admin_manage', { tour: tour, chars: CHARACTERS_BY_ELEMENT });
+    const globalBanEntries = await TournamentGlobalBan.find({ tournamentId: tour._id }).lean();
+    const banUsers = await User.find({ discordId: { $in: globalBanEntries.map(entry => entry.discordId) } }).select('discordId username').lean();
+    const names = new Map(banUsers.map(user => [user.discordId, user.username]));
+    res.render('pages/admin_manage', { tour: tour, chars: CHARACTERS_BY_ELEMENT,
+        allCharsForGlobalBans: Object.values(CHARACTERS_BY_ELEMENT).flat().sort((a, b) => a.name.localeCompare(b.name)),
+        globalBanEntries: globalBanEntries.map(entry => ({ ...entry, username: names.get(entry.discordId) || entry.discordId })) });
+});
+
+router.post('/admin/tournament/:id/global-bans/:discordId', isAdmin, express.json(), async (req, res) => {
+    const tour = await Tournament.findById(req.params.id);
+    if (!tour?.globalBansEnabled) return res.status(404).json({ error: 'Global bans are unavailable.' });
+    if (!validateGlobalBans(req.body.characterIds, tour.globalBanCount)) return res.status(400).json({ error: 'Invalid character selection.' });
+    await TournamentGlobalBan.updateOne(
+        { tournamentId: tour._id, discordId: req.params.discordId },
+        { $set: { characterIds: req.body.characterIds, updatedAt: new Date() } }, { upsert: true }
+    );
+    res.json({ success: true });
 });
 
 router.post('/admin/edit/:id', isAdmin, upload.single('image'), async (req, res) => {
     try {
-        const updateData = { ...req.body, isMine: req.body.isMine === 'on', isLive: req.body.isLive === 'on' };
+        const updateData = { ...req.body, isMine: req.body.isMine === 'on', isLive: req.body.isLive === 'on',
+            globalBansEnabled: req.body.globalBansEnabled === 'on', globalBansLocked: req.body.globalBansLocked === 'on',
+            globalBanCount: Number(req.body.globalBanCount) || 3 };
+        if (!Number.isInteger(updateData.globalBanCount) || updateData.globalBanCount < 1 || updateData.globalBanCount > 10) return res.status(400).send('Global ban count must be between 1 and 10.');
         if (req.file) updateData.image = req.file.filename;
 
         let newMatches = [];

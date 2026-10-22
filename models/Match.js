@@ -32,6 +32,7 @@ const matchSchema = new mongoose.Schema({
     },
 
     tournamentSlug: { type: String, default: null },
+    globalBans: { blue: { type: [String], default: [] }, red: { type: [String], default: [] } },
     date: { type: Date, default: Date.now }
 });
 

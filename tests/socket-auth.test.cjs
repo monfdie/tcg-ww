@@ -31,6 +31,25 @@ function startApp({ store = new session.MemoryStore(), env = {} } = {}) {
         findOne: async ({ roomId }) => saved.find(m => m.roomId === roomId) || null,
         find: () => ({ sort: () => ({ limit: async () => saved }) })
     };
+    const globalTournament = { _id: 'global-test-id', slug: 'global-test', title: 'Global Test',
+        type: 'tournament', isMine: true, isLive: true, globalBansEnabled: true, globalBansLocked: false, globalBanCount: 3 };
+    const globalBanEntries = [
+        { discordId: 'discord-alice', characterIds: ['ganyu', 'diona', 'kaeya'] },
+        { discordId: 'discord-bob', characterIds: ['chongyun', 'ayaka', 'eula'] }
+    ];
+    const Tournament = {
+        find: () => ({ select: () => ({ sort: () => ({ lean: async () => [globalTournament] }) }) }),
+        findOne: async query => query.slug === globalTournament.slug ? globalTournament : null,
+        findById: async id => id === globalTournament._id ? globalTournament : null
+    };
+    const TournamentGlobalBan = {
+        find: () => ({ lean: async () => globalBanEntries }),
+        updateOne: async (query, update) => {
+            let entry = globalBanEntries.find(item => item.discordId === query.discordId);
+            if (!entry) { entry = { discordId: query.discordId }; globalBanEntries.push(entry); }
+            entry.characterIds = update.$set.characterIds;
+        }
+    };
     const timers = [];
     let router;
     function load(filename, suffix = '') {
@@ -43,6 +62,8 @@ function startApp({ store = new session.MemoryStore(), env = {} } = {}) {
                 if (name === 'connect-mongo') return { create: () => store };
                 if (/models\/User$/.test(name)) return User;
                 if (/models\/Match$/.test(name)) return Match;
+                if (/models\/Tournament$/.test(name)) return Tournament;
+                if (/models\/TournamentGlobalBan$/.test(name)) return TournamentGlobalBan;
                 if (name === './routes/index') return router;
                 if (name.startsWith('../')) return projectRequire('./' + name.slice(3));
                 return projectRequire(name);
@@ -59,7 +80,7 @@ function startApp({ store = new session.MemoryStore(), env = {} } = {}) {
     router = load('routes/index.js');
     // Export test handles without changing the production entry point.
     const app = load('server.js', '\nmodule.exports = { server, io, sessions };');
-    return { ...app, store, users, saved, statistics, timers };
+    return { ...app, store, users, saved, statistics, timers, globalTournament, globalBanEntries };
 }
 
 class Client {
@@ -104,6 +125,101 @@ test('identity lookup fails closed for absent, deleted, or unavailable sessions'
     await run({}, {});
     await run({ passport: { user: 'missing' } }, { findById: async () => null });
     await run({ passport: { user: 'alice' } }, { findById: async () => { throw Error('offline'); } });
+});
+
+test('global ban draft starts with open submissions and snapshots both players choices', async () => {
+    const app = startApp();
+    const clients = [];
+    try {
+        if (!app.server.listening) await new Promise(resolve => app.server.once('listening', resolve));
+        const origin = `http://127.0.0.1:${app.server.address().port}`;
+        async function accountCookie(account) {
+            const response = await fetch(origin + '/create');
+            const cookie = response.headers.get('set-cookie').split(';')[0];
+            const sid = signature.unsign(decodeURIComponent(cookie.slice(cookie.indexOf('=') + 1)).slice(2), 'test-secret');
+            const stored = await new Promise((resolve, reject) => app.store.get(sid, (err, value) => err ? reject(err) : resolve(value)));
+            stored.passport = { user: account };
+            await new Promise((resolve, reject) => app.store.set(sid, stored, err => err ? reject(err) : resolve()));
+            return cookie;
+        }
+        async function connect(cookie) {
+            const client = new Client(origin.replace('http:', 'ws:') + '/socket.io/?EIO=4&transport=websocket', cookie);
+            clients.push(client);
+            await client.wait('connected');
+            return client;
+        }
+        const alice = await connect(await accountCookie('alice'));
+        const bob = await connect(await accountCookie('bob'));
+        alice.emit('create_game', { draftType: 'global_ban_sys', tournamentSlug: 'global-test' });
+        const { roomId } = await alice.wait('init_game');
+        alice.emit('take_seat', { roomId, side: 'blue' });
+        await alice.wait('role_update');
+        bob.emit('rejoin_game', { roomId });
+        await bob.wait('init_game');
+        bob.emit('take_seat', { roomId, side: 'red' });
+        await bob.wait('role_update');
+        const bobEntry = app.globalBanEntries.find(entry => entry.discordId === 'discord-bob');
+        bobEntry.characterIds = [];
+        alice.emit('player_ready', roomId);
+        bob.emit('player_ready', roomId);
+        assert.match(await alice.wait('error_msg'), /Both players must confirm/);
+        assert.equal(app.sessions[roomId].gameStarted, false);
+        bobEntry.characterIds = ['chongyun', 'ayaka', 'eula'];
+        alice.emit('player_ready', roomId);
+        bob.emit('player_ready', roomId);
+        await alice.wait('game_started');
+        assert.equal(app.globalTournament.globalBansLocked, false);
+        assert.deepEqual([...app.sessions[roomId].globalBans.blue], ['ganyu', 'diona', 'kaeya']);
+        assert.deepEqual([...app.sessions[roomId].globalBans.red], ['chongyun', 'ayaka', 'eula']);
+        app.globalBanEntries[0].characterIds = ['qiqi', 'shenhe', 'ayaka'];
+        assert.deepEqual([...app.sessions[roomId].globalBans.blue], ['ganyu', 'diona', 'kaeya']);
+        alice.emit('action', { roomId, charId: 'ganyu' });
+        alice.emit('rejoin_game', { roomId });
+        await alice.wait('init_game');
+        assert.equal(app.sessions[roomId].bans.length, 0);
+    } finally {
+        clients.forEach(client => client.close());
+        await closeApp(app);
+    }
+});
+
+test('players submit their own bans and admins can correct locked choices', async () => {
+    const app = startApp({ env: { ADMIN_DISCORD_ID: 'discord-alice' } });
+    try {
+        if (!app.server.listening) await new Promise(resolve => app.server.once('listening', resolve));
+        const origin = `http://127.0.0.1:${app.server.address().port}`;
+        async function cookieFor(account) {
+            const response = await fetch(origin + '/create');
+            const cookie = response.headers.get('set-cookie').split(';')[0];
+            if (account) {
+                const sid = signature.unsign(decodeURIComponent(cookie.slice(cookie.indexOf('=') + 1)).slice(2), 'test-secret');
+                const stored = await new Promise((resolve, reject) => app.store.get(sid, (err, value) => err ? reject(err) : resolve(value)));
+                stored.passport = { user: account };
+                await new Promise((resolve, reject) => app.store.set(sid, stored, err => err ? reject(err) : resolve()));
+            }
+            return cookie;
+        }
+        async function post(path, cookie, characterIds) {
+            return fetch(origin + path, { method: 'POST', redirect: 'manual', headers: { Cookie: cookie, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ characterIds }) });
+        }
+        const guest = await cookieFor();
+        const alice = await cookieFor('alice');
+        const bob = await cookieFor('bob');
+        const playerPath = '/tournament/global-test/global-bans';
+        assert.equal((await post(playerPath, guest, ['ganyu', 'diona', 'kaeya'])).status, 401);
+        assert.equal((await post(playerPath, bob, ['ganyu', 'ganyu', 'kaeya'])).status, 400);
+        assert.equal((await post(playerPath, bob, ['ganyu', 'diona', 'kaeya'])).status, 200);
+        assert.deepEqual(app.globalBanEntries.find(entry => entry.discordId === 'discord-bob').characterIds,
+            ['ganyu', 'diona', 'kaeya']);
+        app.globalTournament.globalBansLocked = true;
+        assert.equal((await post(playerPath, bob, ['chongyun', 'ayaka', 'eula'])).status, 409);
+        const adminPath = `/admin/tournament/${app.globalTournament._id}/global-bans/discord-bob`;
+        assert.equal((await post(adminPath, bob, ['chongyun', 'ayaka', 'eula'])).status, 302);
+        assert.equal((await post(adminPath, alice, ['chongyun', 'ayaka', 'eula'])).status, 200);
+        assert.deepEqual(app.globalBanEntries.find(entry => entry.discordId === 'discord-bob').characterIds,
+            ['chongyun', 'ayaka', 'eula']);
+    } finally { await closeApp(app); }
 });
 
 test('HTTP sessions secure seats, reconnects, draft actions, history and statistics', async () => {
@@ -191,7 +307,7 @@ test('HTTP sessions secure seats, reconnects, draft actions, history and statist
         assert.equal(current.isRedTaken, true);
         // Exercise each retained mode through a complete draft.
         const ids = Object.values(require('../characters.json')).flat().map(c => c.id);
-        const modes = Object.keys(require('../public/draft-rules').DRAFT_RULES);
+        const modes = Object.keys(require('../public/draft-rules').DRAFT_RULES).filter(mode => mode !== 'global_ban_sys');
         for (const mode of modes) {
             reconnected.emit('create_game', { draftType: mode });
             const room = (await reconnected.wait('init_game')).roomId;
@@ -303,7 +419,8 @@ test('all templates compile and game/create browser scripts parse', () => {
     }
     for (const page of ['create', 'game']) for (const user of [null, { username: 'Alice', discordId: 'alice', avatar: 'avatar' }]) {
         const filename = path.join(root, 'views/pages', page + '.ejs');
-        const html = ejs.render(fs.readFileSync(filename, 'utf8'), { roomId: 'TEST', user, savedData: null, chars: require('../characters.json') }, { filename });
+        const html = ejs.render(fs.readFileSync(filename, 'utf8'), { roomId: 'TEST', user, savedData: null,
+            chars: require('../characters.json'), globalBanTournaments: [], selectedTournament: '' }, { filename });
         for (const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
         assert(!html.includes('draft_user_id'));
     }

@@ -18,6 +18,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 const User = require('./models/User');
 const Match = require('./models/Match');
 const Tournament = require('./models/Tournament');
+const TournamentGlobalBan = require('./models/TournamentGlobalBan');
+const { validateGlobalBans, validIds } = require('./lib/global-bans');
 
 const app = express();
 const server = http.createServer(app);
@@ -99,15 +101,24 @@ io.on('connection', (socket) => {
     const identity = socket.data.identity;
     const userId = identity.id;
     
-    socket.on('create_game', ({ draftType } = {}) => {
+    socket.on('create_game', async ({ draftType, tournamentSlug } = {}) => {
+        try {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = draftType || 'gitcg';
         if (!Object.hasOwn(DRAFT_RULES, type)) {
             return socket.emit('error_msg', 'Unsupported draft mode');
         }
+        let tournament = null;
+        if (type === 'global_ban_sys') {
+            if (typeof tournamentSlug !== 'string' || !tournamentSlug || tournamentSlug.length > 100) {
+                return socket.emit('error_msg', 'Select an available global bans tournament.');
+            }
+            tournament = await Tournament.findOne({ slug: tournamentSlug, type: 'tournament', isMine: true, isLive: true, globalBansEnabled: true });
+            if (!tournament) return socket.emit('error_msg', 'Select an available global bans tournament.');
+        }
         
         // Раздельные стартовые таймеры: 30 / 130 для moba_3phase, 45 / 180 для остальных
-        const isMoba = type === 'moba_3phase';
+        const isMoba = type === 'moba_3phase' || type === 'global_ban_sys';
         const baseTimer = isMoba ? 30 : 45;
         const baseReserve = isMoba ? 130 : 180;
 
@@ -117,6 +128,9 @@ io.on('connection', (socket) => {
             redPlayer: null, redUserId: null, redDiscordId: null, redAvatar: null,
             spectators: [socket.id], blueName: 'Waiting...', redName: 'Waiting...',
             draftType: type, draftOrder: DRAFT_RULES[type], gameStarted: false,
+            tournamentId: tournament?._id || null, tournamentSlug: tournament?.slug || null,
+            globalBanCount: tournament?.globalBanCount || 0,
+            globalBans: { blue: [], red: [] }, starting: false,
             immunityPhaseActive: false, immunityStepIndex: 0, immunityPool: [], immunityBans: [],
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: baseTimer, blueReserve: baseReserve, redReserve: baseReserve, timerInterval: null,
@@ -126,6 +140,7 @@ io.on('connection', (socket) => {
 
         socket.join(roomId);
         socket.emit('init_game', { roomId, role: 'spectator', state: getPublicState(sessions[roomId]), chars: CHARACTERS_BY_ELEMENT });
+        } catch (error) { console.error(error); socket.emit('error_msg', 'Unable to create room.'); }
     });
 
     socket.on('join_game', ({roomId}) => {
@@ -159,8 +174,9 @@ io.on('connection', (socket) => {
 
     socket.on('take_seat', ({ roomId, side, nickname } = {}) => {
         const session = sessions[roomId];
-        if (!session || session.gameStarted) return;
+        if (!session || session.gameStarted || session.starting) return;
         if (side !== 'blue' && side !== 'red') return;
+        if (session.draftType === 'global_ban_sys' && !identity.discordId) return socket.emit('error_msg', 'Sign in with Discord for this draft.');
         if (session[`${side}UserId`] && session[`${side}UserId`] !== userId) return;
         socket.join(roomId);
         const playerName = identity.nickname || (typeof nickname === 'string' && nickname.trim().slice(0, 32)) || 'Player';
@@ -189,7 +205,7 @@ io.on('connection', (socket) => {
 
     socket.on('leave_seat', ({ roomId } = {}) => {
         const session = sessions[roomId];
-        if (!session || session.gameStarted) return;
+        if (!session || session.gameStarted || session.starting) return;
         if (session.blueUserId !== userId && session.redUserId !== userId) return;
 
         if (session.blueUserId === userId) { 
@@ -205,16 +221,47 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('update_state', getPublicState(session));
     });
 
-    socket.on('player_ready', (roomId) => {
+    socket.on('player_ready', async (roomId) => {
         const session = sessions[roomId];
-        if (!session) return;
+        if (!session || session.gameStarted || session.starting) return;
         session.lastActive = Date.now();
-        
+        if (socket.id !== session.bluePlayer && socket.id !== session.redPlayer) return;
         if (socket.id === session.bluePlayer) session.ready.blue = true;
         if (socket.id === session.redPlayer) session.ready.red = true;
         io.to(roomId).emit('update_state', getPublicState(session));
         
         if (session.ready.blue && session.ready.red && !session.gameStarted) {
+            if (session.draftType === 'global_ban_sys') {
+                session.starting = true;
+                try {
+                    const tournament = await Tournament.findById(session.tournamentId);
+                    if (!tournament?.globalBansEnabled || !tournament.isLive) {
+                        session.ready = { blue: false, red: false };
+                        io.to(roomId).emit('update_state', getPublicState(session));
+                        io.to(roomId).emit('error_msg', 'Global bans are unavailable for this tournament.');
+                        return;
+                    }
+                    session.globalBanCount = tournament.globalBanCount;
+                    const entries = await TournamentGlobalBan.find({ tournamentId: session.tournamentId,
+                        discordId: { $in: [session.blueDiscordId, session.redDiscordId] } }).lean();
+                    const byPlayer = new Map(entries.map(entry => [entry.discordId, entry.characterIds]));
+                    const blue = byPlayer.get(session.blueDiscordId);
+                    const red = byPlayer.get(session.redDiscordId);
+                    if (!session.blueDiscordId || !session.redDiscordId || session.blueDiscordId === session.redDiscordId ||
+                        !validateGlobalBans(blue, session.globalBanCount) || !validateGlobalBans(red, session.globalBanCount)) {
+                        session.ready = { blue: false, red: false };
+                        io.to(roomId).emit('update_state', getPublicState(session));
+                        io.to(roomId).emit('error_msg', 'Both players must confirm their global bans on the tournament page.');
+                        return;
+                    }
+                    session.globalBans = { blue: [...blue], red: [...red] };
+                } catch (error) {
+                    console.error(error);
+                    session.ready = { blue: false, red: false };
+                    io.to(roomId).emit('error_msg', 'Unable to load global bans.');
+                    return;
+                } finally { session.starting = false; }
+            }
             session.gameStarted = true;
             if (session.draftType === 'gitcg_cup_2') {
                 session.immunityPhaseActive = true;
@@ -250,6 +297,7 @@ io.on('connection', (socket) => {
         session.lastActive = Date.now();
         const isBlue = session.currentTeam === 'blue';
         if ((isBlue && socket.id !== session.bluePlayer) || (!isBlue && socket.id !== session.redPlayer)) return;
+        if (!validIds.has(charId) || session.globalBans.blue.includes(charId) || session.globalBans.red.includes(charId)) return;
 
         if (session.immunityPhaseActive) {
             if (session.immunityBans.includes(charId) || session.immunityPool.includes(charId)) return;
@@ -302,7 +350,7 @@ function nextStep(roomId) {
     const s = sessions[roomId]; 
     s.stepIndex++; 
     // Сброс таймера хода: 30 сек для moba_3phase, 45 сек для остальных
-    s.timer = (s.draftType === 'moba_3phase') ? 30 : 45;
+    s.timer = (s.draftType === 'moba_3phase' || s.draftType === 'global_ban_sys') ? 30 : 45;
 
     if (s.stepIndex >= s.draftOrder.length) {
         clearInterval(s.timerInterval);
@@ -352,7 +400,7 @@ function autoPick(roomId) {
     session.lastActive = Date.now();
 
     // Особый случай для нового режима MOBA 3-Phase при истощении времени:
-    if (session.draftType === 'moba_3phase') {
+    if (session.draftType === 'moba_3phase' || session.draftType === 'global_ban_sys') {
         if (session.currentAction === 'ban') {
             // Бан просто сгорает
             session.bans.push({ id: 'skipped', team: session.currentTeam });
@@ -360,7 +408,8 @@ function autoPick(roomId) {
             return;
         } else {
             // Автопик случайного незанятого персонажа
-            const taken = [...session.bans.map(b => b.id), ...session.bluePicks, ...session.redPicks];
+            const taken = [...session.bans.map(b => b.id), ...session.bluePicks, ...session.redPicks,
+                ...session.globalBans.blue, ...session.globalBans.red];
             available = available.filter(c => !taken.includes(c.id));
             if (available.length > 0) {
                 const randomChar = available[Math.floor(Math.random() * available.length)];
@@ -434,7 +483,8 @@ async function saveMatchImmediately(s) {
             blueDiscordId: s.blueDiscordId, redDiscordId: s.redDiscordId,
             blueAvatar: s.blueAvatar, redAvatar: s.redAvatar, 
             bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks,
-            immunityPool: s.immunityPool, immunityBans: s.immunityBans
+            immunityPool: s.immunityPool, immunityBans: s.immunityBans,
+            tournamentSlug: s.tournamentSlug, globalBans: s.globalBans
         });
         if (s.blueDiscordId) await User.updateOne({ discordId: s.blueDiscordId }, { $inc: { gamesPlayed: 1 } });
         if (s.redDiscordId) await User.updateOne({ discordId: s.redDiscordId }, { $inc: { gamesPlayed: 1 } });
@@ -458,6 +508,7 @@ function getPublicState(session) {
         isBlueTaken: !!session.blueUserId, isRedTaken: !!session.redUserId,
         immunityPhaseActive: session.immunityPhaseActive,
         immunityPool: session.immunityPool || [], immunityBans: session.immunityBans || [],
+        globalBans: session.globalBans || { blue: [], red: [] }, tournamentSlug: session.tournamentSlug,
         draftFinished: session.draftFinished, ready: session.ready, gameStarted: session.gameStarted
     };
 }

@@ -27,6 +27,10 @@
                 <option value="All Pick">All Pick</option>
             </select>
         </div>
+        <div style="display:flex; align-items:center; gap:12px; color:#fff;">
+            <label><input type="checkbox" name="globalBansEnabled"> Use global bans</label>
+            <label>Per player <input type="number" name="globalBanCount" value="3" min="1" max="10" class="form-input" style="width:75px;"></label>
+        </div>
 
         <textarea name="description" placeholder="Description (Optional)" class="form-input" rows="4"></textarea>
 

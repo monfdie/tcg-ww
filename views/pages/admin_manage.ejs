@@ -280,6 +280,9 @@
             </div>
 
             <div class="d-flex align-items-center gap-4 mt-3 pt-3 border-top border-secondary border-opacity-25">
+                <label class="custom-switch-label"><input type="checkbox" name="globalBansEnabled" <%= tour.globalBansEnabled ? 'checked' : '' %>> Use global bans</label>
+                <label class="custom-switch-label"><input type="checkbox" name="globalBansLocked" <%= tour.globalBansLocked ? 'checked' : '' %>> Lock player choices for drafts</label>
+                <label style="color:#fff;">Bans per player <input class="player-input num-input" type="number" name="globalBanCount" min="1" max="10" value="<%= tour.globalBanCount || 3 %>"></label>
                 <label class="custom-switch-label">
                     <input type="checkbox" name="isMine" <%= tour.isMine ? 'checked' : '' %>>
                     <span>Is My Tournament</span>
@@ -292,6 +295,29 @@
             </div>
         </form>
     </div>
+
+    <% if (tour.globalBansEnabled) { %>
+    <div class="admin-panel">
+        <h4 class="text-white mb-3">Global bans by player</h4>
+        <p class="text-muted small">Edit a player's submitted bans. New player submissions appear here after confirmation on the tournament page.</p>
+        <select id="global-ban-admin-player" class="player-input" style="max-width:320px;" onchange="loadAdminBans()">
+            <option value="">Select player</option>
+            <% globalBanEntries.forEach(entry => { %>
+                <option value="<%= entry.discordId %>" data-bans="<%= entry.characterIds.join(',') %>"><%= entry.username %> (<%= entry.discordId %>)</option>
+            <% }) %>
+        </select>
+        <div id="global-ban-admin-grid" class="global-ban-grid">
+            <% allCharsForGlobalBans.forEach(c => { %>
+                <label class="global-ban-option" title="<%= c.name %>">
+                    <input type="checkbox" value="<%= c.id %>" aria-label="<%= c.name %>" onchange="limitAdminBans(this)">
+                    <img src="<%= c.img || '/cardback.png' %>" alt="">
+                </label>
+            <% }) %>
+        </div>
+        <button type="button" class="btn-tcg btn-tcg-save" onclick="saveAdminBans()">Save player bans</button>
+        <div id="global-ban-admin-message" class="text-info mt-2"></div>
+    </div>
+    <% } %>
 
     <!-- Редактор этапов -->
     <div class="admin-panel">
@@ -349,6 +375,31 @@
 </div>
 
 <script>
+    <% if (tour.globalBansEnabled) { %>
+    const globalBanCount = <%= tour.globalBanCount || 3 %>;
+    function loadAdminBans() {
+        const select = document.getElementById('global-ban-admin-player');
+        const chosen = (select.selectedOptions[0]?.dataset.bans || '').split(',').filter(Boolean);
+        document.querySelectorAll('#global-ban-admin-grid input').forEach(input => { input.checked = chosen.includes(input.value); });
+    }
+    function limitAdminBans(input) {
+        const checked = document.querySelectorAll('#global-ban-admin-grid input:checked');
+        if (checked.length > globalBanCount) { input.checked = false; alert(`Select up to ${globalBanCount} characters.`); }
+    }
+    async function saveAdminBans() {
+        const select = document.getElementById('global-ban-admin-player');
+        const discordId = select.value;
+        const characterIds = [...document.querySelectorAll('#global-ban-admin-grid input:checked')].map(input => input.value);
+        const message = document.getElementById('global-ban-admin-message');
+        if (!discordId || characterIds.length !== globalBanCount) { message.textContent = `Select a player and ${globalBanCount} characters.`; return; }
+        const response = await fetch(`/admin/tournament/<%= tour._id %>/global-bans/${encodeURIComponent(discordId)}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ characterIds })
+        });
+        const result = await response.json();
+        message.textContent = response.ok ? 'Saved.' : result.error;
+        if (response.ok) select.selectedOptions[0].dataset.bans = characterIds.join(',');
+    }
+    <% } %>
     const charImages = {};
     <% allChars.forEach(c => { 
         let charImg = c.img || `/cardback.png`;

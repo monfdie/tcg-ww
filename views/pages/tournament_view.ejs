@@ -224,8 +224,67 @@
         letter-spacing: 1px;
     }
 
-    @media (max-width: 992px) { .groups-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 576px) { .groups-grid { grid-template-columns: 1fr; } }
+    .tournament-page { max-width: 1240px; padding-bottom: 48px; }
+    .tournament-hero { display: grid; grid-template-columns: minmax(260px, 38%) 1fr; min-height: 330px; overflow: hidden; border: 1px solid rgba(143, 183, 224, .24); border-radius: 22px; background: linear-gradient(125deg, #172944, #101827 70%); box-shadow: 0 24px 70px rgba(2, 7, 18, .38); }
+    .tournament-hero-art { min-height: 100%; position: relative; overflow: hidden; background: radial-gradient(circle, #284b71, #101827); }
+    .tournament-hero-art img { display: block; width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; }
+    .tournament-hero-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 65%, #172944); }
+    .tournament-hero-content { padding: clamp(24px, 3vw, 42px); display: flex; flex-direction: column; justify-content: center; }
+    .tournament-eyebrow, .tournament-section-kicker { color: #84d9ee; font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+    .tournament-status-dot { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: #67dbc3; box-shadow: 0 0 12px #67dbc3; }
+    .tournament-page .tour-main-title { margin: 12px 0 8px; color: #f5f9ff; background: none; -webkit-text-fill-color: currentColor; text-shadow: none; font-size: clamp(28px, 3vw, 45px); line-height: 1.08; letter-spacing: -.025em; }
+    .tournament-description { margin: 0 0 20px; color: #b9cce0; line-height: 1.5; max-width: 65ch; }
+    .tournament-facts { display: flex; flex-wrap: wrap; gap: 18px 28px; padding: 16px 0; border-top: 1px solid rgba(174, 227, 255, .14); border-bottom: 1px solid rgba(174, 227, 255, .14); }
+    .tournament-facts div { display: flex; flex-direction: column; gap: 3px; min-width: 80px; }
+    .tournament-facts span { color: #7897b5; font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+    .tournament-facts strong { color: #f0f7ff; font-size: 14px; font-weight: 650; }
+    .tournament-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .tournament-page .link-btn { min-width: 0; padding: 9px 14px; margin: 0; border: 1px solid rgba(143, 183, 224, .25); border-radius: 9px; background: rgba(255, 255, 255, .035); box-shadow: none; color: #d5e7f9; font-size: 11px; letter-spacing: .04em; }
+    .tournament-page .link-btn:hover { background: rgba(118, 212, 245, .12); border-color: #76d4f5; }
+    .tournament-page .global-ban-panel { margin: 18px 0 28px; padding: 24px; border: 1px solid rgba(143, 183, 224, .23); border-radius: 18px; background: linear-gradient(135deg, #17273e, #121b2b); box-shadow: 0 18px 45px rgba(2, 7, 18, .24); }
+    .global-ban-intro { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+    .global-ban-intro h2, .global-ban-dialog h2 { color: #f5f9ff; font-size: 23px; font-weight: 750; margin: 3px 0 5px; }
+    .global-ban-intro p { color: #a9c0d8; font-size: 13px; line-height: 1.5; margin: 0; }
+    .global-ban-status { color: #9de9cf; border: 1px solid rgba(157, 233, 207, .35); background: rgba(157, 233, 207, .08); border-radius: 30px; padding: 5px 10px; white-space: nowrap; font-size: 11px; font-weight: 700; }
+    .global-ban-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 9px; margin: 20px 0; }
+    .global-ban-slot { display: flex; align-items: center; gap: 10px; min-height: 62px; padding: 9px 12px; border: 1px solid rgba(143, 183, 224, .19); border-radius: 11px; background: rgba(2, 7, 18, .18); color: #e7f3ff; min-width: 0; }
+    .global-ban-slot-number { color: #678cac; font-size: 11px; font-weight: 800; }
+    .global-ban-slot img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #d47379; flex: none; }
+    .global-ban-slot strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .global-ban-slot-empty { color: #6e8ba8; font-size: 12px; }
+    .global-ban-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+    .global-ban-actions #global-ban-message { margin-left: auto; color: #8fa9c3; font-size: 12px; }
+    .tournament-page .global-ban-primary, .global-ban-dialog .global-ban-primary { background: #7dd9ee; color: #092031; border-color: #7dd9ee; font-weight: 800; }
+    .tournament-page .global-ban-primary:hover, .global-ban-dialog .global-ban-primary:hover { background: #b3f0ff; color: #092031; }
+    .tournament-page .stage-switcher { justify-content: flex-start; margin: 24px 0 20px; padding: 5px; border: 1px solid rgba(143,183,224,.2); border-radius: 12px; width: fit-content; background: rgba(11,20,34,.65); }
+    .tournament-page .stage-btn { min-width: 0; border: 0; border-radius: 8px; padding: 9px 16px; background: transparent; box-shadow: none; color: #9db5ce; }
+    .tournament-page .stage-btn.active { background: #74cfe8; color: #092031; }
+    .tournament-page .public-group-card, .tournament-page .playoff-player-card, .tournament-page .stats-glass-panel { border: 1px solid rgba(143,183,224,.2); border-radius: 15px; background: #142238; box-shadow: 0 10px 30px rgba(2,7,18,.22); backdrop-filter: none; }
+    .tournament-page .public-group-card:hover { transform: translateY(-3px); border-color: #74cfe8; box-shadow: 0 16px 34px rgba(2,7,18,.3); }
+    .tournament-page .public-group-title { background: none; -webkit-text-fill-color: #eef7ff; text-shadow: none; }
+    .global-ban-modal[hidden] { display: none !important; }
+    .global-ban-modal { position: fixed; inset: 0; z-index: 3000; display: grid; place-items: center; padding: 20px; background: rgba(2, 7, 18, .76); backdrop-filter: blur(8px); }
+    .global-ban-dialog { width: min(720px, 100%); max-height: min(760px, 92dvh); display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(143,183,224,.4); border-radius: 18px; background: #142238; box-shadow: 0 30px 100px rgba(0,0,0,.55); }
+    .global-ban-dialog-head, .global-ban-dialog-tools, .global-ban-dialog-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; }
+    .global-ban-dialog-head { border-bottom: 1px solid rgba(143,183,224,.16); }
+    .global-ban-dialog h2 { margin-bottom: 0; }
+    .global-ban-close { background: none; border: 0; color: #bdd1e5; font-size: 28px; line-height: 1; padding: 0 5px; }
+    .global-ban-dialog-tools { padding-top: 14px; padding-bottom: 10px; color: #9de9cf; font-weight: 700; font-size: 12px; }
+    .global-ban-dialog .global-ban-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; min-height: 180px; max-height: none; overflow-y: auto; padding: 4px 22px 18px; margin: 0; }
+    .global-ban-dialog .global-ban-option { min-width: 0; padding: 7px; background: #1b2d46; border-color: rgba(143,183,224,.15); border-radius: 9px; }
+    .global-ban-dialog .global-ban-option:hover { border-color: #74cfe8; }
+    .global-ban-dialog .global-ban-option:has(input:checked) { background: #354052; border-color: #e98488; }
+    .global-ban-dialog .global-ban-option img { width: 100%; height: auto; aspect-ratio: 1; }
+    .global-ban-dialog-foot { border-top: 1px solid rgba(143,183,224,.16); color: #a8bfd7; font-size: 12px; }
+    .global-ban-dialog-foot .link-btn { flex: none; margin: 0; }
+    body.modern-site .tournament-page .global-ban-primary, body.modern-site .global-ban-dialog .global-ban-primary { background: #7dd9ee !important; border-color: #7dd9ee !important; color: #092031 !important; font-weight: 800; }
+    body.modern-site .tournament-page .global-ban-primary:hover, body.modern-site .global-ban-dialog .global-ban-primary:hover { background: #b3f0ff !important; border-color: #b3f0ff !important; }
+    body.modern-site .global-ban-dialog .global-ban-close { background: transparent !important; border: 0 !important; padding: 0 5px; color: #bdd1e5 !important; font-size: 28px; }
+    body.modern-site .tournament-page .stage-btn.active { background: #74cfe8 !important; border-color: #74cfe8 !important; color: #092031 !important; }
+
+    @media (max-width: 992px) { .groups-grid { grid-template-columns: repeat(2, 1fr); } .tournament-hero { grid-template-columns: 34% 1fr; } }
+    @media (max-width: 700px) { .tournament-hero { display: block; } .tournament-hero-art { height: 190px; } .tournament-hero-art img { position: static; } .tournament-hero-art::after { background: linear-gradient(0deg, #172944, transparent 60%); } .tournament-hero-content { padding: 22px; } .global-ban-intro { flex-direction: column; gap: 10px; } .global-ban-actions #global-ban-message { width: 100%; margin: 4px 0 0; } }
+    @media (max-width: 576px) { .groups-grid { grid-template-columns: 1fr; } .tournament-page { padding-left: 12px; padding-right: 12px; } .tournament-page .global-ban-panel { padding: 18px; } .tournament-page .stage-switcher { width: 100%; flex-wrap: wrap; } .global-ban-modal { padding: 8px; } .global-ban-dialog { max-height: 94dvh; } .global-ban-dialog-head, .global-ban-dialog-tools, .global-ban-dialog-foot { padding: 13px; } .global-ban-dialog .global-ban-grid { padding: 4px 13px 13px; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); } }
 </style>
 
 <% 
@@ -239,41 +298,72 @@ function getCharData(id) {
 }
 %>
 
-<div class="container mt-4 mb-5">
-    
-    <!-- ШАПКА ТУРНИРА (Уменьшенная высота фото) -->
-    <div class="mb-2">
-        <% if(tour.image) { %>
-            <img src="<%= tour.image.startsWith('http') ? tour.image : '/uploads/' + tour.image %>" class="img-fluid" style="width: 100%; max-height: 280px; object-fit: cover; object-position: center; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" alt="<%= tour.title %>" onerror="this.src='/logo.png'">
-        <% } else { %>
-            <img src="/logo.png" class="img-fluid" style="width: 100%; max-height: 280px; object-fit: cover; object-position: center; border-radius: 12px;" alt="Logo">
-        <% } %>
-    </div>
+<div class="container tournament-page mt-4 mb-5">
+    <header class="tournament-hero">
+        <div class="tournament-hero-art">
+            <img src="<%= tour.image ? (tour.image.startsWith('http') ? tour.image : '/uploads/' + tour.image) : '/logo.png' %>" alt="" onerror="this.src='/logo.png'">
+        </div>
+        <div class="tournament-hero-content">
+            <div class="tournament-eyebrow"><span class="tournament-status-dot"></span><%= tour.isLive ? 'LIVE TOURNAMENT' : 'TOURNAMENT ARCHIVE' %></div>
+            <h1 class="tour-main-title"><%= tour.title %></h1>
+            <% if (tour.description) { %><p class="tournament-description"><%= tour.description %></p><% } %>
+            <div class="tournament-facts">
+                <div><span>DATE</span><strong><%= tour.date || 'TBA' %></strong></div>
+                <div><span>PRIZE</span><strong><%= tour.prize || 'TBA' %></strong></div>
+                <div><span>REGION</span><strong><%= tour.region || 'Any' %></strong></div>
+                <div><span>FORMAT</span><strong><%= tour.format || 'TBA' %></strong></div>
+            </div>
+            <nav class="tournament-links" aria-label="Tournament links">
+                <% if(tour.regLink) { %><a href="<%= tour.regLink %>" class="link-btn" target="_blank" rel="noopener noreferrer">Register ↗</a><% } %>
+                <% if(tour.rulesLink) { %><a href="<%= tour.rulesLink %>" class="link-btn" target="_blank" rel="noopener noreferrer">Rules RU ↗</a><% } %>
+                <% if(tour.rulesEnLink) { %><a href="<%= tour.rulesEnLink %>" class="link-btn" target="_blank" rel="noopener noreferrer">Rules EN ↗</a><% } %>
+                <% if(tour.discordLink) { %><a href="<%= tour.discordLink %>" class="link-btn" target="_blank" rel="noopener noreferrer">Discord ↗</a><% } %>
+                <% if(tour.telegramLink) { %><a href="<%= tour.telegramLink %>" class="link-btn" target="_blank" rel="noopener noreferrer">Telegram ↗</a><% } %>
+                <% if(tour.bracketLink) { %><a href="<%= tour.bracketLink %>" class="link-btn" target="_blank" rel="noopener noreferrer">Bracket ↗</a><% } %>
+            </nav>
+        </div>
+    </header>
 
-    <h1 class="tour-main-title"><%= tour.title %></h1>
-    
-    <% if (tour.description) { %>
-        <p style="color: #e0f2ff; font-size: 16px; margin-bottom: 20px; line-height: 1.6; text-shadow: 0 1px 2px rgba(0,0,0,0.5);"><%= tour.description %></p>
+    <% if (tour.globalBansEnabled) { %>
+    <section class="global-ban-panel" aria-labelledby="global-ban-heading">
+        <div class="global-ban-intro">
+            <div><span class="tournament-section-kicker">TOURNAMENT RULE</span><h2 id="global-ban-heading">Global bans</h2>
+                <p>Choose <%= tour.globalBanCount %> characters. Your picks join your opponent's bans in each Global Bans Sys draft.</p></div>
+            <span class="global-ban-status"><%= tour.globalBansLocked ? 'Choices locked' : 'Choices open' %></span>
+        </div>
+        <% if (locals.user) { %>
+            <div class="global-ban-slots" id="global-ban-slots">
+                <% for (let i = 0; i < tour.globalBanCount; i++) { const chosen = getCharData(myGlobalBans?.characterIds[i]); %>
+                    <div class="global-ban-slot"><span class="global-ban-slot-number"><%= String(i + 1).padStart(2, '0') %></span>
+                        <% if (myGlobalBans?.characterIds[i]) { %><img src="<%= chosen.img %>" alt="<%= chosen.name %>" title="<%= chosen.name %>"><% } else { %><span class="global-ban-slot-empty">Character</span><% } %>
+                    </div>
+                <% } %>
+            </div>
+            <div class="global-ban-actions">
+                <% if (tour.isLive && !tour.globalBansLocked) { %><button type="button" class="link-btn global-ban-primary" onclick="openGlobalBanPicker()"><%= myGlobalBans ? 'Edit my bans' : 'Choose my bans' %></button><% } %>
+                <% if (tour.isLive) { %><a class="link-btn" href="/create?mode=global_ban_sys&amp;tournament=<%= encodeURIComponent(tour.slug) %>">Create draft ↗</a><% } %>
+                <span id="global-ban-message" role="status"><%= myGlobalBans ? 'Bans confirmed' : (tour.globalBansLocked ? 'No bans submitted' : 'Waiting for your choice') %></span>
+            </div>
+        <% } else { %><a href="/auth/discord" class="link-btn global-ban-primary">Sign in to choose bans</a><% } %>
+    </section>
+    <% if (tour.isLive && !tour.globalBansLocked && locals.user) { %>
+    <div class="global-ban-modal" id="global-ban-picker" role="dialog" aria-modal="true" aria-labelledby="global-ban-picker-title" hidden>
+        <div class="global-ban-dialog">
+            <div class="global-ban-dialog-head"><div><span class="tournament-section-kicker">YOUR TOURNAMENT CHOICE</span><h2 id="global-ban-picker-title">Choose global bans</h2></div><button type="button" class="global-ban-close" onclick="closeGlobalBanPicker()" aria-label="Close">×</button></div>
+            <div class="global-ban-dialog-tools"><span id="global-ban-count">0 / <%= tour.globalBanCount %> selected</span></div>
+            <div class="global-ban-grid" id="global-ban-player-grid">
+                <% Object.values(chars).flat().sort((a,b) => a.name.localeCompare(b.name)).forEach(c => { %>
+                    <label class="global-ban-option" title="<%= c.name %>">
+                        <input type="checkbox" value="<%= c.id %>" aria-label="<%= c.name %>" <%= myGlobalBans?.characterIds.includes(c.id) ? 'checked' : '' %> onchange="updateGlobalBanCount(this)">
+                        <img src="<%= c.img || '/cardback.png' %>" alt="" loading="lazy">
+                    </label>
+                <% }) %>
+            </div>
+            <div class="global-ban-dialog-foot"><span id="global-ban-dialog-message" role="status">Choose <%= tour.globalBanCount %> different characters.</span><button type="button" class="link-btn global-ban-primary" onclick="saveGlobalBans()">Confirm bans</button></div>
+        </div>
+    </div>
     <% } %>
-
-    <div class="mb-4 pb-3"> 
-        <div class="tour-info-line"><strong>Date:</strong> <%= tour.date || 'TBA' %></div>
-        <div class="tour-info-line"><strong>Prize Pool:</strong> <%= tour.prize || 'TBA' %></div>
-        <div class="tour-info-line"><strong>Region:</strong> <%= tour.region || 'Any' %></div>
-        <div class="tour-info-line"><strong>Format:</strong> <%= tour.format || 'TBA' %></div>
-    </div>
-
-    <!-- ССЫЛКИ -->
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <% if(tour.regLink) { %><a href="<%= tour.regLink %>" class="link-btn" target="_blank">Register</a><% } %>
-        <% if(tour.rulesLink) { %><a href="<%= tour.rulesLink %>" class="link-btn" target="_blank">Rules (RU)</a><% } %>
-        <% if(tour.rulesEnLink) { %><a href="<%= tour.rulesEnLink %>" class="link-btn" target="_blank">Rules (EN)</a><% } %>
-        <% if(tour.discordLink) { %><a href="<%= tour.discordLink %>" class="link-btn" target="_blank">Discord</a><% } %>
-        <% if(tour.telegramLink) { %><a href="<%= tour.telegramLink %>" class="link-btn" target="_blank">Telegram</a><% } %>
-        <% if(tour.bracketLink) { %><a href="<%= tour.bracketLink %>" class="link-btn" target="_blank">Bracket</a><% } %>
-    </div>
-
-    <hr style="border-color: rgba(255,255,255,0.1); margin-bottom: 20px; margin-top: 25px;">
+    <% } %>
 
     <!-- ПЕРЕКЛЮЧАТЕЛЬ ЭТАПОВ -->
     <% if (tour.groups && tour.groups.length > 0) { %>
@@ -515,5 +605,73 @@ function getCharData(id) {
     <% } %>
 
 </div>
+
+<% if (tour.globalBansEnabled && tour.isLive && !tour.globalBansLocked && locals.user) { %>
+<script>
+    const requiredGlobalBans = <%= tour.globalBanCount %>;
+    let confirmedGlobalBans = [];
+    function selectedGlobalBans() { return [...document.querySelectorAll('#global-ban-player-grid input:checked')].map(input => input.value); }
+    function showGlobalBanSlots(ids) {
+        const choices = new Map([...document.querySelectorAll('#global-ban-player-grid input')].map(input => [input.value, input.closest('label')]));
+        const slots = document.getElementById('global-ban-slots');
+        slots.replaceChildren();
+        for (let index = 0; index < requiredGlobalBans; index++) {
+            const slot = document.createElement('div'); slot.className = 'global-ban-slot';
+            const number = document.createElement('span'); number.className = 'global-ban-slot-number'; number.textContent = String(index + 1).padStart(2, '0'); slot.appendChild(number);
+            const choice = choices.get(ids[index]);
+            if (choice) {
+                const img = choice.querySelector('img').cloneNode();
+                img.alt = choice.querySelector('input').getAttribute('aria-label');
+                img.title = img.alt;
+                slot.appendChild(img);
+            } else {
+                const empty = document.createElement('span'); empty.className = 'global-ban-slot-empty'; empty.textContent = 'Character'; slot.appendChild(empty);
+            }
+            slots.appendChild(slot);
+        }
+    }
+    function updateGlobalBanCount(input) {
+        const selected = selectedGlobalBans();
+        if (selected.length > requiredGlobalBans && input) { input.checked = false; return; }
+        document.getElementById('global-ban-count').textContent = `${selected.length} / ${requiredGlobalBans} selected`;
+        showGlobalBanSlots(selected);
+    }
+    function openGlobalBanPicker() {
+        document.querySelectorAll('#global-ban-player-grid input').forEach(input => { input.checked = confirmedGlobalBans.includes(input.value); });
+        updateGlobalBanCount();
+        document.getElementById('global-ban-picker').hidden = false;
+        document.querySelector('#global-ban-player-grid input').focus();
+    }
+    function closeGlobalBanPicker() {
+        document.querySelectorAll('#global-ban-player-grid input').forEach(input => { input.checked = confirmedGlobalBans.includes(input.value); });
+        updateGlobalBanCount();
+        document.getElementById('global-ban-picker').hidden = true;
+    }
+    async function saveGlobalBans() {
+        const characterIds = selectedGlobalBans();
+        const message = document.getElementById('global-ban-dialog-message');
+        if (characterIds.length !== requiredGlobalBans) { message.textContent = `Choose ${requiredGlobalBans} characters.`; return; }
+        try {
+            const response = await fetch(`${location.pathname}/global-bans`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ characterIds })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                confirmedGlobalBans = [...characterIds];
+                document.getElementById('global-ban-message').textContent = 'Bans confirmed';
+                closeGlobalBanPicker();
+            } else message.textContent = result.error;
+        } catch { message.textContent = 'Could not save bans. Try again.'; }
+    }
+    confirmedGlobalBans = selectedGlobalBans();
+    updateGlobalBanCount();
+    document.getElementById('global-ban-picker').addEventListener('click', event => {
+        if (event.target.id === 'global-ban-picker') closeGlobalBanPicker();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !document.getElementById('global-ban-picker').hidden) closeGlobalBanPicker();
+    });
+</script>
+<% } %>
 
 <%- include('../partials/footer') %>
