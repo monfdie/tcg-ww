@@ -11,6 +11,21 @@ const User = require('../models/User');
 const { validateGlobalBans } = require('../lib/global-bans');
 const CHARACTERS_BY_ELEMENT = require('../characters.json');
 
+function getChallongeEmbedUrl(link) {
+    try {
+        const url = new URL(link);
+        if (!/^([a-z0-9-]+\.)?challonge\.com$/i.test(url.hostname) || !['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
+        const pathname = url.pathname.replace(/\/+$/, '').replace(/\/bracket$/i, '');
+        if (!pathname || pathname === '/') return null;
+        url.protocol = 'https:';
+        url.pathname = pathname.endsWith('/module') ? pathname : `${pathname}/module`;
+        url.search = '';
+        url.hash = '';
+        url.searchParams.set('scale_to_fit', '1');
+        return url.toString();
+    } catch { return null; }
+}
+
 const uploadDir = path.join(__dirname, '../public/uploads');
 if (!fs.existsSync(uploadDir)){
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -292,7 +307,8 @@ router.get('/tournament/:slug', async (req, res) => {
             deckStats: deckStats,
             charStats: charStats,
             chars: CHARACTERS_BY_ELEMENT,
-            myGlobalBans
+            myGlobalBans,
+            challongeEmbedUrl: getChallongeEmbedUrl(tour.bracketLink)
         });
     } catch (err) {
         console.error(err);

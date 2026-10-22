@@ -246,12 +246,15 @@
     .global-ban-intro h2, .global-ban-dialog h2 { color: #f5f9ff; font-size: 23px; font-weight: 750; margin: 3px 0 5px; }
     .global-ban-intro p { color: #a9c0d8; font-size: 13px; line-height: 1.5; margin: 0; }
     .global-ban-status { color: #9de9cf; border: 1px solid rgba(157, 233, 207, .35); background: rgba(157, 233, 207, .08); border-radius: 30px; padding: 5px 10px; white-space: nowrap; font-size: 11px; font-weight: 700; }
-    .global-ban-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 9px; margin: 20px 0; }
-    .global-ban-slot { display: flex; align-items: center; gap: 10px; min-height: 62px; padding: 9px 12px; border: 1px solid rgba(143, 183, 224, .19); border-radius: 11px; background: rgba(2, 7, 18, .18); color: #e7f3ff; min-width: 0; }
-    .global-ban-slot-number { color: #678cac; font-size: 11px; font-weight: 800; }
-    .global-ban-slot img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #d47379; flex: none; }
-    .global-ban-slot strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .global-ban-slot-empty { color: #6e8ba8; font-size: 12px; }
+    .global-ban-slots { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 18px; }
+    .global-ban-slot { width: 64px; height: 64px; display: grid; place-items: center; padding: 6px; border: 1px solid rgba(143, 183, 224, .28); border-radius: 15px; background: linear-gradient(145deg, rgba(43, 64, 91, .65), rgba(11, 22, 39, .9)); box-shadow: inset 0 1px rgba(255,255,255,.07), 0 6px 16px rgba(2,7,18,.18); }
+    .global-ban-slot:has(img) { border-color: rgba(233, 132, 136, .55); background: linear-gradient(145deg, rgba(233, 132, 136, .16), rgba(20, 34, 56, .9)); }
+    .global-ban-slot img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #e98488; box-shadow: 0 0 0 2px rgba(233, 132, 136, .14); }
+    .global-ban-slot-empty { width: 45px; height: 45px; display: grid; place-items: center; border: 1px dashed rgba(143,183,224,.35); border-radius: 50%; color: #7899b8; font-size: 23px; line-height: 1; }
+    .challonge-panel { margin: 24px 0; padding: 18px; border: 1px solid rgba(143,183,224,.2); border-radius: 15px; background: #142238; }
+    .challonge-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .challonge-panel-head h2 { margin: 0; }
+    .challonge-panel iframe { display: block; width: 100%; height: 620px; border: 0; border-radius: 9px; background: #0d192b; }
     .global-ban-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
     .global-ban-actions #global-ban-message { margin-left: auto; color: #8fa9c3; font-size: 12px; }
     .tournament-page .global-ban-primary, .global-ban-dialog .global-ban-primary { background: #7dd9ee; color: #092031; border-color: #7dd9ee; font-weight: 800; }
@@ -328,14 +331,14 @@ function getCharData(id) {
     <section class="global-ban-panel" aria-labelledby="global-ban-heading">
         <div class="global-ban-intro">
             <div><span class="tournament-section-kicker">TOURNAMENT RULE</span><h2 id="global-ban-heading">Global bans</h2>
-                <p>Choose <%= tour.globalBanCount %> characters. Your picks join your opponent's bans in each Global Bans Sys draft.</p></div>
+                <p>Choose <%= tour.globalBanCount %> characters. Your bans join your opponent's bans in each Fast Cup NewGen draft.</p></div>
             <span class="global-ban-status"><%= tour.globalBansLocked ? 'Choices locked' : 'Choices open' %></span>
         </div>
         <% if (locals.user) { %>
             <div class="global-ban-slots" id="global-ban-slots">
                 <% for (let i = 0; i < tour.globalBanCount; i++) { const chosen = getCharData(myGlobalBans?.characterIds[i]); %>
-                    <div class="global-ban-slot"><span class="global-ban-slot-number"><%= String(i + 1).padStart(2, '0') %></span>
-                        <% if (myGlobalBans?.characterIds[i]) { %><img src="<%= chosen.img %>" alt="<%= chosen.name %>" title="<%= chosen.name %>"><% } else { %><span class="global-ban-slot-empty">Character</span><% } %>
+                    <div class="global-ban-slot">
+                        <% if (myGlobalBans?.characterIds[i]) { %><img src="<%= chosen.img %>" alt="<%= chosen.name %>" title="<%= chosen.name %>"><% } else { %><span class="global-ban-slot-empty" aria-label="Empty ban slot">+</span><% } %>
                     </div>
                 <% } %>
             </div>
@@ -363,6 +366,13 @@ function getCharData(id) {
         </div>
     </div>
     <% } %>
+    <% } %>
+
+    <% if (challongeEmbedUrl) { %>
+    <section class="challonge-panel" aria-labelledby="challonge-heading">
+        <div class="challonge-panel-head"><h2 id="challonge-heading">Bracket</h2><a class="link-btn" href="<%= tour.bracketLink %>" target="_blank" rel="noopener noreferrer">Open on Challonge ↗</a></div>
+        <iframe src="<%= challongeEmbedUrl %>" title="<%= tour.title %> bracket on Challonge" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </section>
     <% } %>
 
     <!-- ПЕРЕКЛЮЧАТЕЛЬ ЭТАПОВ -->
@@ -600,8 +610,6 @@ function getCharData(id) {
                 }
             })();
         </script>
-    <% } else { %>
-        <div class="text-center mt-5 mb-5" style="font-size: 18px; color: #aee3ff; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">No groups have been added to this tournament yet.</div>
     <% } %>
 
 </div>
@@ -617,7 +625,6 @@ function getCharData(id) {
         slots.replaceChildren();
         for (let index = 0; index < requiredGlobalBans; index++) {
             const slot = document.createElement('div'); slot.className = 'global-ban-slot';
-            const number = document.createElement('span'); number.className = 'global-ban-slot-number'; number.textContent = String(index + 1).padStart(2, '0'); slot.appendChild(number);
             const choice = choices.get(ids[index]);
             if (choice) {
                 const img = choice.querySelector('img').cloneNode();
@@ -625,7 +632,7 @@ function getCharData(id) {
                 img.title = img.alt;
                 slot.appendChild(img);
             } else {
-                const empty = document.createElement('span'); empty.className = 'global-ban-slot-empty'; empty.textContent = 'Character'; slot.appendChild(empty);
+                const empty = document.createElement('span'); empty.className = 'global-ban-slot-empty'; empty.textContent = '+'; empty.setAttribute('aria-label', 'Empty ban slot'); slot.appendChild(empty);
             }
             slots.appendChild(slot);
         }
