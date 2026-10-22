@@ -306,9 +306,10 @@
                 <option value="<%= entry.discordId %>" data-bans="<%= entry.characterIds.join(',') %>"><%= entry.username %> (<%= entry.discordId %>)</option>
             <% }) %>
         </select>
+        <input id="global-ban-admin-search" class="player-input mt-3" type="search" placeholder="Search character by name" aria-label="Search characters by name" autocomplete="off" oninput="filterAdminBans()" style="max-width:320px;">
         <div id="global-ban-admin-grid" class="global-ban-grid">
-            <% allCharsForGlobalBans.forEach(c => { %>
-                <label class="global-ban-option" title="<%= c.name %>">
+            <% allCharsForGlobalBans.forEach((c, index) => { %>
+                <label class="global-ban-option" title="<%= c.name %>" data-name="<%= c.name.toLowerCase() %>" data-order="<%= index %>">
                     <input type="checkbox" value="<%= c.id %>" aria-label="<%= c.name %>" onchange="limitAdminBans(this)">
                     <img src="<%= c.img || '/cardback.png' %>" alt="">
                 </label>
@@ -381,10 +382,30 @@
         const select = document.getElementById('global-ban-admin-player');
         const chosen = (select.selectedOptions[0]?.dataset.bans || '').split(',').filter(Boolean);
         document.querySelectorAll('#global-ban-admin-grid input').forEach(input => { input.checked = chosen.includes(input.value); });
+        document.getElementById('global-ban-admin-search').value = '';
+        orderAdminBans(chosen);
+    }
+    function filterAdminBans() {
+        const query = document.getElementById('global-ban-admin-search').value.trim().toLowerCase();
+        document.querySelectorAll('#global-ban-admin-grid .global-ban-option').forEach(option => {
+            option.hidden = !option.dataset.name.includes(query);
+        });
+    }
+    function orderAdminBans(chosen) {
+        const grid = document.getElementById('global-ban-admin-grid');
+        const options = [...grid.querySelectorAll('.global-ban-option')];
+        const byId = new Map(options.map(option => [option.querySelector('input').value, option]));
+        const selected = new Set(chosen);
+        const ordered = chosen.map(id => byId.get(id)).filter(Boolean);
+        ordered.push(...options.filter(option => !selected.has(option.querySelector('input').value))
+            .sort((a, b) => Number(a.dataset.order) - Number(b.dataset.order)));
+        grid.append(...ordered);
+        filterAdminBans();
     }
     function limitAdminBans(input) {
         const checked = document.querySelectorAll('#global-ban-admin-grid input:checked');
-        if (checked.length > globalBanCount) { input.checked = false; alert(`Select up to ${globalBanCount} characters.`); }
+        if (checked.length > globalBanCount) { input.checked = false; alert(`Select up to ${globalBanCount} characters.`); return; }
+        orderAdminBans([...document.querySelectorAll('#global-ban-admin-grid input:checked')].map(option => option.value));
     }
     async function saveAdminBans() {
         const select = document.getElementById('global-ban-admin-player');

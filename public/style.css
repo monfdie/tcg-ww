@@ -246,6 +246,7 @@ button {
 .global-ban-panel { padding: 20px; margin: 20px 0; border: 1px solid rgba(79,172,254,.4); border-radius: 12px; background: rgba(16,25,45,.75); color: #e0f2ff; }
 .global-ban-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; max-height: 280px; overflow-y: auto; margin: 12px 0; }
 .global-ban-option { position: relative; display: flex; align-items: center; justify-content: center; padding: 5px; border: 2px solid #3c4566; border-radius: 6px; color: #e0f2ff; cursor: pointer; }
+.global-ban-option[hidden] { display: none !important; }
 .global-ban-option:has(input:checked) { border-color: #ff6b6b; background: rgba(255,107,107,.2); }
 .global-ban-option:has(input:focus-visible) { outline: 2px solid #7dd9ee; outline-offset: 2px; }
 .global-ban-option img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; }

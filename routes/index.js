@@ -10,6 +10,8 @@ const TournamentGlobalBan = require('../models/TournamentGlobalBan');
 const User = require('../models/User');
 const { validateGlobalBans } = require('../lib/global-bans');
 const CHARACTERS_BY_ELEMENT = require('../characters.json');
+const GLOBAL_BAN_CHARACTERS = ['cryo', 'hydro', 'pyro', 'electro', 'anemo', 'geo', 'dendro']
+    .flatMap(element => CHARACTERS_BY_ELEMENT[element] || []);
 
 function getChallongeEmbedUrl(link) {
     try {
@@ -307,6 +309,7 @@ router.get('/tournament/:slug', async (req, res) => {
             deckStats: deckStats,
             charStats: charStats,
             chars: CHARACTERS_BY_ELEMENT,
+            allCharsForGlobalBans: GLOBAL_BAN_CHARACTERS,
             myGlobalBans,
             challongeEmbedUrl: getChallongeEmbedUrl(tour.bracketLink)
         });
@@ -400,7 +403,7 @@ router.get('/admin/manage/:slug', isAdmin, async (req, res) => {
     const banUsers = await User.find({ discordId: { $in: globalBanEntries.map(entry => entry.discordId) } }).select('discordId username').lean();
     const names = new Map(banUsers.map(user => [user.discordId, user.username]));
     res.render('pages/admin_manage', { tour: tour, chars: CHARACTERS_BY_ELEMENT,
-        allCharsForGlobalBans: Object.values(CHARACTERS_BY_ELEMENT).flat().sort((a, b) => a.name.localeCompare(b.name)),
+        allCharsForGlobalBans: GLOBAL_BAN_CHARACTERS,
         globalBanEntries: globalBanEntries.map(entry => ({ ...entry, username: names.get(entry.discordId) || entry.discordId })) });
 });
 
