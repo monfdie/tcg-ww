@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tournament Bracket Maker</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -14,7 +15,9 @@
             overflow-x: auto;
         }
         
-        .main-container { display: flex; align-items: flex-start; gap: 40px; }
+        .main-container { display: flex; align-items: flex-start; gap: 40px; max-width: 100%; }
+        .canvas-viewport { min-width: 0; overflow-x: auto; }
+        .canvas-hint { display: none; }
 
         /* --- КАРТОЧКА СЕТКИ (размеры меняются через JS) --- */
         .bracket-board {
@@ -130,6 +133,15 @@
         .download-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6); }
         
         .footer-logo { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 120px; opacity: 0.8; filter: drop-shadow(0 0 10px rgba(255,255,255,0.1)); }
+
+        @media (max-width: 768px) {
+            body { display: block; padding: 12px; overflow-x: hidden; }
+            .main-container { width: 100%; flex-direction: column; gap: 16px; }
+            .side-panel { width: 100%; position: static; gap: 12px; }
+            .canvas-viewport { width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+            .canvas-hint { display: block; margin: 0; color: #aebcd0; font-size: 13px; }
+        }
+        @media (hover: none) { .btn-adv { opacity: 1; } }
     </style>
 <link rel="stylesheet" href="/site-theme.css">
 </head>
@@ -168,6 +180,8 @@
             <button class="download-btn" onclick="downloadBracket()" id="dl-btn">Download Bracket</button>
         </div>
 
+        <p class="canvas-hint">Swipe sideways to edit the full bracket.</p>
+        <div class="canvas-viewport" tabindex="0" aria-label="Bracket canvas, scroll horizontally">
         <div class="bracket-board" id="capture-area">
             <div class="b-header">
                 <h1 class="b-title" id="tour-title" contenteditable="true">PLAYOFF STAGE</h1>
@@ -178,6 +192,7 @@
                 </div>
 
             <img src="/logo.png" alt="Logo" class="footer-logo" crossorigin="anonymous">
+        </div>
         </div>
     </div>
 

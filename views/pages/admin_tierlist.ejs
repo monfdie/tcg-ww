@@ -59,6 +59,14 @@
     .add-player-box { margin-top: 20px; display: flex; gap: 10px; }
     .add-player-box input { flex: 1; padding: 12px; background: #0b0d17; color: #fff; border: 1px solid #3c4b70; border-radius: 4px; outline: none; }
     .add-player-box input:focus { border-color: #4facfe; }
+
+    @media (max-width: 768px) {
+        .tl-header { flex-direction: column; align-items: stretch; gap: 14px; }
+        .tl-header > div { min-width: 0; }
+        .tl-title { font-size: clamp(20px, 5vw, 28px) !important; overflow-wrap: anywhere; }
+        .btn-save { align-self: flex-start; }
+        .add-player-box { flex-wrap: wrap; }
+    }
 </style>
 <link rel="stylesheet" href="/tierlist-trends.css">
 

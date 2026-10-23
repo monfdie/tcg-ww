@@ -303,37 +303,38 @@ button {
     html, body, .app-container, .main-content { width: 100vw !important; max-width: 100% !important; overflow-x: hidden !important; }
 
     .app-container { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; flex-direction: row; padding: 10px 10px; align-items: center; justify-content: space-between; border-right: none; border-bottom: 1px solid #2a3454; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-    .sidebar-brand { margin-bottom: 0; font-size: 1.1em; }
-    .sidebar-links { flex-direction: row; overflow-x: auto; scrollbar-width: none; gap: 5px; margin: 0 5px; }
-    .sidebar-links::-webkit-scrollbar { display: none; }
+    .sidebar { width: 100%; height: auto; display: grid; grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "brand user" "links links"; gap: 6px 10px; padding: 10px; align-items: center; border-right: none; border-bottom: 1px solid #2a3454; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    .sidebar-brand { grid-area: brand; margin-bottom: 0; font-size: 1.1em; }
+    .sidebar-links { grid-area: links; min-width: 0; width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; overflow: visible; flex-grow: 0; gap: 5px; margin: 0; }
     .sidebar-links a { padding: 6px 8px; font-size: 0.8em; border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; }
     .sidebar-links a.active { border-left-color: transparent; border-bottom-color: #4facfe; }
 
-    .sidebar-user { margin-top: 0; padding-top: 0; border-top: none; }
+    .sidebar-user { grid-area: user; margin-top: 0; padding-top: 0; border-top: none; }
     .user-profile img { width: 30px; height: 30px; }
     .user-info { display: none; }
 
     .page-container { padding: 15px 10px; width: 100%; }
+    .main-content { height: auto; min-height: 0; flex: 1; }
     .lobby-card { width: 100%; padding: 20px 15px; }
     .lobby-card h1 { font-size: 1.5em; }
 
-    .game-header { width: 100%; padding: 0 5px; gap: 5px; justify-content: center; }
-    .home-logo-link { position: absolute; left: 5px; top: 50%; transform: translateY(-50%); z-index: 100; }
-    .home-logo-link img { height: 24px; }
-    #room-container { position: absolute !important; right: 5px !important; left: auto !important; top: 50% !important; transform: translateY(-50%) !important; z-index: 100; }
-    #room-display { font-size: 9px; padding: 3px 5px; }
+    .game-header { width: 100%; min-height: 48px; height: auto; display: grid; grid-template-columns: 38px auto minmax(0,1fr) auto auto; padding: 4px 8px; gap: 5px; justify-content: normal; }
+    .home-logo-link { position: static; transform: none; z-index: 100; }
+    .home-logo-link img { display: block; height: 36px; }
+    #room-container { position: relative !important; right: auto !important; left: auto !important; top: auto !important; transform: none !important; margin: 0 !important; z-index: 100; }
+    #room-display { font-size: 9px; padding: 3px 5px; white-space: nowrap; }
+    #copy-toast { position: absolute; top: calc(100% + 4px); right: 0; white-space: nowrap; }
     .reserve-timer { font-size: 12px; }
-    #status { font-size: 9px; letter-spacing: 1px; white-space: nowrap; }
+    #status { min-width: 0; font-size: 9px; line-height: 1.2; letter-spacing: 1px; text-align: center; overflow-wrap: anywhere; }
 
-    .draft-area { width: 100%; gap: 2%; padding: 10px 2px; height: auto; min-height: 20vh; }
-    .team-side { width: 49%; padding: 0; }
+    .draft-area { width: 100%; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding: 10px 5px; height: auto; min-height: 20vh; align-items: start; }
+    .team-side { width: 100%; min-width: 0; padding: 0; }
     .player-header { gap: 5px; margin-bottom: 5px; flex-direction: column; }
     .turn-timer { font-size: 20px; min-width: 30px; }
     .player-header h2 { font-size: 0.75em; text-align: center; word-break: break-word; margin-top: 2px; line-height: 1.1; }
     .player-avatar { width: 30px; height: 30px; }
     .ban-row, .pick-row, .pick-row-small { gap: 3px; margin-bottom: 5px; justify-content: center !important; flex-wrap: wrap; }
-    .slot-circle { width: 30px; height: 30px; border-width: 1px; }
+    .slot-circle { width: clamp(24px,7.5vw,30px); height: clamp(24px,7.5vw,30px); flex: none; border-width: 1px; }
     .step-number { font-size: 12px; }
 
     .char-pool { width: 100%; padding: 10px 2px 30px 2px; }
@@ -342,17 +343,25 @@ button {
     .row-half { width: 100%; justify-content: center; padding: 0; gap: 3px; }
     .char-option { width: 34px; height: 34px; }
 
-    .immunity-top-container { top: 2px; }
+    .immunity-top-container { position: static; grid-column: 1 / -1; justify-self: center; transform: none; }
     .im-icon { width: 22px; height: 22px; }
     .im-label { font-size: 8px; margin-bottom: 2px; }
     .im-row { gap: 4px; padding: 3px; }
-    .global-bans-display { top: 2px; padding: 3px 5px; gap: 1px; }
+    .global-bans-display { position: static; grid-column: 1 / -1; justify-self: center; transform: none; padding: 3px 5px; gap: 1px; }
     .global-bans-sides { gap: 5px; font-size: 8px; }
     .global-bans-sides .im-row { gap: 2px; padding: 2px; margin-top: 1px; }
     .global-bans-display .im-icon { width: 18px; height: 18px; }
 
     .cards-container { transform: scale(0.6); }
     .toss-title { font-size: 1.3em; text-align: center; margin-bottom: 10px; }
-    .controls-area { margin-top: 0; }
+    .controls-area { margin-top: 0; gap: 8px; }
+    #skip-btn { position: static; }
+    .skip-left, .skip-right { left: auto; right: auto; margin: 0; }
     .round-btn { padding: 6px 15px; font-size: 0.85em; }
+}
+
+@media (max-width: 768px) and (max-height: 500px) {
+    #game-screen { height: auto; min-height: 100%; }
+    .draft-area { min-height: 0; }
+    .char-pool { flex: 0 0 auto; height: auto; min-height: 220px; overflow-y: visible; }
 }

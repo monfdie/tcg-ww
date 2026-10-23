@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Promo Schedule Maker</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Segoe+UI&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -26,7 +27,10 @@
             display: flex;
             align-items: center;
             gap: 60px;
+            max-width: 100%;
         }
+        .canvas-viewport { min-width: 0; overflow-x: auto; }
+        .canvas-hint { display: none; }
 
         /* Квадратный холст под пост (1080x1080) */
         .promo-card {
@@ -224,6 +228,14 @@
             transform: translateY(-3px);
             box-shadow: 0 10px 30px rgba(178, 141, 255, 0.6);
         }
+
+        @media (max-width: 768px) {
+            body { display: block; padding: 12px; overflow-x: hidden; }
+            .main-container { width: 100%; flex-direction: column; align-items: stretch; gap: 16px; }
+            .side-panel { width: 100%; gap: 12px; }
+            .canvas-viewport { width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+            .canvas-hint { display: block; margin: 0; color: #aebcd0; font-size: 13px; }
+        }
     </style>
 <link rel="stylesheet" href="/site-theme.css">
 </head>
@@ -244,6 +256,8 @@
             <button class="download-btn" onclick="downloadPromo()" id="dl-btn">Download High-Res</button>
         </div>
 
+        <p class="canvas-hint">Swipe sideways to edit the full poster.</p>
+        <div class="canvas-viewport" tabindex="0" aria-label="Poster canvas, scroll horizontally">
         <div class="promo-card" id="capture-area">
             <div class="header-group">
                 <h1 class="title" contenteditable="true">GITCG CUP 2</h1>
@@ -276,6 +290,7 @@
             </div>
 
             <img src="/logo.png" alt="Logo" class="footer-logo" crossorigin="anonymous">
+        </div>
         </div>
     </div>
 
