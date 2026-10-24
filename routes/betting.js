@@ -208,6 +208,12 @@ router.post('/event/:id/close', admin, asyncRoute(async (req, res) => {
     await updateEvent(req, { status: 'open' }, { $set: { status: 'closed' }, $inc: { version: 1 } }, 'Event is no longer open.');
     redirect(req, res, `/bets/event/${req.params.id}`, 'Betting is closed.');
 }));
+router.post('/event/:id/reopen', admin, asyncRoute(async (req, res) => {
+    await updateEvent(req, { status: 'closed', version: rules.integer(req.body.version, true) },
+        { $set: { status: 'open', closesAt: null }, $inc: { version: 1 } },
+        'Event changed or its result was confirmed. Refresh the page.');
+    redirect(req, res, `/bets/event/${req.params.id}`, 'Betting is open again. Set a new closing time in Edit if needed.');
+}));
 router.get('/event/:id/confirm', admin, asyncRoute(async (req, res) => {
     const event = await Event.findById(req.params.id).lean();
     if (!event) return res.status(404).send('Event not found.');
