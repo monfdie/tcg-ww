@@ -348,8 +348,8 @@ button {
     .im-label { font-size: 8px; margin-bottom: 2px; }
     .im-row { gap: 4px; padding: 3px; }
     .global-bans-display { position: static; grid-column: 1 / -1; justify-self: center; transform: none; padding: 3px 5px; gap: 1px; }
-    .global-bans-sides { gap: 5px; font-size: 8px; }
-    .global-bans-sides .im-row { gap: 2px; padding: 2px; margin-top: 1px; }
+    .global-bans-sides { flex-wrap: wrap; justify-content: center; gap: 5px; }
+    .global-bans-sides .im-row { flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 32px); gap: 2px; padding: 2px; margin-top: 1px; }
     .global-bans-display .im-icon { width: 18px; height: 18px; }
 
     .cards-container { transform: scale(0.6); }

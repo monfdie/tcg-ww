@@ -356,8 +356,8 @@ function getCharData(id) {
             <div class="global-ban-dialog-head"><div><span class="tournament-section-kicker">YOUR TOURNAMENT CHOICE</span><h2 id="global-ban-picker-title">Choose global bans</h2></div><button type="button" class="global-ban-close" onclick="closeGlobalBanPicker()" aria-label="Close">×</button></div>
             <div class="global-ban-dialog-tools"><span id="global-ban-count">0 / <%= tour.globalBanCount %> selected</span><input id="global-ban-search" class="global-ban-search" type="search" placeholder="Search by name" aria-label="Search characters by name" autocomplete="off" oninput="filterGlobalBanCharacters()"></div>
             <div class="global-ban-grid" id="global-ban-player-grid">
-                <% allCharsForGlobalBans.forEach(c => { %>
-                    <label class="global-ban-option" title="<%= c.name %>" data-name="<%= c.name.toLowerCase() %>">
+                <% allCharsForGlobalBans.forEach((c, index) => { %>
+                    <label class="global-ban-option" title="<%= c.name %>" data-name="<%= c.name.toLowerCase() %>" data-order="<%= index %>">
                         <input type="checkbox" value="<%= c.id %>" aria-label="<%= c.name %>" <%= myGlobalBans?.characterIds.includes(c.id) ? 'checked' : '' %> onchange="updateGlobalBanCount(this)">
                         <img src="<%= c.img || '/cardback.png' %>" alt="" loading="lazy">
                     </label>
@@ -641,19 +641,32 @@ function getCharData(id) {
     function updateGlobalBanCount(input) {
         const selected = selectedGlobalBans();
         if (selected.length > requiredGlobalBans && input) { input.checked = false; return; }
+        orderGlobalBans(selected);
         document.getElementById('global-ban-count').textContent = `${selected.length} / ${requiredGlobalBans} selected`;
         showGlobalBanSlots(selected);
+    }
+    function orderGlobalBans(chosen) {
+        const grid = document.getElementById('global-ban-player-grid');
+        const options = [...grid.querySelectorAll('.global-ban-option')];
+        const byId = new Map(options.map(option => [option.querySelector('input').value, option]));
+        const selected = new Set(chosen);
+        const ordered = chosen.map(id => byId.get(id)).filter(Boolean);
+        ordered.push(...options.filter(option => !selected.has(option.querySelector('input').value))
+            .sort((a, b) => Number(a.dataset.order) - Number(b.dataset.order)));
+        grid.append(...ordered);
+        filterGlobalBanCharacters();
     }
     function openGlobalBanPicker() {
         document.querySelectorAll('#global-ban-player-grid input').forEach(input => { input.checked = confirmedGlobalBans.includes(input.value); });
         document.getElementById('global-ban-search').value = '';
-        filterGlobalBanCharacters();
+        orderGlobalBans(confirmedGlobalBans);
         updateGlobalBanCount();
         document.getElementById('global-ban-picker').hidden = false;
         document.getElementById('global-ban-search').focus();
     }
     function closeGlobalBanPicker() {
         document.querySelectorAll('#global-ban-player-grid input').forEach(input => { input.checked = confirmedGlobalBans.includes(input.value); });
+        orderGlobalBans(confirmedGlobalBans);
         updateGlobalBanCount();
         document.getElementById('global-ban-picker').hidden = true;
     }

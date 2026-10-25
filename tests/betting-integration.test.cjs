@@ -105,9 +105,21 @@ test('betting MongoDB transactions: concurrent spending, fixed odds, one side, w
         assert.equal((await http(`/bets/event/${newId}/bet`, 'bob', { csrf: bobCsrf, request: randomUUID(), side: 0, amount: 100, odds: 180 })).status, 303);
         assert.equal((await http(`/bets/event/${newId}/close`, 'bob', { csrf: bobCsrf })).status, 403);
         assert.equal((await http(`/bets/event/${newId}/close`, 'alice', { csrf })).status, 303);
+        const closedPage = await http(`/bets/event/${newId}`, 'alice');
+        assert.match(closedPage.body, /Reopen betting/);
+        const closedVersion = (await Event.findById(newId)).version;
+        assert.equal((await http(`/bets/event/${newId}/reopen`, 'bob', { csrf: bobCsrf, version: closedVersion })).status, 403);
+        assert.equal((await http(`/bets/event/${newId}/reopen`, 'alice', { csrf, version: closedVersion - 1 })).status, 400);
+        assert.equal((await http(`/bets/event/${newId}/reopen`, 'alice', { csrf, version: closedVersion })).status, 303);
+        const reopened = await Event.findById(newId);
+        assert.equal(reopened.status, 'open');
+        assert.equal(reopened.closesAt, null);
+        assert.equal(await Bet.countDocuments({ event: newId, status: 'pending' }), 1);
+        assert.equal((await http(`/bets/event/${newId}/bet`, 'bob', { csrf: bobCsrf, request: randomUUID(), side: 0, amount: 1, odds: 180 })).status, 303);
+        assert.equal((await http(`/bets/event/${newId}/close`, 'alice', { csrf })).status, 303);
         const previewPage = await http(`/bets/event/${newId}/confirm?winner=0`, 'alice');
         assert.equal(previewPage.status, 200);
-        assert.match(previewPage.body, /180/);
+        assert.match(previewPage.body, /181/);
         const version = (await Event.findById(newId)).version;
         assert.equal((await http(`/bets/event/${newId}/decide`, 'alice', { csrf, version, winner: 0, cancelled: '0' })).status, 303);
         // The route starts a background pass; wait for that pass without running a second worker.
@@ -134,8 +146,8 @@ test('betting MongoDB transactions: concurrent spending, fixed odds, one side, w
         assert.equal((await http(`/bets/admin/event/${newId}/bets`)).status, 403);
         const participantPage = await http(`/bets/admin/event/${newId}/bets`, 'alice');
         assert.match(participantPage.body, /Bob/);
-        assert.match(participantPage.body, /100 ◆ total/);
-        assert.match(participantPage.body, /1 bets/);
+        assert.match(participantPage.body, /101 ◆ total/);
+        assert.match(participantPage.body, /2 bets/);
         assert.doesNotMatch((await http(`/bets/event/${newId}`, 'bob')).body, /View all bets|Admin only/);
         assert.equal((await http('/bets/admin/remove', 'alice', { csrf, discordId: 'bob', amount: 10, reason: 'Bypass' })).status, 400);
         const removalPreview = await http('/bets/admin/remove/preview', 'alice', { csrf, discordId: 'bob', amount: 20, reason: 'HTTP correction' });

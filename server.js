@@ -95,19 +95,21 @@ const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 
 const sessions = {};
+app.locals.isLiveDraftRoom = roomId => !!sessions[roomId];
 
 // --- 3. SOCKET.IO LOGIC ---
 io.on('connection', (socket) => {
     const identity = socket.data.identity;
     const userId = identity.id;
     
-    socket.on('create_game', async ({ draftType, tournamentSlug } = {}) => {
+    socket.on('create_game', async ({ draftType, tournamentSlug, bestOf } = {}) => {
         try {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = draftType || 'gitcg';
         if (!Object.hasOwn(DRAFT_RULES, type)) {
             return socket.emit('error_msg', 'Unsupported draft mode');
         }
+        if (![1, 2, 3, 5, 7].includes(bestOf)) bestOf = 1;
         let tournament = null;
         if (type === 'global_ban_sys') {
             if (typeof tournamentSlug !== 'string' || !tournamentSlug || tournamentSlug.length > 100) {
@@ -135,7 +137,10 @@ io.on('connection', (socket) => {
             lastActive: Date.now(), stepIndex: 0, currentTeam: null, currentAction: null,
             timer: baseTimer, blueReserve: baseReserve, redReserve: baseReserve, timerInterval: null,
             bans: [], bluePicks: [], redPicks: [], ready: { blue: false, red: false },
-            draftFinished: false, finishedAt: null
+            draftFinished: false, finishedAt: null,
+            bestOf, gameNumber: 1, games: [], score: { player1: 0, player2: 0 },
+            resultVotes: { blue: null, red: null }, nextReady: { blue: false, red: false },
+            confirmedWinner: null, seriesFinished: false
         };
 
         socket.join(roomId);
@@ -231,7 +236,7 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('update_state', getPublicState(session));
         
         if (session.ready.blue && session.ready.red && !session.gameStarted) {
-            if (session.draftType === 'global_ban_sys') {
+            if (session.draftType === 'global_ban_sys' && session.gameNumber === 1) {
                 session.starting = true;
                 try {
                     const tournament = await Tournament.findById(session.tournamentId);
@@ -331,7 +336,73 @@ io.on('connection', (socket) => {
         
         nextStep(roomId);
     });
+
+    socket.on('vote_result', async ({ roomId, winner } = {}) => {
+        const s = sessions[roomId];
+        if (!s?.draftFinished || s.confirmedWinner || !['blue', 'red'].includes(winner)) return;
+        const side = socket.id === s.bluePlayer ? 'blue' : socket.id === s.redPlayer ? 'red' : null;
+        if (!side) return;
+        s.resultVotes[side] = s.resultVotes[side] === winner ? null : winner;
+        s.lastActive = Date.now();
+        if (s.resultVotes.blue && s.resultVotes.blue === s.resultVotes.red) {
+            s.confirmedWinner = winner;
+            const player = (s.gameNumber % 2 === 1) === (winner === 'blue') ? 'player1' : 'player2';
+            s.score[player]++;
+            s.games[s.gameNumber - 1].winner = winner;
+            s.games[s.gameNumber - 1].score = { ...s.score };
+            s.seriesFinished = s.gameNumber >= s.bestOf ||
+                (s.bestOf !== 2 && s.score[player] >= Math.ceil(s.bestOf / 2));
+            try {
+                await s.savePromise;
+                await Match.updateOne({ roomId, gameNumber: s.gameNumber }, { $set: { winner, score: s.score, seriesFinished: s.seriesFinished } });
+            } catch (error) { console.error(error); }
+        }
+        io.to(roomId).emit('update_state', getPublicState(s));
+    });
+
+    socket.on('next_game_ready', ({ roomId } = {}) => {
+        const s = sessions[roomId];
+        if (!s?.confirmedWinner || s.seriesFinished) return;
+        const side = socket.id === s.bluePlayer ? 'blue' : socket.id === s.redPlayer ? 'red' : null;
+        if (!side) return;
+        s.nextReady[side] = !s.nextReady[side];
+        s.lastActive = Date.now();
+        if (s.nextReady.blue && s.nextReady.red) advanceSeries(s);
+        io.to(roomId).emit('update_state', getPublicState(s));
+    });
 });
+
+function advanceSeries(s) {
+    for (const field of ['Player', 'UserId', 'DiscordId', 'Avatar', 'Name']) {
+        const blue = `blue${field}`, red = `red${field}`;
+        [s[blue], s[red]] = [s[red], s[blue]];
+    }
+    [s.globalBans.blue, s.globalBans.red] = [s.globalBans.red, s.globalBans.blue];
+    s.gameNumber++;
+    s.gameStarted = false;
+    s.draftFinished = false;
+    s.finishedAt = null;
+    s.stepIndex = 0;
+    s.currentTeam = null;
+    s.currentAction = null;
+    s.immunityPhaseActive = false;
+    s.immunityStepIndex = 0;
+    s.immunityPool = [];
+    s.immunityBans = [];
+    s.bans = [];
+    s.bluePicks = [];
+    s.redPicks = [];
+    s.ready = { blue: false, red: false };
+    s.resultVotes = { blue: null, red: null };
+    s.nextReady = { blue: false, red: false };
+    s.confirmedWinner = null;
+    const isMoba = s.draftType === 'moba_3phase' || s.draftType === 'global_ban_sys';
+    s.timer = isMoba ? 30 : 45;
+    s.blueReserve = s.redReserve = isMoba ? 130 : 180;
+    io.to(s.bluePlayer).emit('role_update', 'blue');
+    io.to(s.redPlayer).emit('role_update', 'red');
+    io.to(s.id).emit('series_game_changed');
+}
 
 function nextImmunityStep(roomId) {
     const s = sessions[roomId]; 
@@ -356,7 +427,8 @@ function nextStep(roomId) {
         clearInterval(s.timerInterval);
         s.draftFinished = true;
         s.finishedAt = Date.now();
-        saveMatchImmediately(s);
+        s.games.push({ ...getDraftSnapshot(s), winner: null, score: { ...s.score } });
+        s.savePromise = saveMatchImmediately(s);
         return;
     }
     const c = s.draftOrder[s.stepIndex]; 
@@ -480,6 +552,7 @@ async function saveMatchImmediately(s) {
     try {
         await Match.create({
             roomId: s.id, draftType: s.draftType, blueName: s.blueName, redName: s.redName,
+            bestOf: s.bestOf, gameNumber: s.gameNumber,
             blueDiscordId: s.blueDiscordId, redDiscordId: s.redDiscordId,
             blueAvatar: s.blueAvatar, redAvatar: s.redAvatar, 
             bans: s.bans, bluePicks: s.bluePicks, redPicks: s.redPicks,
@@ -499,6 +572,16 @@ async function saveMatchImmediately(s) {
 
 function getPublicState(session) {
     return {
+        ...getDraftSnapshot(session),
+        bestOf: session.bestOf, gameNumber: session.gameNumber,
+        games: session.games, score: session.score,
+        resultVotes: session.resultVotes, nextReady: session.nextReady,
+        confirmedWinner: session.confirmedWinner, seriesFinished: session.seriesFinished
+    };
+}
+
+function getDraftSnapshot(session) {
+    return {
         stepIndex: session.stepIndex + 1,
         currentTeam: session.currentTeam, currentAction: session.currentAction,
         bans: session.bans, bluePicks: session.bluePicks, redPicks: session.redPicks,
@@ -508,7 +591,7 @@ function getPublicState(session) {
         isBlueTaken: !!session.blueUserId, isRedTaken: !!session.redUserId,
         immunityPhaseActive: session.immunityPhaseActive,
         immunityPool: session.immunityPool || [], immunityBans: session.immunityBans || [],
-        globalBans: session.globalBans || { blue: [], red: [] }, tournamentSlug: session.tournamentSlug,
+        globalBans: { blue: [...(session.globalBans?.blue || [])], red: [...(session.globalBans?.red || [])] }, tournamentSlug: session.tournamentSlug,
         draftFinished: session.draftFinished, ready: session.ready, gameStarted: session.gameStarted
     };
 }

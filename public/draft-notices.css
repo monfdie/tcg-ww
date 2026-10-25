@@ -1,0 +1,56 @@
+.draft-notice-stack {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 10000;
+    display: grid;
+    gap: 8px;
+    width: min(350px, calc(100vw - 24px));
+    pointer-events: none;
+}
+.draft-notice {
+    --notice-accent: #a7b2c6;
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 20px;
+    align-items: start;
+    gap: 9px;
+    padding: 12px 13px;
+    border: 1px solid rgba(199, 213, 246, .16);
+    border-left: 3px solid var(--notice-accent);
+    border-radius: 14px;
+    background: linear-gradient(145deg, rgba(33, 41, 59, .98), rgba(21, 27, 41, .98));
+    color: #f4f6fb;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .28);
+    font: 13px/1.45 'Segoe UI', Tahoma, sans-serif;
+    pointer-events: auto;
+    animation: draft-notice-in .2s ease-out;
+}
+.draft-notice[data-kind="success"] { --notice-accent: #b9f478; }
+.draft-notice[data-kind="error"] { --notice-accent: #ffadb6; }
+.draft-notice-icon { color: var(--notice-accent); font-size: 16px; font-weight: 700; line-height: 1.1; text-align: center; }
+.draft-notice-message { min-width: 0; overflow-wrap: anywhere; }
+#draft-notice-stack .draft-notice-close,
+body.modern-site #draft-notice-stack .draft-notice-close {
+    display: grid !important;
+    place-items: center !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    color: #9aa6bb !important;
+    font: 18px/1 'Segoe UI', sans-serif !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    box-shadow: none !important;
+    cursor: pointer;
+}
+#draft-notice-stack .draft-notice-close:hover,
+body.modern-site #draft-notice-stack .draft-notice-close:hover { background: rgba(255, 255, 255, .08) !important; color: #f4f6fb !important; }
+#draft-notice-stack .draft-notice-close:focus-visible { outline: 2px solid #b9f478; outline-offset: 2px; }
+@keyframes draft-notice-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 600px) { .draft-notice-stack { top: 10px; right: 10px; width: calc(100vw - 20px); } }
+@media (prefers-reduced-motion: reduce) { .draft-notice { animation: none; } }

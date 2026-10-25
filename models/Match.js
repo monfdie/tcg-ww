@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 const matchSchema = new mongoose.Schema({
     roomId: String,
+    bestOf: { type: Number, default: 1 },
+    gameNumber: { type: Number, default: 1 },
+    winner: { type: String, default: null },
+    seriesFinished: { type: Boolean, default: false },
     draftType: { type: String, default: 'moba_3phase' },
     blueName: { type: String, default: 'Player 1' },
     redName: { type: String, default: 'Player 2' },

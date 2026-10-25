@@ -453,9 +453,12 @@ router.post('/admin/edit-groups/:id', isAdmin, express.json(), async (req, res) 
 
 router.get('/game/:id', async (req, res) => {
     try {
-        const match = await Match.findOne({ roomId: req.params.id });
-        res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id, savedData: match || null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true });
-    } catch (e) { res.render('pages/game', { title: "Error", roomId: req.params.id, savedData: null, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true }); }
+        const matches = req.app.locals.isLiveDraftRoom(req.params.id) ? [] :
+            await Match.find({ roomId: req.params.id }).sort({ gameNumber: 1 }).lean();
+        res.render('pages/game', { title: `Room ${req.params.id}`, roomId: req.params.id, savedData: matches[0] || null,
+            savedSeries: matches, initialGame: Number(req.query.game) || 1, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true });
+    } catch (e) { res.render('pages/game', { title: "Error", roomId: req.params.id, savedData: null,
+        savedSeries: [], initialGame: 1, chars: CHARACTERS_BY_ELEMENT, hideSidebar: true }); }
 });
 
 router.get('/auth/discord', passport.authenticate('discord'));

@@ -65,4 +65,12 @@ test('betting: all view modes render, escape event names, and preserve existing 
     for (const mode of ['list', 'event', 'leaders', 'error']) {
         await ejs.renderFile(path.join(__dirname, '../views/pages/betting.ejs'), { ...base, mode, user: null, wallet: null, isAdmin: false });
     }
+    const closedEvent = { ...event, status: 'closed', closesAt: new Date('2020-01-01T00:00:00Z') };
+    const closedAdmin = await ejs.renderFile(path.join(__dirname, '../views/pages/betting.ejs'), { ...base, mode: 'event', event: closedEvent });
+    assert.match(closedAdmin, /\/bets\/event\/event1\/reopen/);
+    assert.match(closedAdmin, /Reopen betting/);
+    assert.doesNotMatch(await ejs.renderFile(path.join(__dirname, '../views/pages/betting.ejs'),
+        { ...base, mode: 'event', event: closedEvent, isAdmin: false }), /\/reopen/);
+    assert.doesNotMatch(await ejs.renderFile(path.join(__dirname, '../views/pages/betting.ejs'),
+        { ...base, mode: 'event', event: { ...event, status: 'settled' } }), /\/reopen/);
 });

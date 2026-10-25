@@ -58,10 +58,12 @@ body.modern-site :is(button,.btn-hero-primary,.btn-hero-secondary,.btn-manage,.b
 body.modern-tools .side-panel :is(button,.back-link):hover { background: #344056 !important; border-color: rgba(199,213,246,.3) !important; transform: translateY(-1px); }
 body.modern-site :is(.btn-primary,.btn-hero-primary,.btn-save,.btn-tcg-save,.btn-tcg-add,.btn-action,.main-reg-btn,.submit-btn,.site-primary):not(.betting *),
 body.modern-tools .side-panel .download-btn { background: var(--site-accent) !important; border-color: transparent !important; color: #17200e !important; }
-body.modern-site :is(.btn-primary,.btn-hero-primary,.btn-save,.btn-tcg-save,.btn-tcg-add,.btn-action,.main-reg-btn,.submit-btn,.site-primary):hover:not(.betting *),
-body.modern-tools .side-panel .download-btn:hover { background: #ccffa0 !important; color: #17200e !important; box-shadow: 0 4px 20px rgba(185,244,120,.12) !important; }
+body.modern-site :is(.btn-primary,.btn-hero-primary,.btn-save,.btn-tcg-save,.btn-tcg-add,.btn-action,.main-reg-btn,.submit-btn,.site-primary):hover:not(:disabled):not(.betting *),
+body.modern-tools .side-panel .download-btn:hover { background: #8fbd4f !important; border-color: transparent !important; color: #17200e !important; box-shadow: 0 4px 16px rgba(185,244,120,.10) !important; }
 body.modern-site :is(.btn-delete,.btn-delete-group,.btn-del-ver,.m-clear):not(.betting *) { color: #ffadb6 !important; background: rgba(235,105,128,.09) !important; border-color: rgba(235,105,128,.2) !important; }
+body.modern-site :is(.btn-delete,.btn-delete-group,.btn-del-ver,.m-clear):hover:not(:disabled):not(.betting *) { color: #ffd0d5 !important; background: rgba(235,105,128,.15) !important; border-color: rgba(235,105,128,.28) !important; }
 body.modern-site :is(.filter-tag,.stage-btn,.stage-tab,.btn-action-outline).active, body.modern-tools .side-panel .action-btn.active { color: var(--site-accent) !important; border-color: rgba(185,244,120,.4) !important; background: rgba(185,244,120,.10) !important; box-shadow: none !important; }
+body.modern-site :is(.filter-tag,.stage-btn,.stage-tab,.btn-action-outline).active:hover:not(:disabled), body.modern-tools .side-panel .action-btn.active:hover { color: #8fbd4f !important; border-color: rgba(185,244,120,.4) !important; background: rgba(185,244,120,.14) !important; }
 body.modern-site :is(.stage-switcher,.stage-tabs) { border: 1px solid var(--site-line); border-radius: 16px; padding: 6px; background: rgba(11,15,24,.45); gap: 6px; }
 body.modern-site .filter-section { gap: 22px; }
 body.modern-site .filter-label { font-size: 10px; color: #7f8ba1; }

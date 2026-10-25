@@ -1,4 +1,5 @@
 <%- include('../partials/header') %>
+<link rel="stylesheet" href="/draft-notices.css">
 
 <style>
     body, html { background: linear-gradient(rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.85)), url('/bg.jpg') !important; background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important; background-attachment: fixed !important; min-height: 100vh; }
@@ -31,6 +32,39 @@
         .home-logo-link { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); }
         #room-container { position: absolute; right: 20px; left: auto; top: 50%; transform: translateY(-50%); margin: 0; z-index: 100; }
     }
+    #game-screen { position: relative; }
+    .series-bar { position: absolute; z-index: 60; top: calc(6vh + 9px); right: 20px; width: 216px; box-sizing: border-box; flex-direction: column; align-items: stretch; gap: 0; padding: 8px; background: linear-gradient(145deg,rgba(33,41,59,.95),rgba(21,27,41,.96)); border: 1px solid rgba(199,213,246,.12); border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+    #series-score { display: block; color: #e8edf6; font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 600; text-align: center; letter-spacing: 0; padding: 2px 0 7px; border-bottom: 1px solid rgba(199,213,246,.12); }
+    .series-tabs { display: flex; justify-content: center; gap: 3px; margin-top: 6px; padding: 4px; border: 1px solid rgba(199,213,246,.12); border-radius: 12px; background: rgba(11,15,24,.45); }
+    .series-tab { flex: 1; min-width: 0; margin: 0; padding: 5px 2px; background: transparent; border: 1px solid transparent; border-radius: 9px; color: #9aa6bb; font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0; text-transform: none; white-space: nowrap; transition: background .18s, border-color .18s, color .18s; }
+    .series-tab:hover { color: #f4f6fb; background: rgba(255,255,255,.05); }
+    .series-tab.active { background: rgba(185,244,120,.10); border-color: rgba(185,244,120,.4); color: #b9f478; box-shadow: none; }
+    .series-tab-short { display: none; }
+    .series-bar.compact .series-tab-full { display: none; }
+    .series-bar.compact .series-tab-short { display: inline; }
+    .series-panel { display: none; position: absolute; z-index: 70; right: 20px; bottom: 20px; width: min(320px, calc(100% - 40px)); box-sizing: border-box; align-items: center; justify-content: center; gap: 7px; flex-wrap: wrap; padding: 11px; color: #f4f6fb; background: linear-gradient(145deg,rgba(33,41,59,.96),rgba(21,27,41,.97)); border: 1px solid rgba(199,213,246,.12); border-radius: 18px; box-shadow: 0 10px 28px rgba(0,0,0,.28); font-family: 'Segoe UI', sans-serif; font-size: 11px; }
+    .series-panel.visible { display: flex; }
+    .series-panel span:first-child { width: 100%; text-align: center; font-family: 'Segoe UI', sans-serif; font-weight: 600; color: #e8edf6; letter-spacing: 0; }
+    .series-action, .winner-choice { margin: 0; padding: 8px 11px; min-height: 34px; border-radius: 11px; border: 1px solid rgba(199,213,246,.16); background: #252d3e; color: #e8edf6; font-family: 'Segoe UI', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; box-shadow: none; transition: background .18s, border-color .18s, transform .18s; }
+    .series-action:hover, .winner-choice:hover { background: #344056; border-color: rgba(199,213,246,.3); transform: translateY(-1px); }
+    .series-action:not(.active) { background: rgba(185,244,120,.10); border-color: rgba(185,244,120,.35); color: #b9f478; }
+    .series-action.active { background: #252d3e; color: #9aa6bb; border-color: rgba(199,213,246,.16); }
+    .winner-choice.active { background: rgba(185,244,120,.10); color: #b9f478; border-color: rgba(185,244,120,.4); box-shadow: none; }
+    .winner-choice:disabled { cursor: default; opacity: .7; }
+    .series-panel span:last-child:not(:first-child) { color: #9aa6bb; text-align: center; }
+    .series-tab:focus-visible, .series-action:focus-visible, .winner-choice:focus-visible { outline: 2px solid #b9f478; outline-offset: 2px; }
+    .draft-area { transition: opacity .22s ease, transform .22s ease; }
+    .draft-area.switching { opacity: 0; transform: translateX(16px); }
+    @media (max-width: 768px) {
+        .series-bar { position: static; width: calc(100% - 12px); margin: 6px auto 0; padding: 5px 7px; flex-direction: row; align-items: center; gap: 6px; flex-shrink: 0; border-radius: 12px; box-shadow: none; }
+        #series-score { flex: 0 0 auto; font-size: 10px; padding: 0 7px 0 0; border-bottom: 0; border-right: 1px solid rgba(199,213,246,.12); white-space: nowrap; }
+        .series-tabs { flex: 1; min-width: 0; gap: 2px; margin: 0; padding: 0; border: 0; background: transparent; }
+        .series-tab { font-size: 9px; padding: 5px 1px; }
+        .series-tab-full { display: none; }
+        .series-tab-short { display: inline; }
+        .series-panel { position: static; width: calc(100% - 16px); margin: 4px auto 8px; flex-shrink: 0; box-shadow: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { .draft-area, .series-tab { transition: none; } }
 
 </style>
 
@@ -42,16 +76,20 @@
          <div class="reserve-timer red-res"><span id="red-res">3:00</span></div>
          <div id="room-container">
              <div id="room-display" onclick="copyRoomCode()">CODE: <%= roomId %></div>
-             <span id="copy-toast">Code Copied!</span>
          </div>
+    </div>
+
+    <div class="series-bar" id="series-bar" style="display:none;">
+        <span id="series-score"></span>
+        <div class="series-tabs" id="series-tabs"></div>
     </div>
 
      <div class="draft-area">
          <div id="global-bans-display" class="global-bans-display" style="display:none;">
              <div class="im-label">GLOBAL BANS</div>
              <div class="global-bans-sides">
-                 <div><span>BLUE</span><div class="im-row" id="global-blue-bans"></div></div>
-                 <div><span>RED</span><div class="im-row" id="global-red-bans"></div></div>
+                 <div class="im-row" id="global-blue-bans"></div>
+                 <div class="im-row" id="global-red-bans"></div>
              </div>
          </div>
          <div id="immunity-top-display" class="immunity-top-container" style="display: none;">
@@ -99,6 +137,8 @@
          <button id="skip-btn" class="round-btn" onclick="skipTurn()" style="display: none;">SKIP</button>
          <button id="confirm-btn" class="confirm-btn round-btn" onclick="confirmSelection()" disabled style="display: none;">SELECT</button>
      </div>
+     <div class="series-panel" id="result-panel"></div>
+     <div class="series-panel" id="next-panel"></div>
 
      <div class="char-pool" id="char-pool-container"></div>
 </div>
@@ -106,6 +146,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="/draft-rules.js"></script>
 <script src="/player-avatar.js"></script>
+<script src="/draft-notices.js"></script>
 
 <script>
     const socket = io({ transports: ['websocket'] });
@@ -114,12 +155,15 @@
     let myRole = '', currentDraftType = 'gitcg', isGameStarted = false;
     let charsData = {}, selectedCharId = null, currentState = null;
     let isDraftFinishedLocal = false;
+    let latestState = null, viewedGame = 1, isReview = false, savedStates = [];
+    let lastFinishedNotice = 0, seriesNoticeShown = false;
     
     const myNick = <%- locals.user ? JSON.stringify(locals.user.username) : '""' %>;
     const localNick = sessionStorage.getItem('draft_nickname') || 'Player';
     const finalNick = myNick || localNick;
 
     const savedData = <%- JSON.stringify(locals.savedData || null) %>;
+    const savedSeries = <%- JSON.stringify(locals.savedSeries || []) %>;
     const serverChars = <%- JSON.stringify(locals.chars || null) %>;
 
     function applyDefaultTimers(draftType) {
@@ -148,10 +192,20 @@
             stepIndex: 999, ready: { blue: true, red: true },
             draftFinished: true, isBlueTaken: true, isRedTaken: true
         };
+        savedStates = savedSeries.map((match, index) => ({
+            ...mockState, ...match, gameNumber: match.gameNumber || index + 1,
+            draftType: match.draftType === 'abyss_box' ? 'gitcg_cup_2' :
+                match.draftType === 'chaos' ? 'classic' : (match.draftType || 'gitcg'),
+            bestOf: match.bestOf || 1, draftFinished: true, gameStarted: true,
+            stepIndex: 999, isBlueTaken: true, isRedTaken: true,
+            ready: { blue: true, red: true }
+        }));
         currentDraftType = mockState.draftType;
         applyDefaultTimers(currentDraftType);
         renderRows(mockState);
-        updateUI(mockState);
+        viewedGame = savedStates.some(game => game.gameNumber === <%= locals.initialGame || 1 %>)
+            ? <%= locals.initialGame || 1 %> : (savedStates[0]?.gameNumber || 1);
+        updateUI(savedStates.find(game => game.gameNumber === viewedGame) || mockState);
     } else {
         socket.on('connect', () => {
             if (currentRoom) {
@@ -163,22 +217,37 @@
             myRole = data.role; charsData = data.chars; currentDraftType = data.state.draftType || 'gitcg';
             applyDefaultTimers(currentDraftType);
             document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
+            viewedGame = data.state.gameNumber || 1;
             renderRows(data.state); updateUI(data.state);
         });
 
         socket.on('role_update', (newRole) => {
             myRole = newRole;
             document.getElementById('room-display').innerText = `CODE: ${currentRoom}` + (myRole === 'spectator' ? " (SPEC)" : "");
+            if (latestState) updateUI(latestState);
         });
 
         socket.on('update_state', updateUI);
         socket.on('game_started', () => { isGameStarted = true; });
-        socket.on('game_over', (state) => { updateUI(state); alert("Draft is complete and saved!"); });
-        socket.on('error_msg', (msg) => { alert(msg); });
-        socket.on('connect_error', (error) => { alert(error.message); });
+        socket.on('game_over', (state) => {
+            updateUI(state);
+            if (state.gameNumber !== lastFinishedNotice) {
+                lastFinishedNotice = state.gameNumber;
+                showDraftNotice(myRole === 'spectator' ? 'Draft complete.' : 'Draft complete. Confirm the winner below.', 'success');
+            }
+        });
+        socket.on('series_game_changed', () => {
+            if (viewedGame === latestState?.gameNumber) viewedGame++;
+            selectedCharId = null;
+            document.getElementById('confirm-btn').disabled = true;
+            showDraftNotice('Next game is ready. Both players can start the draft.', 'info');
+        });
+        socket.on('error_msg', (msg) => { showDraftNotice(msg, 'error'); });
+        socket.on('connect_error', (error) => { showDraftNotice(error.message, 'error'); });
         
         socket.on('timer_tick', (data) => {
             const t = typeof data === 'object' ? data.main : data;
+            if (viewedGame !== latestState?.gameNumber) return;
             document.getElementById('blue-timer').innerText = t; 
             document.getElementById('red-timer').innerText = t;
             if(typeof data === 'object') {
@@ -188,26 +257,126 @@
         });
     }
 
+    function renderSeries(state) {
+        const seriesBar = document.getElementById('series-bar');
+        const tabs = document.getElementById('series-tabs');
+        const max = savedData ? savedStates.length : state.gameNumber;
+        seriesBar.style.display = state.bestOf > 1 ? 'flex' : 'none';
+        seriesBar.classList.toggle('compact', state.bestOf >= 5);
+        tabs.replaceChildren();
+        for (let n = 1; n <= max; n++) {
+            const button = document.createElement('button');
+            button.className = `series-tab${viewedGame === n ? ' active' : ''}`;
+            const fullLabel = document.createElement('span');
+            fullLabel.className = 'series-tab-full';
+            fullLabel.textContent = `GAME ${n}`;
+            const shortLabel = document.createElement('span');
+            shortLabel.className = 'series-tab-short';
+            shortLabel.textContent = `G${n}`;
+            button.setAttribute('aria-label', `Game ${n}`);
+            button.append(fullLabel, shortLabel);
+            button.onclick = () => switchSeriesGame(n);
+            tabs.appendChild(button);
+        }
+        const score = state.score || { player1: 0, player2: 0 };
+        document.getElementById('series-score').textContent = `BO${state.bestOf || 1} · ${score.player1 || 0} : ${score.player2 || 0}`;
+
+        const resultPanel = document.getElementById('result-panel');
+        const nextPanel = document.getElementById('next-panel');
+        resultPanel.replaceChildren(); nextPanel.replaceChildren();
+        resultPanel.classList.remove('visible'); nextPanel.classList.remove('visible');
+        if (!savedData && viewedGame !== state.gameNumber) return;
+        if (savedData || !state.draftFinished || state.confirmedWinner) {
+            if (!savedData && state.confirmedWinner && !state.seriesFinished && (myRole === 'blue' || myRole === 'red')) {
+                nextPanel.classList.add('visible');
+                const button = document.createElement('button');
+                button.className = `series-action${state.nextReady?.[myRole] ? ' active' : ''}`;
+                button.textContent = state.nextReady?.[myRole] ? 'Cancel readiness' : 'Move to next game';
+                button.onclick = () => socket.emit('next_game_ready', { roomId: currentRoom });
+                nextPanel.appendChild(button);
+                const note = document.createElement('span');
+                note.textContent = `Ready: ${(state.nextReady?.blue ? 1 : 0) + (state.nextReady?.red ? 1 : 0)}/2`;
+                nextPanel.appendChild(note);
+            } else if (!savedData && state.seriesFinished) {
+                nextPanel.classList.add('visible');
+                nextPanel.textContent = 'SERIES FINISHED';
+            }
+            return;
+        }
+        resultPanel.classList.add('visible');
+        const title = document.createElement('span');
+        title.textContent = 'Confirm game winner:';
+        resultPanel.appendChild(title);
+        for (const side of ['blue', 'red']) {
+            const button = document.createElement('button');
+            button.className = `winner-choice${state.resultVotes?.[myRole] === side ? ' active' : ''}`;
+            button.textContent = state[`${side}Name`];
+            button.disabled = myRole !== 'blue' && myRole !== 'red';
+            button.onclick = () => socket.emit('vote_result', { roomId: currentRoom, winner: side });
+            resultPanel.appendChild(button);
+        }
+        const note = document.createElement('span');
+        note.textContent = state.resultVotes?.blue && state.resultVotes?.red && state.resultVotes.blue !== state.resultVotes.red
+            ? 'Players selected different winners. Change a vote to agree.'
+            : `Confirmed: ${(state.resultVotes?.blue ? 1 : 0) + (state.resultVotes?.red ? 1 : 0)}/2`;
+        resultPanel.appendChild(note);
+    }
+
+    function switchSeriesGame(gameNumber) {
+        if (gameNumber === viewedGame) return;
+        const state = savedData ? savedStates.find(game => game.gameNumber === gameNumber) :
+            gameNumber === latestState.gameNumber ? latestState : latestState.games?.[gameNumber - 1];
+        if (!state) return;
+        const area = document.querySelector('.draft-area');
+        area.classList.add('switching');
+        setTimeout(() => {
+            viewedGame = gameNumber;
+            selectedCharId = null;
+            document.getElementById('confirm-btn').disabled = true;
+            document.querySelectorAll('.char-option').forEach(char => char.classList.remove('selected-pending'));
+            renderDraftState(state);
+            renderSeries(latestState);
+            area.classList.remove('switching');
+        }, 220);
+    }
+
     function formatTime(s) { if (s < 0) s = 0; const m=Math.floor(s/60), sec=s%60; return `${m}:${sec<10?'0':''}${sec}`; }
-    function toggleReady(r) { if(myRole===r) socket.emit('player_ready', currentRoom); }
-    function copyRoomCode() { navigator.clipboard.writeText(currentRoom); }
-    function skipTurn() { if(currentRoom && !savedData && !isDraftFinishedLocal) socket.emit('skip_action', currentRoom); }
+    function toggleReady(r) { if(myRole===r && !isReview) socket.emit('player_ready', currentRoom); }
+    function copyRoomCode() {
+        if (!navigator.clipboard?.writeText) return showDraftNotice('Could not copy the room code.', 'error');
+        navigator.clipboard.writeText(currentRoom)
+            .then(() => showDraftNotice('Room code copied.', 'success'))
+            .catch(() => showDraftNotice('Could not copy the room code.', 'error'));
+    }
+    function skipTurn() { if(currentRoom && !isReview && !isDraftFinishedLocal) socket.emit('skip_action', currentRoom); }
     function takeSeat(side) { socket.emit('take_seat', { roomId: currentRoom, side: side, nickname: finalNick }); }
     function leaveSeat() { socket.emit('leave_seat', { roomId: currentRoom }); }
     
     function updateUI(state) {
+        latestState = state;
+        if (!savedData && state.seriesFinished && !seriesNoticeShown) {
+            seriesNoticeShown = true;
+            showDraftNotice('Series complete. Results are saved.', 'success');
+        }
+        renderSeries(state);
+        if (!savedData && viewedGame !== state.gameNumber) return;
+        renderDraftState(state);
+    }
+
+    function renderDraftState(state) {
+        isReview = !!savedData || viewedGame !== latestState?.gameNumber;
         currentState = state;
         isGameStarted = state.gameStarted;
         isDraftFinishedLocal = state.draftFinished;
         currentDraftType = state.draftType || currentDraftType;
-        const isMyTurn = (myRole === state.currentTeam);
+        const isMyTurn = !isReview && (myRole === state.currentTeam);
 
         const blueJoinBtn = document.getElementById('join-blue-btn');
         const redJoinBtn = document.getElementById('join-red-btn');
         const blueLeaveBtn = document.getElementById('leave-blue-btn');
         const redLeaveBtn = document.getElementById('leave-red-btn');
 
-        if (!state.gameStarted && !state.draftFinished) {
+        if (!isReview && !state.gameStarted && !state.draftFinished) {
             blueJoinBtn.style.display = (!state.isBlueTaken && myRole !== 'blue') ? 'block' : 'none';
             blueLeaveBtn.style.display = (myRole === 'blue') ? 'block' : 'none';
             redJoinBtn.style.display = (!state.isRedTaken && myRole !== 'red') ? 'block' : 'none';
@@ -228,7 +397,7 @@
         
         const confirmBtn = document.getElementById('confirm-btn');
         const skipBtn = document.getElementById('skip-btn');
-        if (state.gameStarted && !state.draftFinished && !savedData && isMyTurn) {
+        if (state.gameStarted && !state.draftFinished && !isReview && isMyTurn) {
             confirmBtn.style.display = 'inline-block';
             if (state.immunityPhaseActive) {
                 skipBtn.style.display = 'inline-block';
@@ -362,7 +531,7 @@
         el.innerHTML = `<img src="${char.img}">`;
         
         el.onclick = () => {
-            if(!isGameStarted || myRole === 'spectator' || savedData || isDraftFinishedLocal) return;
+            if(!isGameStarted || myRole === 'spectator' || isReview || isDraftFinishedLocal) return;
             if (el.classList.contains('disabled')) return;
             
             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
@@ -374,7 +543,7 @@
     }
 
     function confirmSelection() {
-        if(selectedCharId && currentRoom && !savedData && !isDraftFinishedLocal) {
+        if(selectedCharId && currentRoom && !isReview && !isDraftFinishedLocal) {
             socket.emit('action', { roomId: currentRoom, charId: selectedCharId });
             selectedCharId = null; document.getElementById('confirm-btn').disabled = true;
             document.querySelectorAll('.char-option').forEach(c => c.classList.remove('selected-pending'));
@@ -446,7 +615,7 @@
                  
                  if (isBan) slot.classList.add('slot-ban');
                  if (step.immunity) slot.classList.add('slot-immunity-pick');
-                 if (!state.immunityPhaseActive && state.gameStarted && !savedData && !state.draftFinished && step.num === state.stepIndex) {
+                 if (!state.immunityPhaseActive && state.gameStarted && !isReview && !state.draftFinished && step.num === state.stepIndex) {
                      slot.classList.add('active-slot');
                  }
   

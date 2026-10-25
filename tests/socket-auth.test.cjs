@@ -27,6 +27,10 @@ function startApp({ store = new session.MemoryStore(), env = {} } = {}) {
     };
     const Match = {
         create: async data => saved.push(data),
+        updateOne: async (query, update) => {
+            const match = saved.find(m => m.roomId === query.roomId && m.gameNumber === query.gameNumber);
+            if (match) Object.assign(match, update.$set);
+        },
         countDocuments: async () => saved.length,
         findOne: async ({ roomId }) => saved.find(m => m.roomId === roomId) || null,
         find: () => ({ sort: () => ({ limit: async () => saved }) })
@@ -125,6 +129,89 @@ test('identity lookup fails closed for absent, deleted, or unavailable sessions'
     await run({}, {});
     await run({ passport: { user: 'missing' } }, { findById: async () => null });
     await run({ passport: { user: 'alice' } }, { findById: async () => { throw Error('offline'); } });
+});
+
+test('BO3 requires matching results and both ready votes, then swaps sides and ends at two wins', async () => {
+    const app = startApp();
+    const clients = [];
+    try {
+        if (!app.server.listening) await new Promise(resolve => app.server.once('listening', resolve));
+        const origin = `http://127.0.0.1:${app.server.address().port}`;
+        async function connect(account) {
+            const response = await fetch(origin + '/create');
+            const cookie = response.headers.get('set-cookie').split(';')[0];
+            const sid = signature.unsign(decodeURIComponent(cookie.slice(cookie.indexOf('=') + 1)).slice(2), 'test-secret');
+            const stored = await new Promise((resolve, reject) => app.store.get(sid, (err, value) => err ? reject(err) : resolve(value)));
+            stored.passport = { user: account };
+            await new Promise((resolve, reject) => app.store.set(sid, stored, err => err ? reject(err) : resolve()));
+            const client = new Client(origin.replace('http:', 'ws:') + '/socket.io/?EIO=4&transport=websocket', cookie);
+            clients.push(client);
+            await client.wait('connected');
+            return client;
+        }
+        const alice = await connect('alice'), bob = await connect('bob');
+        alice.emit('create_game', { draftType: 'classic', bestOf: 3 });
+        const { roomId } = await alice.wait('init_game');
+        alice.emit('take_seat', { roomId, side: 'blue' });
+        await alice.wait('role_update');
+        bob.emit('rejoin_game', { roomId });
+        await bob.wait('init_game');
+        bob.emit('take_seat', { roomId, side: 'red' });
+        await bob.wait('role_update');
+        const s = app.sessions[roomId];
+        // A one-step draft exercises the real finish/result/advance socket flow.
+        s.draftOrder = [{ team: 'blue', type: 'ban' }];
+        s.gameStarted = true;
+        s.currentTeam = 'blue';
+        s.currentAction = 'ban';
+        s.globalBans = { blue: ['ganyu'], red: ['ayaka'] };
+        alice.emit('action', { roomId, charId: 'diona' });
+        await alice.wait('game_over');
+        assert.equal(s.games.length, 1);
+        alice.emit('vote_result', { roomId, winner: 'blue' });
+        bob.emit('vote_result', { roomId, winner: 'red' });
+        await new Promise(resolve => setTimeout(resolve, 40));
+        assert.equal(s.confirmedWinner, null);
+        bob.emit('vote_result', { roomId, winner: 'blue' });
+        await new Promise(resolve => setTimeout(resolve, 40));
+        assert.equal(s.score.player1, 1);
+        alice.emit('next_game_ready', { roomId });
+        await new Promise(resolve => setTimeout(resolve, 40));
+        assert.equal(s.gameNumber, 1);
+        alice.emit('next_game_ready', { roomId });
+        bob.emit('next_game_ready', { roomId });
+        await new Promise(resolve => setTimeout(resolve, 40));
+        assert.equal(s.gameNumber, 1);
+        alice.emit('next_game_ready', { roomId });
+        await alice.wait('series_game_changed');
+        assert.equal(s.gameNumber, 2);
+        assert.equal(s.blueName, 'Bob');
+        assert.equal(s.redName, 'Alice');
+        assert.deepEqual([...s.globalBans.blue], ['ayaka']);
+        assert.deepEqual([...s.globalBans.red], ['ganyu']);
+        assert.equal(s.bans.length, 0);
+        assert.equal(s.ready.blue, false);
+        assert.equal(app.saved.length, 1);
+        assert.equal(s.games[0].blueName, 'Alice');
+        assert.equal(s.games[0].globalBans.blue[0], 'ganyu');
+        s.gameStarted = true;
+        s.currentTeam = 'blue';
+        s.currentAction = 'ban';
+        bob.emit('action', { roomId, charId: 'kaeya' });
+        await bob.wait('game_over');
+        alice.emit('vote_result', { roomId, winner: 'red' });
+        bob.emit('vote_result', { roomId, winner: 'red' });
+        await new Promise(resolve => setTimeout(resolve, 40));
+        assert.equal(s.score.player1, 2);
+        assert.equal(s.seriesFinished, true);
+        bob.emit('next_game_ready', { roomId });
+        await new Promise(resolve => setTimeout(resolve, 40));
+        assert.equal(s.gameNumber, 2);
+        assert.equal(app.saved.length, 2);
+    } finally {
+        clients.forEach(client => client.close());
+        await closeApp(app);
+    }
 });
 
 test('global ban draft starts with open submissions and snapshots both players choices', async () => {
