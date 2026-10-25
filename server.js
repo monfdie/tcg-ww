@@ -140,7 +140,7 @@ io.on('connection', (socket) => {
             draftFinished: false, finishedAt: null,
             bestOf, gameNumber: 1, games: [], score: { player1: 0, player2: 0 },
             resultVotes: { blue: null, red: null }, nextReady: { blue: false, red: false },
-            confirmedWinner: null, seriesFinished: false
+            confirmedWinner: null, seriesFinished: false, savePromises: {}
         };
 
         socket.join(roomId);
@@ -337,32 +337,44 @@ io.on('connection', (socket) => {
         nextStep(roomId);
     });
 
-    socket.on('vote_result', async ({ roomId, winner } = {}) => {
+    socket.on('vote_result', async ({ roomId, winner, gameNumber } = {}) => {
         const s = sessions[roomId];
-        if (!s?.draftFinished || s.confirmedWinner || !['blue', 'red'].includes(winner)) return;
-        const side = socket.id === s.bluePlayer ? 'blue' : socket.id === s.redPlayer ? 'red' : null;
+        if (!s || !['blue', 'red'].includes(winner)) return;
+        const number = gameNumber === undefined ? s.gameNumber : gameNumber;
+        if (!Number.isInteger(number) || number < 1 || number > s.games.length) return;
+        const game = s.games[number - 1];
+        if (!game?.draftFinished || game.winner) return;
+        const side = userId === game.blueUserId ? 'blue' : userId === game.redUserId ? 'red' : null;
         if (!side) return;
-        s.resultVotes[side] = s.resultVotes[side] === winner ? null : winner;
+        game.resultVotes[side] = game.resultVotes[side] === winner ? null : winner;
         s.lastActive = Date.now();
-        if (s.resultVotes.blue && s.resultVotes.blue === s.resultVotes.red) {
-            s.confirmedWinner = winner;
-            const player = (s.gameNumber % 2 === 1) === (winner === 'blue') ? 'player1' : 'player2';
-            s.score[player]++;
-            s.games[s.gameNumber - 1].winner = winner;
-            s.games[s.gameNumber - 1].score = { ...s.score };
-            s.seriesFinished = s.gameNumber >= s.bestOf ||
-                (s.bestOf !== 2 && s.score[player] >= Math.ceil(s.bestOf / 2));
+        if (game.resultVotes.blue && game.resultVotes.blue === game.resultVotes.red) {
+            game.winner = winner;
+            const score = { player1: 0, player2: 0 };
+            for (const played of s.games) {
+                if (!played.winner) continue;
+                const player = (played.gameNumber % 2 === 1) === (played.winner === 'blue') ? 'player1' : 'player2';
+                score[player]++;
+            }
+            s.score = score;
+            game.score = { ...score };
+            s.seriesFinished = (s.games.length >= s.bestOf && s.games.every(played => !!played.winner)) ||
+                (s.bestOf !== 2 && Math.max(score.player1, score.player2) >= Math.ceil(s.bestOf / 2));
             try {
-                await s.savePromise;
-                await Match.updateOne({ roomId, gameNumber: s.gameNumber }, { $set: { winner, score: s.score, seriesFinished: s.seriesFinished } });
+                await s.savePromises[number];
+                await Match.updateOne({ roomId, gameNumber: number }, { $set: { winner, score: game.score, seriesFinished: s.seriesFinished } });
             } catch (error) { console.error(error); }
+        }
+        if (number === s.gameNumber) {
+            s.resultVotes = game.resultVotes;
+            s.confirmedWinner = game.winner;
         }
         io.to(roomId).emit('update_state', getPublicState(s));
     });
 
     socket.on('next_game_ready', ({ roomId } = {}) => {
         const s = sessions[roomId];
-        if (!s?.confirmedWinner || s.seriesFinished) return;
+        if (!s?.draftFinished || s.seriesFinished || s.gameNumber >= s.bestOf) return;
         const side = socket.id === s.bluePlayer ? 'blue' : socket.id === s.redPlayer ? 'red' : null;
         if (!side) return;
         s.nextReady[side] = !s.nextReady[side];
@@ -427,8 +439,10 @@ function nextStep(roomId) {
         clearInterval(s.timerInterval);
         s.draftFinished = true;
         s.finishedAt = Date.now();
-        s.games.push({ ...getDraftSnapshot(s), winner: null, score: { ...s.score } });
-        s.savePromise = saveMatchImmediately(s);
+        s.games.push({ ...getDraftSnapshot(s), gameNumber: s.gameNumber,
+            blueUserId: s.blueUserId, redUserId: s.redUserId,
+            resultVotes: { blue: null, red: null }, winner: null, score: { ...s.score } });
+        s.savePromises[s.gameNumber] = saveMatchImmediately(s);
         return;
     }
     const c = s.draftOrder[s.stepIndex]; 
@@ -574,7 +588,7 @@ function getPublicState(session) {
     return {
         ...getDraftSnapshot(session),
         bestOf: session.bestOf, gameNumber: session.gameNumber,
-        games: session.games, score: session.score,
+        games: session.games.map(({ blueUserId, redUserId, ...game }) => game), score: session.score,
         resultVotes: session.resultVotes, nextReady: session.nextReady,
         confirmedWinner: session.confirmedWinner, seriesFinished: session.seriesFinished
     };

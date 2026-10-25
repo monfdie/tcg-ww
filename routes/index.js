@@ -407,12 +407,27 @@ router.get('/admin/manage/:slug', isAdmin, async (req, res) => {
         globalBanEntries: globalBanEntries.map(entry => ({ ...entry, username: names.get(entry.discordId) || entry.discordId })) });
 });
 
+router.get('/admin/tournament/:id/global-bans/player/:discordId', isAdmin, async (req, res) => {
+    const tour = await Tournament.findById(req.params.id);
+    if (!tour?.globalBansEnabled) return res.status(404).json({ error: 'Global bans are unavailable.' });
+    const discordId = req.params.discordId.trim();
+    if (!discordId || discordId.length > 64) return res.status(400).json({ error: 'Enter a valid Discord ID.' });
+    const player = await User.findOne({ discordId });
+    if (!player) return res.status(404).json({ error: 'Player with this Discord ID was not found.' });
+    const entry = await TournamentGlobalBan.findOne({ tournamentId: tour._id, discordId });
+    res.json({ discordId, username: player.username || discordId, characterIds: entry?.characterIds || [] });
+});
+
 router.post('/admin/tournament/:id/global-bans/:discordId', isAdmin, express.json(), async (req, res) => {
     const tour = await Tournament.findById(req.params.id);
     if (!tour?.globalBansEnabled) return res.status(404).json({ error: 'Global bans are unavailable.' });
+    const discordId = req.params.discordId.trim();
+    if (!discordId || discordId.length > 64) return res.status(400).json({ error: 'Enter a valid Discord ID.' });
+    const player = await User.findOne({ discordId });
+    if (!player) return res.status(404).json({ error: 'Player with this Discord ID was not found.' });
     if (!validateGlobalBans(req.body.characterIds, tour.globalBanCount)) return res.status(400).json({ error: 'Invalid character selection.' });
     await TournamentGlobalBan.updateOne(
-        { tournamentId: tour._id, discordId: req.params.discordId },
+        { tournamentId: tour._id, discordId },
         { $set: { characterIds: req.body.characterIds, updatedAt: new Date() } }, { upsert: true }
     );
     res.json({ success: true });

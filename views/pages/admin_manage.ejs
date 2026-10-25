@@ -299,7 +299,11 @@
     <% if (tour.globalBansEnabled) { %>
     <div class="admin-panel">
         <h4 class="text-white mb-3">Global bans by player</h4>
-        <p class="text-muted small">Edit a player's submitted bans. New player submissions appear here after confirmation on the tournament page.</p>
+        <p class="text-muted small">Choose a player with saved bans or find any registered player by Discord ID to set their bans.</p>
+        <div class="d-flex gap-2 flex-wrap mb-2">
+            <input id="global-ban-admin-player-id" class="player-input" type="search" placeholder="Player Discord ID" aria-label="Player Discord ID" autocomplete="off" style="max-width:320px;" onkeydown="if(event.key === 'Enter') { event.preventDefault(); findAdminBanPlayer(); }">
+            <button type="button" class="btn-tcg btn-tcg-add" onclick="findAdminBanPlayer()">Find player</button>
+        </div>
         <select id="global-ban-admin-player" class="player-input" style="max-width:320px;" onchange="loadAdminBans()">
             <option value="">Select player</option>
             <% globalBanEntries.forEach(entry => { %>
@@ -378,6 +382,27 @@
 <script>
     <% if (tour.globalBansEnabled) { %>
     const globalBanCount = <%= tour.globalBanCount || 3 %>;
+    async function findAdminBanPlayer() {
+        const discordId = document.getElementById('global-ban-admin-player-id').value.trim();
+        const select = document.getElementById('global-ban-admin-player');
+        const message = document.getElementById('global-ban-admin-message');
+        select.value = '';
+        loadAdminBans();
+        if (!discordId) { message.textContent = 'Enter a player Discord ID.'; return; }
+        try {
+            const response = await fetch(`/admin/tournament/<%= tour._id %>/global-bans/player/${encodeURIComponent(discordId)}`);
+            const result = await response.json();
+            if (!response.ok) { message.textContent = result.error || 'Player not found.'; return; }
+            let option = [...select.options].find(item => item.value === result.discordId);
+            if (!option) { option = document.createElement('option'); select.appendChild(option); }
+            option.value = result.discordId;
+            option.textContent = `${result.username} (${result.discordId})`;
+            option.dataset.bans = result.characterIds.join(',');
+            select.value = result.discordId;
+            loadAdminBans();
+            message.textContent = result.characterIds.length ? 'Player found. You can edit their bans.' : 'Player found. Choose their bans and save.';
+        } catch { message.textContent = 'Could not find the player. Try again.'; }
+    }
     function loadAdminBans() {
         const select = document.getElementById('global-ban-admin-player');
         const chosen = (select.selectedOptions[0]?.dataset.bans || '').split(',').filter(Boolean);

@@ -23,6 +23,7 @@ function startApp({ store = new session.MemoryStore(), env = {} } = {}) {
     };
     const User = {
         findById: async id => users[id] || null,
+        findOne: async ({ discordId }) => Object.values(users).find(user => user.discordId === discordId) || null,
         updateOne: async (...args) => statistics.push(args)
     };
     const Match = {
@@ -48,6 +49,7 @@ function startApp({ store = new session.MemoryStore(), env = {} } = {}) {
     };
     const TournamentGlobalBan = {
         find: () => ({ lean: async () => globalBanEntries }),
+        findOne: async ({ discordId }) => globalBanEntries.find(entry => entry.discordId === discordId) || null,
         updateOne: async (query, update) => {
             let entry = globalBanEntries.find(item => item.discordId === query.discordId);
             if (!entry) { entry = { discordId: query.discordId }; globalBanEntries.push(entry); }
@@ -214,6 +216,89 @@ test('BO3 requires matching results and both ready votes, then swaps sides and e
     }
 });
 
+test('BO2 can draft both games before confirming either result', async () => {
+    const app = startApp();
+    const clients = [];
+    try {
+        if (!app.server.listening) await new Promise(resolve => app.server.once('listening', resolve));
+        const origin = `http://127.0.0.1:${app.server.address().port}`;
+        async function connect(account) {
+            const response = await fetch(origin + '/create');
+            const cookie = response.headers.get('set-cookie').split(';')[0];
+            const sid = signature.unsign(decodeURIComponent(cookie.slice(cookie.indexOf('=') + 1)).slice(2), 'test-secret');
+            const stored = await new Promise((resolve, reject) => app.store.get(sid, (err, value) => err ? reject(err) : resolve(value)));
+            if (account) stored.passport = { user: account };
+            await new Promise((resolve, reject) => app.store.set(sid, stored, err => err ? reject(err) : resolve()));
+            const client = new Client(origin.replace('http:', 'ws:') + '/socket.io/?EIO=4&transport=websocket', cookie);
+            clients.push(client);
+            await client.wait('connected');
+            return client;
+        }
+        const alice = await connect('alice'), bob = await connect('bob'), spectator = await connect(null);
+        alice.emit('create_game', { draftType: 'classic', bestOf: 2 });
+        const { roomId } = await alice.wait('init_game');
+        alice.emit('take_seat', { roomId, side: 'blue' });
+        await alice.wait('role_update');
+        bob.emit('rejoin_game', { roomId });
+        await bob.wait('init_game');
+        bob.emit('take_seat', { roomId, side: 'red' });
+        await bob.wait('role_update');
+        spectator.emit('rejoin_game', { roomId });
+        await spectator.wait('init_game');
+        const s = app.sessions[roomId];
+        s.draftOrder = [{ team: 'blue', type: 'ban' }];
+        alice.emit('next_game_ready', { roomId });
+        await new Promise(resolve => setTimeout(resolve, 30));
+        assert.equal(s.nextReady.blue, false);
+        s.gameStarted = true;
+        s.currentTeam = 'blue';
+        s.currentAction = 'ban';
+        alice.emit('action', { roomId, charId: 'diona' });
+        await alice.wait('game_over');
+        await bob.wait('game_over');
+        alice.emit('next_game_ready', { roomId });
+        await new Promise(resolve => setTimeout(resolve, 30));
+        assert.equal(s.gameNumber, 1);
+        bob.emit('next_game_ready', { roomId });
+        await alice.wait('series_game_changed');
+        assert.equal(s.gameNumber, 2);
+        assert.equal(s.games[0].winner, null);
+        assert.equal(s.blueUserId, 'user:bob');
+        s.gameStarted = true;
+        s.currentTeam = 'blue';
+        s.currentAction = 'ban';
+        bob.emit('action', { roomId, charId: 'kaeya' });
+        await bob.wait('game_over');
+        assert.equal(s.games.length, 2);
+        spectator.emit('vote_result', { roomId, gameNumber: 1, winner: 'blue' });
+        bob.emit('vote_result', { roomId, gameNumber: 99, winner: 'blue' });
+        await new Promise(resolve => setTimeout(resolve, 30));
+        assert.equal(s.games[0].resultVotes.blue, null);
+        alice.emit('vote_result', { roomId, gameNumber: 1, winner: 'blue' });
+        bob.emit('vote_result', { roomId, gameNumber: 1, winner: 'blue' });
+        await new Promise(resolve => setTimeout(resolve, 40));
+        assert.equal(s.games[0].winner, 'blue');
+        assert.equal(s.score.player1, 1);
+        assert.equal(s.seriesFinished, false);
+        alice.emit('vote_result', { roomId, gameNumber: 1, winner: 'red' });
+        alice.emit('vote_result', { roomId, gameNumber: 2, winner: 'red' });
+        bob.emit('vote_result', { roomId, gameNumber: 2, winner: 'red' });
+        await new Promise(resolve => setTimeout(resolve, 40));
+        assert.equal(s.score.player1, 2);
+        assert.equal(s.score.player2, 0);
+        assert.equal(s.seriesFinished, true);
+        assert.equal(app.saved[0].winner, 'blue');
+        assert.equal(app.saved[1].winner, 'red');
+        alice.emit('next_game_ready', { roomId });
+        bob.emit('next_game_ready', { roomId });
+        await new Promise(resolve => setTimeout(resolve, 30));
+        assert.equal(s.gameNumber, 2);
+    } finally {
+        clients.forEach(client => client.close());
+        await closeApp(app);
+    }
+});
+
 test('global ban draft starts with open submissions and snapshots both players choices', async () => {
     const app = startApp();
     const clients = [];
@@ -306,6 +391,19 @@ test('players submit their own bans and admins can correct locked choices', asyn
         assert.equal((await post(adminPath, alice, ['chongyun', 'ayaka', 'eula'])).status, 200);
         assert.deepEqual(app.globalBanEntries.find(entry => entry.discordId === 'discord-bob').characterIds,
             ['chongyun', 'ayaka', 'eula']);
+        app.globalBanEntries.splice(app.globalBanEntries.findIndex(entry => entry.discordId === 'discord-bob'), 1);
+        const lookupPath = `/admin/tournament/${app.globalTournament._id}/global-bans/player/discord-bob`;
+        assert.equal((await fetch(origin + lookupPath, { headers: { Cookie: bob }, redirect: 'manual' })).status, 302);
+        const lookup = await fetch(origin + lookupPath, { headers: { Cookie: alice } });
+        assert.equal(lookup.status, 200);
+        assert.deepEqual((await lookup.json()).characterIds, []);
+        assert.equal((await post(adminPath, alice, ['ganyu', 'diona', 'kaeya'])).status, 200);
+        assert.deepEqual(app.globalBanEntries.find(entry => entry.discordId === 'discord-bob').characterIds,
+            ['ganyu', 'diona', 'kaeya']);
+        const missingPath = `/admin/tournament/${app.globalTournament._id}/global-bans/player/unknown-id`;
+        assert.equal((await fetch(origin + missingPath, { headers: { Cookie: alice } })).status, 404);
+        assert.equal((await post(`/admin/tournament/${app.globalTournament._id}/global-bans/unknown-id`, alice,
+            ['ganyu', 'diona', 'kaeya'])).status, 404);
     } finally { await closeApp(app); }
 });
 
