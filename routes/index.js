@@ -244,6 +244,17 @@ router.get('/tournament/:slug', async (req, res) => {
         if (tour.isMine === false) return res.redirect('/tournaments');
         const myGlobalBans = tour.globalBansEnabled && req.user
             ? await TournamentGlobalBan.findOne({ tournamentId: tour._id, discordId: req.user.discordId }).lean() : null;
+        let publicGlobalBans = [];
+        if (tour.globalBansEnabled && tour.globalBansLocked) {
+            const entries = await TournamentGlobalBan.find({ tournamentId: tour._id }).lean();
+            const users = await User.find({ discordId: { $in: entries.map(entry => entry.discordId) } })
+                .select('discordId username').lean();
+            const names = new Map(users.map(user => [user.discordId, user.username]));
+            publicGlobalBans = entries.map((entry, index) => ({
+                username: names.get(entry.discordId) || `Player ${index + 1}`,
+                characterIds: entry.characterIds
+            })).sort((a, b) => a.username.localeCompare(b.username));
+        }
 
         const roomIds = tour.matches ? tour.matches.map(m => m.roomId) : [];
         const dbMatches = await Match.find({ roomId: { $in: roomIds } });
@@ -311,6 +322,7 @@ router.get('/tournament/:slug', async (req, res) => {
             chars: CHARACTERS_BY_ELEMENT,
             allCharsForGlobalBans: GLOBAL_BAN_CHARACTERS,
             myGlobalBans,
+            publicGlobalBans,
             challongeEmbedUrl: getChallongeEmbedUrl(tour.bracketLink)
         });
     } catch (err) {

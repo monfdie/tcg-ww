@@ -24,6 +24,8 @@ function startApp({ store = new session.MemoryStore(), env = {} } = {}) {
     const User = {
         findById: async id => users[id] || null,
         findOne: async ({ discordId }) => Object.values(users).find(user => user.discordId === discordId) || null,
+        find: ({ discordId }) => ({ select: () => ({ lean: async () =>
+            Object.values(users).filter(user => discordId.$in.includes(user.discordId)) }) }),
         updateOne: async (...args) => statistics.push(args)
     };
     const Match = {
@@ -378,6 +380,10 @@ test('players submit their own bans and admins can correct locked choices', asyn
         const guest = await cookieFor();
         const alice = await cookieFor('alice');
         const bob = await cookieFor('bob');
+        const publicPath = '/tournament/global-test';
+        const openPage = await fetch(origin + publicPath, { headers: { Cookie: guest } });
+        assert.equal(openPage.status, 200);
+        assert.doesNotMatch(await openPage.text(), /Player global bans/);
         const playerPath = '/tournament/global-test/global-bans';
         assert.equal((await post(playerPath, guest, ['ganyu', 'diona', 'kaeya'])).status, 401);
         assert.equal((await post(playerPath, bob, ['ganyu', 'ganyu', 'kaeya'])).status, 400);
@@ -385,6 +391,14 @@ test('players submit their own bans and admins can correct locked choices', asyn
         assert.deepEqual(app.globalBanEntries.find(entry => entry.discordId === 'discord-bob').characterIds,
             ['ganyu', 'diona', 'kaeya']);
         app.globalTournament.globalBansLocked = true;
+        const lockedPage = await fetch(origin + publicPath, { headers: { Cookie: guest } });
+        assert.equal(lockedPage.status, 200);
+        const lockedHtml = await lockedPage.text();
+        assert.match(lockedHtml, /Player global bans/);
+        assert.match(lockedHtml, /Alice/);
+        assert.match(lockedHtml, /Bob/);
+        assert.match(lockedHtml, /Ganyu/);
+        assert.doesNotMatch(lockedHtml, /discord-bob/);
         assert.equal((await post(playerPath, bob, ['chongyun', 'ayaka', 'eula'])).status, 409);
         const adminPath = `/admin/tournament/${app.globalTournament._id}/global-bans/discord-bob`;
         assert.equal((await post(adminPath, bob, ['chongyun', 'ayaka', 'eula'])).status, 302);

@@ -251,6 +251,18 @@
     .global-ban-slot:has(img) { border-color: rgba(233, 132, 136, .55); background: linear-gradient(145deg, rgba(233, 132, 136, .16), rgba(20, 34, 56, .9)); }
     .global-ban-slot img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #e98488; box-shadow: 0 0 0 2px rgba(233, 132, 136, .14); }
     .global-ban-slot-empty { width: 45px; height: 45px; display: grid; place-items: center; border: 1px dashed rgba(143,183,224,.35); border-radius: 50%; color: #7899b8; font-size: 23px; line-height: 1; }
+    .global-ban-roster { margin: 0 0 28px; }
+    .global-ban-roster-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .global-ban-roster-head h2 { margin: 3px 0 0; color: #f5f9ff; font-size: 23px; font-weight: 750; }
+    .global-ban-roster-count { color: #a9c0d8; font-size: 12px; }
+    .global-ban-roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .global-ban-player-card { min-width: 0; padding: 18px; border: 1px solid rgba(143,183,224,.2); border-radius: 15px; background: #142238; box-shadow: 0 10px 30px rgba(2,7,18,.22); }
+    .global-ban-player-name { margin: 0 0 14px; color: #eef7ff; font-size: 17px; font-weight: 750; overflow-wrap: anywhere; }
+    .global-ban-player-picks { display: flex; flex-wrap: wrap; gap: 8px; }
+    .global-ban-player-pick { width: 66px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 4px; border: 1px solid rgba(233,132,136,.25); border-radius: 11px; background: rgba(233,132,136,.07); text-align: center; }
+    .global-ban-player-pick img { width: 46px; height: 46px; border: 2px solid #e98488; border-radius: 50%; object-fit: cover; }
+    .global-ban-player-pick span { width: 100%; color: #d9e7f5; font-size: 10px; line-height: 1.2; overflow-wrap: anywhere; }
+    .global-ban-roster-empty { margin: 0; padding: 24px; border: 1px dashed rgba(143,183,224,.28); border-radius: 15px; color: #a9c0d8; background: #142238; text-align: center; }
     .challonge-panel { margin: 24px 0; padding: 18px; border: 1px solid rgba(143,183,224,.2); border-radius: 15px; background: #142238; }
     .challonge-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
     .challonge-panel-head h2 { margin: 0; }
@@ -348,8 +360,33 @@ function getCharData(id) {
                 <% if (tour.isLive) { %><a class="link-btn" href="/create?mode=global_ban_sys&amp;tournament=<%= encodeURIComponent(tour.slug) %>">Create draft ↗</a><% } %>
                 <span id="global-ban-message" role="status"><%= myGlobalBans ? 'Bans confirmed' : (tour.globalBansLocked ? 'No bans submitted' : 'Waiting for your choice') %></span>
             </div>
-        <% } else { %><a href="/auth/discord" class="link-btn global-ban-primary">Sign in to choose bans</a><% } %>
+        <% } else if (!tour.globalBansLocked) { %><a href="/auth/discord" class="link-btn global-ban-primary">Sign in to choose bans</a><% } %>
     </section>
+    <% if (tour.globalBansLocked) { %>
+    <section class="global-ban-roster" aria-labelledby="global-ban-roster-heading">
+        <div class="global-ban-roster-head">
+            <div><span class="tournament-section-kicker">LOCKED SELECTIONS</span><h2 id="global-ban-roster-heading">Player global bans</h2></div>
+            <span class="global-ban-roster-count"><%= publicGlobalBans.length %> players</span>
+        </div>
+        <% if (publicGlobalBans.length) { %>
+        <div class="global-ban-roster-grid">
+            <% publicGlobalBans.forEach(player => { %>
+            <article class="global-ban-player-card">
+                <h3 class="global-ban-player-name"><%= player.username %></h3>
+                <div class="global-ban-player-picks" aria-label="<%= player.username %> global bans">
+                    <% player.characterIds.forEach(charId => { const character = getCharData(charId); %>
+                    <div class="global-ban-player-pick" title="<%= character.name %>">
+                        <img src="<%= character.img %>" alt="<%= character.name %>" loading="lazy">
+                        <span><%= character.name %></span>
+                    </div>
+                    <% }) %>
+                </div>
+            </article>
+            <% }) %>
+        </div>
+        <% } else { %><p class="global-ban-roster-empty">No player bans have been saved yet.</p><% } %>
+    </section>
+    <% } %>
     <% if (tour.isLive && !tour.globalBansLocked && locals.user) { %>
     <div class="global-ban-modal" id="global-ban-picker" role="dialog" aria-modal="true" aria-labelledby="global-ban-picker-title" hidden>
         <div class="global-ban-dialog">
